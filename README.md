@@ -33,7 +33,7 @@ python main.py
 
 | 단계 | 자료 |
 |---|---|
-| 1차 발표 | 기획서 PPT, 발표 PPT, 발표 영상: [YouTube 링크 추가 예정] |
+| 1차 발표 | 기획서 [PPT](docs/Last6Bullet_Design.pptx) · [PDF](docs/Last6Bullet_Design.pdf), 발표 [PPT](docs/Last6Bullet_Presentation1.pptx) · [PDF](docs/Last6Bullet_Presentation1.pdf), 발표 영상: [YouTube 링크 추가 예정] |
 | 2차 발표 | 예정 |
 | 3차 발표 | 예정 |
 
