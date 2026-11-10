@@ -531,6 +531,27 @@ def shooting_a_wall_up_close_hurts_yourself():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 5-2. 연출
+
+def effects(kind):
+    import game_world
+    return [o for o in game_world.objects() if isinstance(o, kind)]
+
+
+@test
+def firing_shows_a_short_muzzle_flash_at_the_bullet():
+    from effect import MuzzleFlash
+    pm = fresh()
+    p = pm.player
+    aim(p, 45)
+    bl = p.fire()
+    [fl] = effects(MuzzleFlash)
+    assert (fl.x, fl.y) == (bl.x, bl.y), '불꽃이 총알이 나온 자리에 없음'
+    sim.step(6)                    # 0.1초 뒤에는 사라진다
+    assert effects(MuzzleFlash) == [], '총구 불꽃이 남아 있음'
+    pm.finish()
+
+
 # ---------------------------------------------------------------- 6. 총알 장부
 
 @test

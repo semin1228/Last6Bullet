@@ -1,6 +1,8 @@
 # 잠깐 보였다 사라지는 연출. 정해진 시간이 지나면 스스로 월드에서 빠진다.
 # 충돌 검사나 총알 장부와는 관계없다 (Bullet 이 아니므로 장부가 세지 않는다).
-from pico2d import load_font
+import math
+
+from pico2d import draw_circle, draw_line, load_font
 
 import config
 import game_framework
@@ -53,3 +55,15 @@ class TextPop(Effect):
         f = font()
         if f:
             f.draw(self.x - 14, self.y + 22 * self.progress(), self.text, self.color)
+
+
+class MuzzleFlash(Effect):
+    # 총구 불꽃: 발사 순간 총알이 나온 자리에서 노랗게 번쩍이고 줄어든다
+    def __init__(self, x, y, angle, life=0.07):
+        super().__init__(x, y, life)
+        self.dx, self.dy = math.cos(angle), math.sin(angle)
+
+    def draw(self):
+        r = int(8 * (1 - self.progress())) + 2
+        draw_circle(self.x + self.dx * 3, self.y + self.dy * 3, r, *config.COLOR_FLASH, filled=True)
+        draw_circle(self.x, self.y, max(1, r // 2), *config.COLOR_FLASH_CORE, filled=True)

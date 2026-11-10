@@ -72,6 +72,7 @@ class Player:
         # 몸 중심(항상 빈 공간)에서 만들고 총구까지 벽 검사를 하며 옮긴다.
         bullet.fire(self.x, self.y, self.aim, 'player')
         bullet.travel(self.gun_reach())
+        effect.spawn(effect.MuzzleFlash(bullet.x, bullet.y, self.aim))
         game_world.add_object(bullet, 1)
         game_world.add_collision_pair('player:bullet', None, bullet)
         self.fire_cooldown = config.FIRE_COOLDOWN
