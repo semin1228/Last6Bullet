@@ -100,6 +100,23 @@ def w1_4_bounce():
     pm.finish()
 
 
+@scene
+def w1_5_self_hit():
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = pm.zone.inner
+    p.x, p.y = r - 160, (b + t) / 2
+    sim.mouse_move(r, p.y)
+    sim.click()
+    sim.step(21)
+    save('w1_5_bounced_back')      # 벽에 튕겨 돌아오는 총알 (주황: 누구든 맞음)
+    sim.step(14)
+    p.invincible = 0.05            # 스크린샷이 깜빡임에 걸려 캐릭터가 사라지지 않게
+    sim.step(1)
+    save('w1_5_hurt')              # 맞아서 왼쪽 위 체력이 3칸, 총알은 발밑에서 주워 다시 6발
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)
