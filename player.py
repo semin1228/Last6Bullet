@@ -22,6 +22,8 @@ class Player:
         self.pressed = set()
         self.held = []             # 손에 든 총알 (HELD 상태의 Bullet)
         self.fire_cooldown = 0.0
+        self.hp = config.PLAYER_HP
+        self.invincible = 0.0      # 남은 무적 시간 (초)
 
         self.machine = Machine(
             model=self,
@@ -82,6 +84,7 @@ class Player:
 
     def update(self):
         self.fire_cooldown = max(0.0, self.fire_cooldown - game_framework.frame_time)
+        self.invincible = max(0.0, self.invincible - game_framework.frame_time)
         if self.state == 'RUN':
             dx, dy = self.direction()
             step = config.PLAYER_SPEED * game_framework.frame_time
@@ -94,6 +97,8 @@ class Player:
             self.aim = math.atan2(my - self.y, mx - self.x)
 
     def draw(self):
+        if self.invincible > 0 and int(self.invincible * 10) % 2:
+            return                 # 무적 중에는 깜빡인다
         cx, cy = math.cos(self.aim), math.sin(self.aim)
         gx, gy = self.x + cx * (self.radius + 10), self.y + cy * (self.radius + 10)
         for o in (-1, 0, 1):  # 두께 3px 총신
@@ -110,3 +115,9 @@ class Player:
 
     def handle_collision(self, group, other):
         pass
+
+    def hurt(self):
+        if self.invincible > 0 or self.hp <= 0:
+            return
+        self.hp -= 1
+        self.invincible = config.INVINCIBLE_TIME

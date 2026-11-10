@@ -4,6 +4,7 @@ import config
 import game_framework
 import game_world
 from bullet import Bullet
+from hud import Hud
 from player import Player
 from zone import Zone
 
@@ -20,6 +21,7 @@ def init():
     # 구역의 총알은 여기서만 만든다. 이후에는 상태만 바뀌므로 총알 수가 늘거나 줄지 않는다.
     player.held = [Bullet(zone) for _ in range(config.AMMO)]
     game_world.add_collision_pair('player:bullet', player, None)
+    game_world.add_object(Hud(player), 2)
 
 
 def handle_events():
