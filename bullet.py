@@ -19,6 +19,7 @@ class Bullet:
         self.radius = config.BULLET_RADIUS
         self.owner = None          # 마지막으로 쏜 쪽 ('player' 등)
         self.age = 0.0             # 날아간 시간 (초)
+        self.bounces = 0           # 벽이나 장애물에 튕긴 횟수
 
         self.machine = Machine(
             model=self,
@@ -38,6 +39,7 @@ class Bullet:
         self.vy = math.sin(angle) * config.BULLET_SPEED
         self.owner = owner
         self.age = 0.0
+        self.bounces = 0
 
     def on_enter_FLOOR(self):
         self.vx = self.vy = 0.0
@@ -49,11 +51,12 @@ class Bullet:
         self.age += dt
         self.x += self.vx * dt
         self.y += self.vy * dt
-        x, y = self.zone.push_out(self.x, self.y, self.radius)
-        if (x, y) != (self.x, self.y):  # 벽에 닿으면 그 자리에 떨어진다 (반사는 다음 단계)
-            self.x, self.y = x, y
-            self.land()
-        elif self.age >= config.BULLET_LIFE:
+        if self.zone.bounce(self):
+            self.bounces += 1
+            if self.bounces > config.MAX_BOUNCES:
+                self.land()
+                return
+        if self.age >= config.BULLET_LIFE:
             self.land()
 
     def draw(self):

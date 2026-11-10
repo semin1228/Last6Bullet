@@ -41,3 +41,31 @@ class Zone:
         l, b, r, t = self.inner
         return min(max(x, l + radius), r - radius), min(max(y, b + radius), t - radius)
 
+    def bounce(self, bullet):
+        # 총알이 벽이나 장애물에 닿았으면 속도를 뒤집고 밖으로 꺼낸 뒤 True 를 돌려준다
+        x, y, rad = bullet.x, bullet.y, bullet.radius
+        l, b, r, t = self.inner
+        hit = False
+        if x - rad < l or x + rad > r:
+            bullet.x = min(max(x, l + rad), r - rad)
+            bullet.vx = -bullet.vx
+            hit = True
+        if y - rad < b or y + rad > t:
+            bullet.y = min(max(y, b + rad), t - rad)
+            bullet.vy = -bullet.vy
+            hit = True
+        for ol, ob, o_r, ot in self.obstacles:
+            x, y = bullet.x, bullet.y
+            if x + rad <= ol or x - rad >= o_r or y + rad <= ob or y - rad >= ot:
+                continue
+            # 겹친 깊이가 얕은 축으로 들어온 것으로 보고 그 축의 속도를 뒤집는다 (PRD 15-5)
+            over_x = min(x + rad - ol, o_r - (x - rad))
+            over_y = min(y + rad - ob, ot - (y - rad))
+            if over_x < over_y:
+                bullet.x = ol - rad if x < (ol + o_r) / 2 else o_r + rad
+                bullet.vx = -bullet.vx
+            else:
+                bullet.y = ob - rad if y < (ob + ot) / 2 else ot + rad
+                bullet.vy = -bullet.vy
+            hit = True
+        return hit
