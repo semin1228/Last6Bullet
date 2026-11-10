@@ -49,7 +49,16 @@ class Bullet:
             return
         dt = game_framework.frame_time
         self.age += dt
-        # 한 프레임 이동을 BULLET_SUBSTEP 이하로 나눠 움직여서 얇은 벽을 뚫고 지나가지 않게 한다
+        self.advance(dt)
+        if self.state == 'FLYING' and self.age >= config.BULLET_LIFE:
+            self.land()
+
+    def travel(self, distance):
+        # 쏜 사람 몸 중심에서 총구까지 처럼, 프레임과 상관없이 정해진 거리만큼 움직인다
+        self.advance(distance / config.BULLET_SPEED)
+
+    def advance(self, dt):
+        # dt 초 동안의 이동을 BULLET_SUBSTEP 이하로 나눠 움직여서 얇은 벽을 뚫고 지나가지 않게 한다
         distance = math.hypot(self.vx, self.vy) * dt
         steps = max(1, math.ceil(distance / config.BULLET_SUBSTEP))
         for _ in range(steps):
@@ -60,8 +69,6 @@ class Bullet:
                 if self.bounces > config.MAX_BOUNCES:
                     self.land()
                     return
-        if self.age >= config.BULLET_LIFE:
-            self.land()
 
     def draw(self):
         if self.state == 'FLYING':
