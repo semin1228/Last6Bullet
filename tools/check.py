@@ -328,6 +328,107 @@ def shoot_randomly(dt):
     pm.finish()
 
 
+# ---------------------------------------------------------------- 5. 줍기와 튕긴 총알 자해
+
+def flying_bullet(pm, x, y, vx, vy, bounces, age=1.0):
+    import game_world
+    from bullet import Bullet
+    b = pm.player.held.pop()
+    b.fire(x, y, 0.0, 'player')
+    b.vx, b.vy, b.bounces, b.age = vx, vy, bounces, age
+    game_world.add_object(b, 1)
+    game_world.add_collision_pair('player:bullet', None, b)
+    return b
+
+
+@test
+def walking_over_floor_bullet_picks_it_up():
+    import config
+    from pico2d import SDLK_d
+    pm = fresh()
+    p = pm.player
+    aim(p, 0)
+    sim.click()
+    [b] = bullets_in_world()
+    while b.state != 'FLOOR':
+        sim.step(1)
+    p.x, p.y = b.x - 60, b.y       # 총알 왼쪽 60px 에서 걸어간다
+    sim.key_down(SDLK_d)
+    sim.step(30)
+    assert b.state == 'HELD' and b in p.held, '바닥 총알을 줍지 못함'
+    assert len(p.held) == config.AMMO and bullets_in_world() == []
+    pm.finish()
+
+
+@test
+def own_unbounced_bullet_passes_through():
+    import config
+    pm = fresh()
+    p = pm.player
+    b = flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=0)
+    sim.step(20)
+    assert p.hp == config.PLAYER_HP, '튕기지 않은 내 총알에 맞음'
+    assert b.state == 'FLYING' and b.x > p.x + p.radius
+    pm.finish()
+
+
+@test
+def bounced_bullet_hurts_and_drops():
+    import config
+    pm = fresh()
+    p = pm.player
+    b = flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
+    sim.step(20)
+    assert p.hp == config.PLAYER_HP - 1 and p.invincible > 0
+    # 맞힌 총알은 맞은 자리(내 발밑)에 떨어지고, 그 위에 서 있으니 곧바로 주워진다
+    assert b.state == 'HELD' and b in p.held, '맞힌 총알이 발밑에 떨어져 주워지지 않음'
+    pm.finish()
+
+
+@test
+def bullet_that_hit_you_drops_at_your_feet():
+    import config
+    pm = fresh()
+    p = pm.player
+    b = flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
+    while b.state == 'FLYING':
+        sim.step(1)
+    assert b.state == 'FLOOR', '맞힌 총알이 바닥에 떨어지지 않음'
+    assert abs(b.x - p.x) <= p.radius + b.radius, '맞은 자리에 떨어지지 않음'
+    pm.finish()
+
+
+@test
+def invincibility_blocks_second_hit():
+    import config
+    pm = fresh()
+    p = pm.player
+    flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
+    flying_bullet(pm, p.x + 60, p.y, -config.BULLET_SPEED, 0, bounces=1)
+    sim.step(20)
+    assert p.hp == config.PLAYER_HP - 1, '무적 시간에 또 맞음 (체력 %d)' % p.hp
+    sim.step(int(config.INVINCIBLE_TIME * 60) + 1)
+    flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
+    sim.step(20)
+    assert p.hp == config.PLAYER_HP - 2, '무적이 끝났는데 맞지 않음'
+    pm.finish()
+
+
+@test
+def shooting_a_wall_up_close_hurts_yourself():
+    # 실제 상황 재현: 오른쪽 벽 바로 앞에서 벽을 쏘면 튕겨 나온 총알에 내가 맞는다
+    import config
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = pm.zone.inner
+    place(p, r - 80, (b + t) / 2)
+    aim(p, 0)
+    sim.click()
+    sim.step(30)
+    assert p.hp == config.PLAYER_HP - 1, '벽에 튕긴 내 총알에 맞지 않음'
+    pm.finish()
+
+
 def main():
     sim.open_game('--window' in sys.argv)
     from pico2d import close_canvas
