@@ -8,6 +8,7 @@ from pico2d import draw_circle
 from transitions import Machine
 
 import config
+import effect
 import game_framework
 
 
@@ -66,6 +67,7 @@ class Bullet:
             self.y += self.vy * dt / steps
             if self.zone.bounce(self):
                 self.bounces += 1
+                effect.spawn(effect.Spark(self.x, self.y, self.vx, self.vy))
                 if self.bounces > config.MAX_BOUNCES:
                     self.land()
                     return

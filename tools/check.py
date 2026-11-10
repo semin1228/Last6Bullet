@@ -552,6 +552,26 @@ def firing_shows_a_short_muzzle_flash_at_the_bullet():
     pm.finish()
 
 
+@test
+def bounce_throws_sparks_away_from_the_wall():
+    import math
+    from effect import Spark
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = pm.zone.inner
+    aim(p, 0)
+    bl = p.fire()
+    p.y += 200                     # 돌아오는 총알에 맞지 않게 비켜선다
+    while bl.bounces == 0:
+        sim.step(1)
+    [sp] = effects(Spark)
+    assert abs(sp.x - (r - bl.radius)) < 1, '불똥이 오른쪽 벽에 없음 (x=%.1f)' % sp.x
+    assert math.cos(sp.angle) < 0, '불똥이 벽 안쪽(오른쪽)으로 퍼짐'
+    sim.step(10)
+    assert effects(Spark) == []
+    pm.finish()
+
+
 # ---------------------------------------------------------------- 6. 총알 장부
 
 @test

@@ -67,3 +67,21 @@ class MuzzleFlash(Effect):
         r = int(8 * (1 - self.progress())) + 2
         draw_circle(self.x + self.dx * 3, self.y + self.dy * 3, r, *config.COLOR_FLASH, filled=True)
         draw_circle(self.x, self.y, max(1, r // 2), *config.COLOR_FLASH_CORE, filled=True)
+
+
+class Spark(Effect):
+    # 튕김 불똥: 총알이 벽·장애물에 닿은 자리에서 튕겨 나가는 쪽으로 짧은 선이 퍼진다.
+    # 튕긴 총알은 누구든 맞으므로(주황), '이제 위험해졌다' 는 순간을 보여 준다.
+    SPREAD = (-0.9, -0.35, 0.35, 0.9)  # 튕겨 나가는 방향에서 벌어지는 각도 (라디안)
+
+    def __init__(self, x, y, vx, vy, life=0.15):
+        super().__init__(x, y, life)
+        self.angle = math.atan2(vy, vx)
+
+    def draw(self):
+        p = self.progress()
+        near, far = 3 + 6 * p, 6 + 8 * p
+        for s in self.SPREAD:
+            c, d = math.cos(self.angle + s), math.sin(self.angle + s)
+            draw_line(self.x + c * near, self.y + d * near, self.x + c * far, self.y + d * far,
+                      *config.COLOR_BULLET_BOUNCED)
