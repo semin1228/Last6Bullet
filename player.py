@@ -114,7 +114,17 @@ class Player:
         return self.x - r, self.y - r, self.x + r, self.y + r
 
     def handle_collision(self, group, other):
-        pass
+        if group != 'player:bullet':
+            return
+        if math.hypot(other.x - self.x, other.y - self.y) > self.radius + other.radius + config.PICKUP_REACH:
+            return                 # 사각형은 겹쳐도 원끼리는 닿지 않음 (대각선 모서리)
+        if other.state == 'FLOOR':
+            self.pick_up(other)
+
+    def pick_up(self, bullet):
+        bullet.pick_up()
+        game_world.remove_object(bullet)
+        self.held.append(bullet)
 
     def hurt(self):
         if self.invincible > 0 or self.hp <= 0:
