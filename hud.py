@@ -33,6 +33,10 @@ class Hud:
             result.append((CYLINDER_X + math.cos(a) * CHAMBER_DIST, y + math.sin(a) * CHAMBER_DIST, i < loaded))
         return result
 
+    def rim_color(self):
+        # 빈 총을 당긴 직후에는 실린더 테두리를 붉게 해서 '총알 없음' 을 알린다
+        return config.COLOR_CROSSHAIR if self.player.dry_flash > 0 else config.COLOR_CROSSHAIR_EMPTY
+
     def draw(self):
         y = config.HEIGHT - config.WALL // 2
         for i in range(config.PLAYER_HP):
@@ -40,7 +44,7 @@ class Hud:
             draw_circle(48 + i * 26, y, 9, *color, filled=True)
 
         draw_circle(CYLINDER_X, y, CYLINDER_R, *config.COLOR_CYLINDER, filled=True)
-        draw_circle(CYLINDER_X, y, CYLINDER_R, *config.COLOR_CROSSHAIR_EMPTY)   # 어두운 벽 위에서 보이게 테두리
+        draw_circle(CYLINDER_X, y, CYLINDER_R, *self.rim_color())   # 어두운 벽 위에서 보이게 테두리
         for cx, cy, loaded in self.chambers():
             color = config.COLOR_BULLET_FLOOR if loaded else config.COLOR_CHAMBER_EMPTY
             draw_circle(cx, cy, CHAMBER_R, *color, filled=True)

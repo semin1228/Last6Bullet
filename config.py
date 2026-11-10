@@ -15,7 +15,8 @@ BULLET_SPEED = 520             # px/초
 BULLET_LIFE = 1.6              # 이 시간이 지나면 바닥에 떨어진다 (초)
 FIRE_COOLDOWN = 0.18           # 연사 간격 (초)
 MAX_BOUNCES = 2                # 이만큼 튕긴 뒤 다시 닿으면 바닥에 떨어진다
-HIT_GRACE = 0.12               # 발사 직후 이 시간 동안은 사람에게 맞지 않는다 (초)
+DRY_FLASH_TIME = 0.3           # 빈 총을 당겼을 때 HUD 실린더가 붉게 깜빡이는 시간 (초)
+HIT_GRACE = 0.12              # 발사 직후 이 시간 동안은 사람에게 맞지 않는다 (초)
 BULLET_SUBSTEP = 6             # 한 번에 움직이는 최대 거리 (px). 얇은 벽을 뚫고 지나가지 않게 한다
 
 # 술집 테이블 (left, bottom, right, top)

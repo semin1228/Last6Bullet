@@ -6,6 +6,7 @@ from pico2d import (SDL_BUTTON_LEFT, SDL_KEYDOWN, SDL_KEYUP, SDL_MOUSEBUTTONDOWN
 from transitions import Machine
 
 import config
+import effect
 import game_framework
 import game_world
 
@@ -24,6 +25,7 @@ class Player:
         self.fire_cooldown = 0.0
         self.hp = config.PLAYER_HP
         self.invincible = 0.0      # 남은 무적 시간 (초)
+        self.dry_flash = 0.0       # 빈 총을 당긴 뒤 HUD 실린더가 붉게 보이는 남은 시간 (초)
 
         self.machine = Machine(
             model=self,
@@ -59,7 +61,10 @@ class Player:
         return self.radius + 10    # 몸 중심에서 총구까지 거리
 
     def fire(self):
-        if not self.held or self.fire_cooldown > 0:
+        if self.fire_cooldown > 0:
+            return None
+        if not self.held:
+            self.dry_fire()
             return None
         self.update_aim()          # 같은 프레임에 마우스를 움직이고 바로 쏴도 새 방향으로 나가게
         bullet = self.held.pop()
@@ -71,6 +76,12 @@ class Player:
         game_world.add_collision_pair('player:bullet', None, bullet)
         self.fire_cooldown = config.FIRE_COOLDOWN
         return bullet
+
+    def dry_fire(self):
+        # 빈 총: 아무것도 안 나가면 클릭이 씹힌 건지 총알이 없는 건지 알 수 없어서 알려 준다
+        self.dry_flash = config.DRY_FLASH_TIME
+        self.fire_cooldown = config.FIRE_COOLDOWN   # 연타해도 글자가 겹겹이 쌓이지 않게
+        effect.spawn(effect.TextPop(self.x, self.y + self.radius + 6, '찰칵', config.COLOR_CROSSHAIR))
 
     def update_run_state(self):
         moving = self.direction() != (0.0, 0.0)
@@ -87,6 +98,7 @@ class Player:
     def update(self):
         self.fire_cooldown = max(0.0, self.fire_cooldown - game_framework.frame_time)
         self.invincible = max(0.0, self.invincible - game_framework.frame_time)
+        self.dry_flash = max(0.0, self.dry_flash - game_framework.frame_time)
         if self.state == 'RUN':
             dx, dy = self.direction()
             step = config.PLAYER_SPEED * game_framework.frame_time
