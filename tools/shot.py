@@ -117,6 +117,23 @@ def w1_5_self_hit():
     pm.finish()
 
 
+@scene
+def w1_6_ledger():
+    from pico2d import SDLK_F1
+    pm = fresh()
+    p = pm.player
+    sim.key_down(SDLK_F1)          # 장부 표시 켜기
+    for tx, ty in ((p.x - 300, p.y + 250), (p.x + 400, p.y - 200)):
+        sim.mouse_move(tx, ty)
+        sim.click()
+        sim.step(80)
+    sim.mouse_move(p.x, p.y + 300)
+    sim.click()
+    sim.step(6)
+    save('w1_6_ledger')            # 오른쪽 위에 손·바닥·공중 총알 수와 합계(항상 6)
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)
