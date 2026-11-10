@@ -1,8 +1,9 @@
 # 총알 장부: 매 프레임 구역 총알 수가 그대로인지 검사한다 (PRD 15-3, 18장 위험 요소).
-# 버그로 총알이 늘거나 사라지면 화면에 경고를 띄운다. F1 로 집계를 켜고 끈다.
+# 버그로 총알이 늘거나 사라지면 화면에 경고를 띄운다. F1 로 집계와 FPS 표시를 켜고 끈다.
 from pico2d import load_font
 
 import config
+import game_framework
 import game_world
 from bullet import Bullet
 
@@ -15,6 +16,7 @@ class AmmoLedger:
         self.counts = {'hand': 0, 'floor': 0, 'air': 0}
         self.problem = None        # 마지막으로 찾은 문제 (없으면 None)
         self.reported = False
+        self.fps = 0.0             # 최근 프레임 속도 (부드럽게 평균 낸 값)
         try:
             self.font = load_font(config.DEBUG_FONT, 16)
         except Exception:
@@ -43,7 +45,10 @@ class AmmoLedger:
         return self.problem is None
 
     def update(self):
-        pass
+        # 프레임마다 값이 튀어 숫자를 읽기 어려우므로 최근 값 쪽으로 조금씩 옮겨 간다
+        if game_framework.frame_time > 0:
+            now = 1.0 / game_framework.frame_time
+            self.fps = now if self.fps == 0 else self.fps * 0.9 + now * 0.1
 
     def draw(self):
         if not self.font or not (self.visible or self.problem):
@@ -51,6 +56,8 @@ class AmmoLedger:
         c = self.counts
         text = '손 %d · 바닥 %d · 공중 %d = %d' % (c['hand'], c['floor'], c['air'], sum(c.values()))
         color = (240, 149, 149) if self.problem else (244, 233, 212)
+        if self.visible:
+            text = 'FPS %3d    ' % round(self.fps) + text
         if self.problem:
             text += '   ' + self.problem
-        self.font.draw(config.WIDTH - 420, config.HEIGHT - config.WALL // 2, text, color)
+        self.font.draw(config.WIDTH - 500, config.HEIGHT - config.WALL // 2, text, color)

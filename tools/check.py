@@ -652,6 +652,21 @@ def ledger_catches_a_wrong_state():
 
 
 @test
+def f1_shows_fps_near_frame_rate():
+    from pico2d import SDLK_F1
+    pm = fresh()
+    sim.key_down(SDLK_F1)
+    assert pm.ledger.visible
+    sim.step(120)                  # 1/60초 프레임
+    assert near(pm.ledger.fps, 60, 1), 'FPS %.1f' % pm.ledger.fps
+    sim.step(120, dt=1 / 30)
+    assert near(pm.ledger.fps, 30, 1), '느려진 뒤 FPS %.1f' % pm.ledger.fps
+    sim.key_down(SDLK_F1)
+    assert not pm.ledger.visible
+    pm.finish()
+
+
+@test
 def random_play_for_50_seconds_keeps_six_bullets():
     # 무작위로 이동·조준·발사를 3000프레임 하면서 매 프레임 총알 수와 위치를 검사한다
     import random, config
