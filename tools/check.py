@@ -123,6 +123,21 @@ def aim_follows_mouse_even_while_moving():
     pm.finish()
 
 
+@test
+def crosshair_sits_on_mouse_and_greys_out_when_empty():
+    import config, game_world
+    from crosshair import Crosshair
+    pm = fresh()
+    p = pm.player
+    [ch] = [o for o in game_world.objects() if isinstance(o, Crosshair)]
+    sim.mouse_move(900, 200)
+    assert p.mouse == (900, 200), '조준점 위치가 마우스와 다름: %s' % (p.mouse,)
+    assert ch.color() == config.COLOR_CROSSHAIR
+    p.held.clear()                 # 빈 총 흉내 (총알 수 검사는 이 테스트에서 보지 않는다)
+    assert ch.color() == config.COLOR_CROSSHAIR_EMPTY, '빈 총인데 조준점 색이 그대로'
+    pm.finish()
+
+
 # ---------------------------------------------------------------- 3. 발사와 총알 상태
 
 def bullets_in_world():

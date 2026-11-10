@@ -5,6 +5,7 @@ import game_framework
 import game_world
 from ammo_ledger import AmmoLedger
 from bullet import Bullet
+from crosshair import Crosshair
 from hud import Hud
 from player import Player
 from zone import Zone
@@ -26,6 +27,8 @@ def init():
     game_world.add_object(Hud(player), 2)
     ledger = AmmoLedger([player], config.AMMO)
     game_world.add_object(ledger, 2)
+    game_world.add_object(Crosshair(player), 2)     # UI 중 가장 위에 그린다
+    hide_cursor()
 
 
 def handle_events():
@@ -59,6 +62,7 @@ def render():
 
 def finish():
     game_world.clear()
+    show_cursor()
 
 
 def pause():
