@@ -58,6 +58,20 @@ def w1_2_move_and_aim():
     pm.finish()
 
 
+@scene
+def w1_3_fire():
+    pm = fresh()
+    p = pm.player
+    for tx, ty in ((1100, 650), (200, 600), (900, 100)):
+        sim.mouse_move(tx, ty)
+        sim.click()
+        sim.step(14)
+    save('w1_3_fire_flying')       # 세 발이 날아가는 중, 발밑 총알 표시는 3칸 남음
+    sim.step(120)
+    save('w1_3_fire_floor')        # 벽에 닿거나 1.6초가 지나 바닥에 떨어진 총알
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)
