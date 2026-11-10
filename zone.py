@@ -18,3 +18,8 @@ class Zone:
         draw_rectangle(l, b, r, t, *config.COLOR_FLOOR, filled=True)
         for y in range(b + 40, t, 40):  # 나무 바닥 결
             draw_line(l, y, r, y, *config.COLOR_FLOOR_LINE)
+
+    def push_out(self, x, y, radius):
+        # 반지름 radius 인 원이 바닥 영역 안에 머물도록 위치를 고쳐 돌려준다
+        l, b, r, t = self.inner
+        return min(max(x, l + radius), r - radius), min(max(y, b + radius), t - radius)
