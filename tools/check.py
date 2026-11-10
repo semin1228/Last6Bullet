@@ -200,6 +200,109 @@ def flying_bullet_stops_on_floor():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 4. 벽과 장애물 반사
+
+def place(p, x, y):
+    p.x, p.y = x, y
+    sim.mouse_move(x + 100, y)     # 기본 조준은 오른쪽
+
+
+def aim(p, angle_deg):
+    import math
+    a = math.radians(angle_deg)
+    sim.mouse_move(p.x + math.cos(a) * 200, p.y + math.sin(a) * 200)
+
+
+@test
+def bullet_bounces_off_right_wall():
+    pm = fresh()
+    p = pm.player
+    aim(p, 0)
+    sim.click()
+    [b] = bullets_in_world()
+    sim.step(80)                   # 벽까지 약 600px, 1.15초
+    assert b.state == 'FLYING' and b.bounces == 1 and b.vx < 0, '오른쪽 벽에서 튕기지 않음'
+    pm.finish()
+
+
+@test
+def third_hit_lands_the_bullet():
+    import config
+    pm = fresh()
+    life = config.BULLET_LIFE
+    config.BULLET_LIFE = 99        # 수명 대신 튕긴 횟수로 떨어지는지만 본다
+    try:
+        p = pm.player
+        aim(p, 0)
+        sim.click()
+        [b] = bullets_in_world()
+        while b.state == 'FLYING':
+            sim.step(1)
+        assert b.bounces == config.MAX_BOUNCES + 1, '튕긴 횟수 %d' % b.bounces
+    finally:
+        config.BULLET_LIFE = life
+    pm.finish()
+
+
+@test
+def bullet_bounces_off_table():
+    import config
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = config.SALOON_TABLES[0]
+    place(p, (l + r) / 2, b - 80)  # 첫 번째 테이블 바로 아래에서 위로 쏜다
+    aim(p, 90)
+    sim.click()
+    [bl] = bullets_in_world()
+    sim.step(20)
+    assert bl.bounces == 1 and bl.vy < 0, '테이블 아랫면에서 튕기지 않음'
+    assert bl.y < b, '총알이 테이블을 통과함'
+    pm.finish()
+
+
+@test
+def player_cannot_walk_through_table():
+    import config
+    from pico2d import SDLK_w
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = config.SALOON_TABLES[0]
+    place(p, (l + r) / 2, b - 60)
+    sim.key_down(SDLK_w)
+    sim.step(120)
+    assert near(p.y, b - p.radius), '테이블을 뚫고 지나감: y=%.1f' % p.y
+    pm.finish()
+
+
+@test
+def no_tunneling_in_500_random_shots():
+    shoot_randomly(sim.DT)
+
+
+def shoot_randomly(dt):
+    import random, game_world, config
+    from bullet import Bullet
+    pm = fresh()
+    rng = random.Random(1234)
+    l, b, r, t = pm.zone.inner
+    shots = []
+    for _ in range(500):
+        bl = Bullet(pm.zone)
+        x, y = pm.zone.push_out(rng.uniform(l, r), rng.uniform(b, t), bl.radius)
+        bl.fire(x, y, rng.uniform(0, 6.283), 'player')
+        game_world.add_object(bl, 1)
+        shots.append(bl)
+    for frame in range(int(config.BULLET_LIFE / dt) + 2):
+        sim.step(1, dt=dt)
+        for bl in shots:
+            assert l <= bl.x <= r and b <= bl.y <= t, '벽 밖으로 나감 (%d 프레임)' % frame
+            for ol, ob, o_r, ot in pm.zone.obstacles:
+                inside = ol < bl.x < o_r and ob < bl.y < ot
+                assert not inside, '테이블 안으로 뚫고 들어감 (%d 프레임)' % frame
+    assert all(bl.state == 'FLOOR' for bl in shots)
+    pm.finish()
+
+
 def main():
     sim.open_game('--window' in sys.argv)
     from pico2d import close_canvas

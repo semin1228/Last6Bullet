@@ -51,12 +51,12 @@ def send(event):
     play_mode.dispatch(event)
 
 
-def step(frames=1, before=None):
+def step(frames=1, before=None, dt=DT):
     import game_framework
     import play_mode
     for i in range(frames):
         if before:
             before(i)
-        game_framework.frame_time = DT
+        game_framework.frame_time = dt
         play_mode.update()
         play_mode.render()
