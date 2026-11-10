@@ -1,16 +1,21 @@
 from pico2d import *
 
+import config
 import game_framework
 import game_world
+from player import Player
 from zone import Zone
 
 zone = None
+player = None
 
 
 def init():
-    global zone
+    global zone, player
     zone = Zone()
     game_world.add_object(zone, 0)
+    player = Player(zone, config.WIDTH // 2, config.HEIGHT // 2)
+    game_world.add_object(player, 1)
 
 
 def handle_events():
@@ -24,6 +29,8 @@ def dispatch(event):
         game_framework.quit()
     elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
         game_framework.quit()
+    else:
+        player.handle_event(event)
 
 
 def update():
@@ -42,7 +49,7 @@ def finish():
 
 
 def pause():
-    pass
+    player.release_all_keys()
 
 
 def resume():
