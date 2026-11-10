@@ -3,6 +3,7 @@ from pico2d import *
 import config
 import game_framework
 import game_world
+from ammo_ledger import AmmoLedger
 from bullet import Bullet
 from hud import Hud
 from player import Player
@@ -10,10 +11,11 @@ from zone import Zone
 
 zone = None
 player = None
+ledger = None
 
 
 def init():
-    global zone, player
+    global zone, player, ledger
     zone = Zone(config.SALOON_TABLES)
     game_world.add_object(zone, 0)
     player = Player(zone, config.WIDTH // 2, config.HEIGHT // 2)
@@ -22,6 +24,8 @@ def init():
     player.held = [Bullet(zone) for _ in range(config.AMMO)]
     game_world.add_collision_pair('player:bullet', player, None)
     game_world.add_object(Hud(player), 2)
+    ledger = AmmoLedger([player], config.AMMO)
+    game_world.add_object(ledger, 2)
 
 
 def handle_events():
@@ -42,6 +46,7 @@ def dispatch(event):
 def update():
     game_world.update()
     game_world.handle_collisions()
+    ledger.check()                 # 충돌 처리(줍기 등)까지 끝난 뒤 총알 수를 검사한다
 
 
 def render():

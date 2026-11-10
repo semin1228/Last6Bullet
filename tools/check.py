@@ -292,6 +292,7 @@ def thin_wall_is_not_tunneled_at_slowest_frame_rate():
     pm.zone.obstacles = [wall]
     rng = random.Random(99)
     shots = []
+    pm.ledger.expected += 200      # 검사용으로 총알을 직접 더 만든다
     for _ in range(200):
         bl = Bullet(pm.zone)
         bl.fire(rng.uniform(100, 600), rng.uniform(60, 660), rng.uniform(-1.2, 1.2), 'player')
@@ -311,6 +312,7 @@ def shoot_randomly(dt):
     rng = random.Random(1234)
     l, b, r, t = pm.zone.inner
     shots = []
+    pm.ledger.expected += 500      # 검사용으로 총알을 직접 더 만든다
     for _ in range(500):
         bl = Bullet(pm.zone)
         x, y = pm.zone.push_out(rng.uniform(l, r), rng.uniform(b, t), bl.radius)

@@ -25,6 +25,9 @@ SALOON_TABLES = [
     (840, 440, 980, 510),
 ]
 
+# 디버그 표시용 글꼴 (Windows 기본 글꼴, 저장소에는 넣지 않는다). 없으면 글자 없이 실행된다.
+DEBUG_FONT = 'C:/Windows/Fonts/malgun.ttf'
+
 # 색 (r, g, b)
 COLOR_WALL = (65, 36, 2)
 COLOR_FLOOR = (214, 186, 150)

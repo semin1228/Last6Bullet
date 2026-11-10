@@ -1,0 +1,56 @@
+# 총알 장부: 매 프레임 구역 총알 수가 그대로인지 검사한다 (PRD 15-3, 18장 위험 요소).
+# 버그로 총알이 늘거나 사라지면 화면에 경고를 띄운다. F1 로 집계를 켜고 끈다.
+from pico2d import load_font
+
+import config
+import game_world
+from bullet import Bullet
+
+
+class AmmoLedger:
+    def __init__(self, holders, expected):
+        self.holders = holders     # 총알을 손에 드는 쪽 목록 (지금은 플레이어, 2주차부터 적도 추가)
+        self.expected = expected
+        self.visible = False
+        self.counts = {'hand': 0, 'floor': 0, 'air': 0}
+        self.problem = None        # 마지막으로 찾은 문제 (없으면 None)
+        self.reported = False
+        try:
+            self.font = load_font(config.DEBUG_FONT, 16)
+        except Exception:
+            self.font = None
+
+    def check(self):
+        hand = [b for h in self.holders for b in h.held]
+        loose = [o for o in game_world.objects() if isinstance(o, Bullet)]
+        self.counts = {
+            'hand': len(hand),
+            'floor': sum(1 for b in loose if b.state == 'FLOOR'),
+            'air': sum(1 for b in loose if b.state == 'FLYING'),
+        }
+        total = len(hand) + len(loose)
+        if total != self.expected:
+            self.problem = '총알 수 %d (기대 %d)' % (total, self.expected)
+        elif any(b.state != 'HELD' for b in hand) or any(b.state == 'HELD' for b in loose):
+            self.problem = '상태와 위치가 맞지 않는 총알이 있음'
+        elif len(set(map(id, hand + loose))) != total:
+            self.problem = '같은 총알이 두 곳에 있음'
+        else:
+            self.problem = None
+        if self.problem and not self.reported:
+            print('[AmmoLedger]', self.problem)
+            self.reported = True
+        return self.problem is None
+
+    def update(self):
+        pass
+
+    def draw(self):
+        if not self.font or not (self.visible or self.problem):
+            return
+        c = self.counts
+        text = '손 %d · 바닥 %d · 공중 %d = %d' % (c['hand'], c['floor'], c['air'], sum(c.values()))
+        color = (240, 149, 149) if self.problem else (244, 233, 212)
+        if self.problem:
+            text += '   ' + self.problem
+        self.font.draw(config.WIDTH - 420, config.HEIGHT - config.WALL // 2, text, color)
