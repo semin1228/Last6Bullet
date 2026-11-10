@@ -134,6 +134,89 @@ def w1_6_ledger():
     pm.finish()
 
 
+@scene
+def w1_7_hud_and_crosshair():
+    pm = fresh()
+    for tx, ty in ((1100, 650), (200, 600)):
+        sim.mouse_move(tx, ty)
+        sim.click()
+        sim.step(14)
+    sim.mouse_move(820, 280)
+    sim.step(2)
+    save('w1_7_hud_and_crosshair')  # 위쪽: 체력, 실린더(4발), 구역 이름 / 마우스 자리에 조준점
+    pm.finish()
+
+
+@scene
+def w1_8_effects():
+    import config
+    import game_world
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = pm.zone.inner
+    p.x, p.y = r - 200, 300
+    sim.mouse_move(r - 60, 300)
+    sim.click()
+    sim.step(1)
+    save('w1_8_muzzle_flash')      # 총구 불꽃
+    [bl] = [o for o in game_world.objects() if getattr(o, 'state', '') == 'FLYING']
+    while bl.bounces == 0:
+        sim.step(1)
+    sim.mouse_move(r - 300, 450)   # 조준점이 불똥을 가리지 않게 옮긴다
+    sim.step(2)
+    save('w1_8_bounce_spark')      # 벽에 튕긴 자리의 불똥, 총알은 주황
+    while p.hp == config.PLAYER_HP:   # 돌아온 총알에 맞을 때까지
+        sim.step(1)
+    sim.step(4)
+    p.invincible = 0.05            # 깜빡임에 걸려 캐릭터가 사라지지 않게
+    sim.step(1)
+    save('w1_8_hit_ring')          # 튕긴 총알에 맞은 붉은 고리 + 발밑에 떨어진 총알을 주운 놋쇠 고리
+    pm.finish()
+
+
+@scene
+def w1_8_dry_click():
+    import math
+    pm = fresh()
+    p = pm.player
+    deg = 100
+    while p.held:                  # 여섯 발을 실제로 다 쏴서 빈 총을 만든다 (돌아와 주운 총알도 다시 쏜다)
+        sim.mouse_move(p.x + math.cos(math.radians(deg)) * 200, p.y + math.sin(math.radians(deg)) * 200)
+        sim.click()
+        sim.step(15)
+        deg += 55
+        if not p.held:
+            sim.step(100)          # 모두 바닥에 떨어질 때까지 기다린다
+    sim.mouse_move(p.x + 150, p.y + 60)
+    sim.click()
+    sim.step(8)
+    save('w1_8_dry_click')         # 머리 위 '찰칵', 위쪽 실린더 테두리 붉게, 조준점 회색
+    pm.finish()
+
+
+@scene
+def w1_9_thin_wall_fix():
+    # 버그 수정 확인: 6px 벽에 붙어 벽 쪽으로 쏴도 총알이 벽 앞면에서 튕겨 나온다
+    from pico2d import clear_canvas, draw_circle
+    import game_world
+    pm = fresh()
+    p = pm.player
+    wall = (700, 40, 706, 680)
+    pm.zone.obstacles = [wall]
+    p.x, p.y = pm.zone.push_out(wall[0] - 1, 360, p.radius)
+    sim.mouse_move(p.x + 200, p.y + 60)
+    sim.click()
+    trail = []
+    sim.step(30, before=lambda i: trail.extend(
+        (o.x, o.y) for o in game_world.objects() if getattr(o, 'state', '') == 'FLYING'))
+    clear_canvas()
+    game_world.render()
+    for x, y in trail:
+        draw_circle(x, y, 1, 12, 68, 124, filled=True)
+    save('w1_9_thin_wall_fix')
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)
