@@ -475,6 +475,69 @@ def ledger_catches_a_wrong_state():
     pm.finish()
 
 
+@test
+def random_play_for_50_seconds_keeps_six_bullets():
+    # 무작위로 이동·조준·발사를 3000프레임 하면서 매 프레임 총알 수와 위치를 검사한다
+    import random, config
+    from pico2d import SDLK_a, SDLK_d, SDLK_s, SDLK_w
+    pm = fresh()
+    p = pm.player
+    rng = random.Random(2026)
+    keys = [SDLK_w, SDLK_a, SDLK_s, SDLK_d]
+    l, b, r, t = pm.zone.inner
+    picked = 0
+
+    def walk_toward(tx, ty):
+        want = set()
+        if tx > p.x + 4: want.add(SDLK_d)
+        if tx < p.x - 4: want.add(SDLK_a)
+        if ty > p.y + 4: want.add(SDLK_w)
+        if ty < p.y - 4: want.add(SDLK_s)
+        for k in keys:
+            (sim.key_down if k in want else sim.key_up)(k)
+
+    detour = {'frames': 0, 'target': None, 'last': (p.x, p.y)}
+
+    def act(i):
+        floor = [bl for bl in bullets_in_world() if bl.state == 'FLOOR']
+        if (i // 150) % 2 == 1 and floor:
+            # 줍기 구간: 실제 플레이처럼 가장 가까운 바닥 총알로 걸어간다.
+            # 테이블에 막혀 제자리면 잠깐 무작위 방향으로 비켜 걷는다.
+            if detour['frames'] > 0:
+                detour['frames'] -= 1
+                walk_toward(*detour['target'])
+            else:
+                near_b = min(floor, key=lambda bl: (bl.x - p.x) ** 2 + (bl.y - p.y) ** 2)
+                walk_toward(near_b.x, near_b.y)
+                lx, ly = detour['last']
+                if abs(p.x - lx) + abs(p.y - ly) < 0.5 and p.state == 'RUN':
+                    detour['frames'] = 40
+                    detour['target'] = (rng.uniform(l, r), rng.uniform(b, t))
+            detour['last'] = (p.x, p.y)
+        elif i % 20 == 0:
+            for k in keys:
+                (sim.key_down if rng.random() < 0.4 else sim.key_up)(k)
+        if i % 7 == 0:
+            sim.mouse_move(rng.uniform(l, r), rng.uniform(b, t))
+        if rng.random() < 0.08:
+            sim.click()
+        p.hp = config.PLAYER_HP    # 체력 0 처리는 2주차라 검사 동안 유지한다
+
+    for i in range(3000):
+        held_before = len(p.held)
+        sim.step(1, before=lambda _, i=i: act(i))   # step 안의 번호는 항상 0이라 전체 프레임 번호를 넘긴다
+        picked += max(0, len(p.held) - held_before)
+        assert pm.ledger.problem is None, '%d 프레임: %s' % (i, pm.ledger.problem)
+        assert l <= p.x <= r and b <= p.y <= t
+        for ol, ob, o_r, ot in pm.zone.obstacles:
+            assert not (ol < p.x < o_r and ob < p.y < ot), '플레이어가 테이블 안에 있음'
+        for bl in bullets_in_world():
+            assert l <= bl.x <= r and b <= bl.y <= t, '총알이 벽 밖에 있음'
+    assert picked > 0, '50초 동안 한 번도 줍지 않음 (검사가 의미 없음)'
+    print('       (50초 동안 주운 총알 %d발)' % picked)
+    pm.finish()
+
+
 def main():
     sim.open_game('--window' in sys.argv)
     from pico2d import close_canvas
