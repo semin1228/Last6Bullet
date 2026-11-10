@@ -1,12 +1,13 @@
 # 보안관(플레이어). 위에서 내려다본 모습: 몸통 원, 모자 원, 마우스 쪽으로 향한 총.
 import math
 
-from pico2d import (SDL_KEYDOWN, SDL_KEYUP, SDL_MOUSEMOTION, SDLK_a, SDLK_d, SDLK_s,
-                    SDLK_w, draw_circle, draw_line)
+from pico2d import (SDL_BUTTON_LEFT, SDL_KEYDOWN, SDL_KEYUP, SDL_MOUSEBUTTONDOWN,
+                    SDL_MOUSEMOTION, SDLK_a, SDLK_d, SDLK_s, SDLK_w, draw_circle, draw_line)
 from transitions import Machine
 
 import config
 import game_framework
+import game_world
 
 MOVE_KEYS = {SDLK_w: (0, 1), SDLK_s: (0, -1), SDLK_a: (-1, 0), SDLK_d: (1, 0)}
 
@@ -19,6 +20,8 @@ class Player:
         self.mouse = (x + 1, y)    # 마지막 마우스 위치 (게임 좌표)
         self.aim = 0.0             # 조준 각도 (라디안, 오른쪽이 0)
         self.pressed = set()
+        self.held = []             # 손에 든 총알 (HELD 상태의 Bullet)
+        self.fire_cooldown = 0.0
 
         self.machine = Machine(
             model=self,
@@ -46,7 +49,23 @@ class Player:
             self.pressed.discard(event.key)
         elif event.type == SDL_MOUSEMOTION:
             self.mouse = (event.x, config.HEIGHT - 1 - event.y)  # SDL 은 좌상단 원점이라 뒤집는다
+        elif event.type == SDL_MOUSEBUTTONDOWN and event.button == SDL_BUTTON_LEFT:
+            self.fire()
         self.update_run_state()
+
+    def gun_tip(self):
+        reach = self.radius + 10
+        return self.x + math.cos(self.aim) * reach, self.y + math.sin(self.aim) * reach
+
+    def fire(self):
+        if not self.held or self.fire_cooldown > 0:
+            return None
+        bullet = self.held.pop()
+        bullet.fire(*self.gun_tip(), self.aim, 'player')
+        game_world.add_object(bullet, 1)
+        game_world.add_collision_pair('player:bullet', None, bullet)
+        self.fire_cooldown = config.FIRE_COOLDOWN
+        return bullet
 
     def update_run_state(self):
         moving = self.direction() != (0.0, 0.0)
@@ -61,6 +80,7 @@ class Player:
         self.update_run_state()
 
     def update(self):
+        self.fire_cooldown = max(0.0, self.fire_cooldown - game_framework.frame_time)
         if self.state == 'RUN':
             dx, dy = self.direction()
             step = config.PLAYER_SPEED * game_framework.frame_time
