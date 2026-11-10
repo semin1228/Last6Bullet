@@ -36,6 +36,74 @@ def skeleton_runs_and_esc_quits():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 2. 이동
+
+def near(a, b, tol=1.0):
+    return abs(a - b) <= tol
+
+
+@test
+def move_right_for_one_second():
+    import config
+    from pico2d import SDLK_d
+    pm = fresh()
+    p = pm.player
+    x0, y0 = p.x, p.y
+    sim.key_down(SDLK_d)
+    assert p.state == 'RUN'
+    sim.step(60)
+    assert near(p.x - x0, config.PLAYER_SPEED), '1초에 %.1f px 이동 (기대 %d)' % (p.x - x0, config.PLAYER_SPEED)
+    assert near(p.y, y0)
+    sim.key_up(SDLK_d)
+    assert p.state == 'IDLE'
+    x1 = p.x
+    sim.step(30)
+    assert p.x == x1, '키를 뗐는데 계속 움직임'
+    pm.finish()
+
+
+@test
+def diagonal_has_same_speed():
+    import config, math
+    from pico2d import SDLK_d, SDLK_w
+    pm = fresh()
+    p = pm.player
+    x0, y0 = p.x, p.y
+    sim.key_down(SDLK_w)
+    sim.key_down(SDLK_d)
+    sim.step(60)
+    dist = math.hypot(p.x - x0, p.y - y0)
+    assert near(dist, config.PLAYER_SPEED), '대각선 1초 이동 거리 %.1f' % dist
+    pm.finish()
+
+
+@test
+def opposite_keys_cancel():
+    from pico2d import SDLK_a, SDLK_d
+    pm = fresh()
+    p = pm.player
+    x0 = p.x
+    sim.key_down(SDLK_a)
+    sim.key_down(SDLK_d)
+    assert p.state == 'IDLE', '반대 방향 키를 같이 눌렀는데 RUN'
+    sim.step(30)
+    assert p.x == x0
+    pm.finish()
+
+
+@test
+def cannot_leave_the_floor():
+    from pico2d import SDLK_a, SDLK_s
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = pm.zone.inner
+    sim.key_down(SDLK_a)
+    sim.key_down(SDLK_s)
+    sim.step(600)
+    assert near(p.x, l + p.radius) and near(p.y, b + p.radius), '벽 밖으로 나감: (%.1f, %.1f)' % (p.x, p.y)
+    pm.finish()
+
+
 def main():
     sim.open_game('--window' in sys.argv)
     from pico2d import close_canvas
