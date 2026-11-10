@@ -85,3 +85,26 @@ class Spark(Effect):
             c, d = math.cos(self.angle + s), math.sin(self.angle + s)
             draw_line(self.x + c * near, self.y + d * near, self.x + c * far, self.y + d * far,
                       *config.COLOR_BULLET_BOUNCED)
+
+
+class Ring(Effect):
+    # 퍼지는 고리: 줍기(놋쇠색, 작게)와 피격(붉은색, 크게)에 쓴다
+    def __init__(self, x, y, color, start, end, life):
+        super().__init__(x, y, life)
+        self.color, self.start, self.end = color, start, end
+
+    def radius(self):
+        return int(self.start + (self.end - self.start) * self.progress())
+
+    def draw(self):
+        r = self.radius()
+        draw_circle(self.x, self.y, r, *self.color)
+        draw_circle(self.x, self.y, r + 1, *self.color)
+
+
+def pickup_ring(x, y):
+    return Ring(x, y, config.COLOR_BULLET_FLOOR, 5, 16, 0.25)
+
+
+def hit_ring(x, y):
+    return Ring(x, y, config.COLOR_HP, 16, 36, 0.3)

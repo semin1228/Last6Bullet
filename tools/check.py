@@ -572,6 +572,26 @@ def bounce_throws_sparks_away_from_the_wall():
     pm.finish()
 
 
+@test
+def picking_up_shows_a_small_brass_ring():
+    import config
+    from effect import Ring
+    pm = fresh()
+    p = pm.player
+    aim(p, 0)
+    bl = p.fire()
+    while bl.state != 'FLOOR':
+        sim.step(1)
+    assert effects(Ring) == []
+    p.x, p.y = bl.x, bl.y
+    sim.step(1)
+    [ring] = effects(Ring)
+    assert ring.color == config.COLOR_BULLET_FLOOR and (ring.x, ring.y) == (bl.x, bl.y)
+    sim.step(20)
+    assert effects(Ring) == []
+    pm.finish()
+
+
 # ---------------------------------------------------------------- 6. 총알 장부
 
 @test

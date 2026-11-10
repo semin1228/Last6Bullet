@@ -143,6 +143,7 @@ class Player:
         bullet.pick_up()
         game_world.remove_object(bullet)
         self.held.append(bullet)
+        effect.spawn(effect.pickup_ring(bullet.x, bullet.y))
 
     def hurt(self):
         if self.invincible > 0 or self.hp <= 0:
