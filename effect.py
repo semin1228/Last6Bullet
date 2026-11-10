@@ -46,7 +46,7 @@ class Effect:
 
 
 class TextPop(Effect):
-    # 글자가 위로 떠오르며 사라진다 (예: 빈 총 '찰칵')
+    # 글자가 위로 떠오르며 사라진다 (예: 빈 총 'CLICK')
     def __init__(self, x, y, text, color, life=0.5):
         super().__init__(x, y, life)
         self.text, self.color = text, color
@@ -54,7 +54,8 @@ class TextPop(Effect):
     def draw(self):
         f = font()
         if f:
-            f.draw(self.x - 14, self.y + 22 * self.progress(), self.text, self.color)
+            # 글자 폭을 잴 수 없어서 한 글자 약 9px 로 어림해 가운데에 맞춘다
+            f.draw(self.x - len(self.text) * 4.5, self.y + 22 * self.progress(), self.text, self.color)
 
 
 class MuzzleFlash(Effect):

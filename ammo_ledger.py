@@ -32,11 +32,11 @@ class AmmoLedger:
         }
         total = len(hand) + len(loose)
         if total != self.expected:
-            self.problem = '총알 수 %d (기대 %d)' % (total, self.expected)
+            self.problem = 'AMMO %d (expected %d)' % (total, self.expected)
         elif any(b.state != 'HELD' for b in hand) or any(b.state == 'HELD' for b in loose):
-            self.problem = '상태와 위치가 맞지 않는 총알이 있음'
+            self.problem = 'bullet state does not match its place'
         elif len(set(map(id, hand + loose))) != total:
-            self.problem = '같은 총알이 두 곳에 있음'
+            self.problem = 'same bullet in two places'
         else:
             self.problem = None
         if self.problem and not self.reported:
@@ -50,14 +50,17 @@ class AmmoLedger:
             now = 1.0 / game_framework.frame_time
             self.fps = now if self.fps == 0 else self.fps * 0.9 + now * 0.1
 
-    def draw(self):
-        if not self.font or not (self.visible or self.problem):
-            return
+    def text(self):
         c = self.counts
-        text = '손 %d · 바닥 %d · 공중 %d = %d' % (c['hand'], c['floor'], c['air'], sum(c.values()))
-        color = (240, 149, 149) if self.problem else (244, 233, 212)
+        text = 'HAND %d · FLOOR %d · AIR %d = %d' % (c['hand'], c['floor'], c['air'], sum(c.values()))
         if self.visible:
             text = 'FPS %3d    ' % round(self.fps) + text
         if self.problem:
             text += '   ' + self.problem
-        self.font.draw(config.WIDTH - 500, config.HEIGHT - config.WALL // 2, text, color)
+        return text
+
+    def draw(self):
+        if not self.font or not (self.visible or self.problem):
+            return
+        color = (240, 149, 149) if self.problem else (244, 233, 212)
+        self.font.draw(config.WIDTH - 500, config.HEIGHT - config.WALL // 2, self.text(), color)

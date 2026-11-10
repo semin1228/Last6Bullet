@@ -190,7 +190,7 @@ def w1_8_dry_click():
     sim.mouse_move(p.x + 150, p.y + 60)
     sim.click()
     sim.step(8)
-    save('w1_8_dry_click')         # 머리 위 '찰칵', 위쪽 실린더 테두리 붉게, 조준점 회색
+    save('w1_8_dry_click')         # 머리 위 'CLICK', 위쪽 실린더 테두리 붉게, 조준점 회색
     pm.finish()
 
 

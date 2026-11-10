@@ -50,4 +50,4 @@ class Hud:
             draw_circle(cx, cy, CHAMBER_R, *color, filled=True)
 
         if self.font:
-            self.font.draw(config.WIDTH // 2 - 50, y, self.zone.title, config.COLOR_HUD_TEXT)
+            self.font.draw(config.WIDTH // 2 - 70, y, self.zone.title, config.COLOR_HUD_TEXT)

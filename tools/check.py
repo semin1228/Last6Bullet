@@ -209,18 +209,18 @@ def empty_click_says_click_and_flashes_cylinder():
     p = pm.player
     [hud] = [o for o in game_world.objects() if isinstance(o, Hud)]
     pops = lambda: [o for o in game_world.objects() if isinstance(o, TextPop)]
-    sim.click()                    # 총알이 있을 때는 '찰칵' 이 나오지 않는다
+    sim.click()                    # 총알이 있을 때는 'CLICK' 이 나오지 않는다
     assert pops() == [] and p.dry_flash == 0
     p.x -= 300                     # 첫 발이 돌아와 내게 맞고 주워지지 않게 비켜선다
     for _ in range(config.AMMO):
         sim.step(15)
         sim.click()
-    assert p.held == [] and len(pops()) == 1, '빈 총 클릭에 찰칵이 %d개' % len(pops())
+    assert p.held == [] and len(pops()) == 1, '빈 총 클릭에 CLICK 이 %d개' % len(pops())
     assert hud.rim_color() == config.COLOR_CROSSHAIR, '실린더 테두리가 붉어지지 않음'
     sim.click()                    # 바로 또 눌러도 연사 간격 동안은 글자가 쌓이지 않는다
     assert len(pops()) == 1
     sim.step(int(max(config.DRY_FLASH_TIME, 0.5) * 60) + 2)
-    assert pops() == [], '찰칵 글자가 사라지지 않음'
+    assert pops() == [], 'CLICK 글자가 사라지지 않음'
     assert hud.rim_color() == config.COLOR_CROSSHAIR_EMPTY
     assert pm.ledger.problem is None
     pm.finish()
@@ -258,7 +258,7 @@ def hud_cylinder_matches_bullets_in_hand():
         assert loaded == sorted(loaded, reverse=True), '채워진 칸이 앞쪽부터 이어지지 않음: %s' % loaded
     for x, y, _ in hud.chambers():
         assert config.HEIGHT - config.WALL <= y <= config.HEIGHT, '실린더가 위쪽 벽 밖으로 나감'
-    assert hud.zone.title == '1구역 · 술집'
+    assert hud.zone.title == 'ZONE 1 · SALOON'
     pm.finish()
 
 
@@ -663,6 +663,34 @@ def f1_shows_fps_near_frame_rate():
     assert near(pm.ledger.fps, 30, 1), '느려진 뒤 FPS %.1f' % pm.ledger.fps
     sim.key_down(SDLK_F1)
     assert not pm.ledger.visible
+    pm.finish()
+
+
+@test
+def screen_text_is_english():
+    # 게임 화면 글자는 영어로 쓴다 (PRD 14장). 한글이 다시 섞이면 잡아낸다.
+    import re, game_world
+    from effect import TextPop
+    from pico2d import SDLK_F1
+    hangul = re.compile('[가-힣ㄱ-ㆎ]')
+    pm = fresh()
+    p = pm.player
+    texts = [pm.zone.title]
+    sim.key_down(SDLK_F1)
+    sim.step(1)
+    texts.append(pm.ledger.text())
+    p.held[0].state = 'FLOOR'      # 장부 경고 문구도 화면에 나온다
+    sim.step(1)
+    texts.append(pm.ledger.text())
+    p.held[0].state = 'HELD'
+    for b in p.held:
+        b.state = 'FLOOR'
+    p.held.clear()
+    p.dry_fire()
+    texts += [o.text for o in game_world.objects() if isinstance(o, TextPop)]
+    assert 'CLICK' in texts and 'SALOON' in pm.zone.title, texts
+    bad = [t for t in texts if hangul.search(t)]
+    assert not bad, '화면 글자에 한글: %s' % bad
     pm.finish()
 
 

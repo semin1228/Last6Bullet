@@ -17,7 +17,7 @@ ledger = None
 
 def init():
     global zone, player, ledger
-    zone = Zone(config.SALOON_TABLES, 1, '술집')
+    zone = Zone(config.SALOON_TABLES, 1, 'SALOON')
     game_world.add_object(zone, 0)
     player = Player(zone, config.WIDTH // 2, config.HEIGHT // 2)
     game_world.add_object(player, 1)

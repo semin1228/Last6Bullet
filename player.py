@@ -82,7 +82,7 @@ class Player:
         # 빈 총: 아무것도 안 나가면 클릭이 씹힌 건지 총알이 없는 건지 알 수 없어서 알려 준다
         self.dry_flash = config.DRY_FLASH_TIME
         self.fire_cooldown = config.FIRE_COOLDOWN   # 연타해도 글자가 겹겹이 쌓이지 않게
-        effect.spawn(effect.TextPop(self.x, self.y + self.radius + 6, '찰칵', config.COLOR_CROSSHAIR))
+        effect.spawn(effect.TextPop(self.x, self.y + self.radius + 6, 'CLICK', config.COLOR_CROSSHAIR))
 
     def update_run_state(self):
         moving = self.direction() != (0.0, 0.0)
