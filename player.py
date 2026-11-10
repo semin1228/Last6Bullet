@@ -55,16 +55,18 @@ class Player:
             self.fire()
         self.update_run_state()
 
-    def gun_tip(self):
-        reach = self.radius + 10
-        return self.x + math.cos(self.aim) * reach, self.y + math.sin(self.aim) * reach
+    def gun_reach(self):
+        return self.radius + 10    # 몸 중심에서 총구까지 거리
 
     def fire(self):
         if not self.held or self.fire_cooldown > 0:
             return None
         self.update_aim()          # 같은 프레임에 마우스를 움직이고 바로 쏴도 새 방향으로 나가게
         bullet = self.held.pop()
-        bullet.fire(*self.gun_tip(), self.aim, 'player')
+        # 총구에서 바로 만들면 벽에 붙어 쏠 때 총구가 벽 너머에 있어 총알이 벽을 건너뛴다.
+        # 몸 중심(항상 빈 공간)에서 만들고 총구까지 벽 검사를 하며 옮긴다.
+        bullet.fire(self.x, self.y, self.aim, 'player')
+        bullet.travel(self.gun_reach())
         game_world.add_object(bullet, 1)
         game_world.add_collision_pair('player:bullet', None, bullet)
         self.fire_cooldown = config.FIRE_COOLDOWN
@@ -100,7 +102,7 @@ class Player:
         if self.invincible > 0 and int(self.invincible * 10) % 2:
             return                 # 무적 중에는 깜빡인다
         cx, cy = math.cos(self.aim), math.sin(self.aim)
-        gx, gy = self.x + cx * (self.radius + 10), self.y + cy * (self.radius + 10)
+        gx, gy = self.x + cx * self.gun_reach(), self.y + cy * self.gun_reach()
         for o in (-1, 0, 1):  # 두께 3px 총신
             draw_line(self.x - cy * o, self.y + cx * o, gx - cy * o, gy + cx * o, *config.COLOR_GUN)
         draw_circle(self.x, self.y, self.radius, *config.COLOR_PLAYER, filled=True)

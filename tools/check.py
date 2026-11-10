@@ -305,6 +305,44 @@ def thin_wall_is_not_tunneled_at_slowest_frame_rate():
     pm.finish()
 
 
+@test
+def hugging_a_thin_wall_does_not_shoot_through_it():
+    # 6px 벽에 몸을 붙이고 벽 쪽으로 쏘면 총구(몸 중심에서 24px)가 벽 너머에 있다.
+    # 총알이 총구에서 바로 생기면 벽 반대편에서 나오므로, 몸에서 총구까지도 벽 검사를 해야 한다.
+    import game_world
+    from bullet import Bullet
+    pm = fresh()
+    p = pm.player
+    wall = (700, 40, 706, 680)
+    pm.zone.obstacles = [wall]
+    for deg in (0, 30, -30, 60):
+        p.x, p.y = pm.zone.push_out(wall[0] - 1, 360, p.radius)   # 벽 왼쪽 면에 붙인다
+        aim(p, deg)
+        p.fire_cooldown = 0
+        bl = p.fire()
+        assert bl.x <= wall[0], '%d도: 총알이 벽 너머(x=%.1f)에서 생김' % (deg, bl.x)
+        sim.step(10)
+        assert bl.x <= wall[0], '%d도: 총알이 벽을 뚫고 지나감 (x=%.1f)' % (deg, bl.x)
+        game_world.remove_object(bl)                 # 다음 각도 검사를 위해 치운다
+        bl.state = 'HELD'
+        p.held.append(bl)
+    pm.finish()
+
+
+@test
+def hugging_a_table_bounces_off_its_near_face():
+    # 테이블 아랫면에 붙어 위로 쏘면 총알은 테이블 안이나 윗쪽이 아니라 아랫면에서 튕겨 내려와야 한다
+    import config
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = config.SALOON_TABLES[0]
+    p.x, p.y = pm.zone.push_out((l + r) / 2, b - 1, p.radius)
+    aim(p, 90)
+    bl = p.fire()
+    assert bl.y <= b and bl.vy < 0 and bl.bounces == 1, '아랫면에서 튕기지 않음 (y=%.1f, vy=%.1f)' % (bl.y, bl.vy)
+    pm.finish()
+
+
 def shoot_randomly(dt):
     import random, game_world, config
     from bullet import Bullet
