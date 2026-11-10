@@ -123,6 +123,66 @@ def aim_follows_mouse_even_while_moving():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 3. 발사와 총알 상태
+
+def bullets_in_world():
+    import game_world
+    from bullet import Bullet
+    return [o for o in game_world.objects() if isinstance(o, Bullet)]
+
+
+@test
+def start_with_six_bullets_in_hand():
+    import config
+    pm = fresh()
+    assert len(pm.player.held) == config.AMMO
+    assert all(b.state == 'HELD' for b in pm.player.held)
+    assert bullets_in_world() == []
+    pm.finish()
+
+
+@test
+def cooldown_blocks_rapid_double_click():
+    import config
+    pm = fresh()
+    p = pm.player
+    sim.click()
+    sim.click()
+    assert len(p.held) == config.AMMO - 1, '연사 간격 안에 두 발이 나감'
+    sim.step(int(config.FIRE_COOLDOWN * 60) + 1)
+    sim.click()
+    assert len(p.held) == config.AMMO - 2
+    pm.finish()
+
+
+@test
+def empty_gun_does_nothing():
+    import config
+    pm = fresh()
+    p = pm.player
+    for _ in range(config.AMMO + 2):
+        sim.click()
+        sim.step(15)
+    assert p.held == []
+    assert len(bullets_in_world()) == config.AMMO, '총알 수가 변함'
+    pm.finish()
+
+
+@test
+def flying_bullet_stops_on_floor():
+    import config
+    pm = fresh()
+    sim.mouse_move(pm.player.x + 300, pm.player.y)
+    sim.step(1)
+    sim.click()
+    [b] = bullets_in_world()
+    sim.step(int(config.BULLET_LIFE * 60) + 5)
+    assert b.state == 'FLOOR' and (b.vx, b.vy) == (0, 0)
+    l, bt, r, t = pm.zone.inner
+    assert l <= b.x <= r and bt <= b.y <= t, '총알이 벽 밖에 떨어짐'
+    pm.finish()
+
+
 def main():
     sim.open_game('--window' in sys.argv)
     from pico2d import close_canvas
