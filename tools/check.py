@@ -215,6 +215,27 @@ def flying_bullet_stops_on_floor():
     pm.finish()
 
 
+@test
+def hud_cylinder_matches_bullets_in_hand():
+    import config, game_world
+    from hud import Hud
+    pm = fresh()
+    p = pm.player
+    [hud] = [o for o in game_world.objects() if isinstance(o, Hud)]
+    assert sum(loaded for _, _, loaded in hud.chambers()) == config.AMMO
+    for shot in range(1, 4):
+        aim(p, 90 * shot)
+        p.fire_cooldown = 0
+        p.fire()
+        loaded = [l for _, _, l in hud.chambers()]
+        assert sum(loaded) == config.AMMO - shot, '실린더 %d칸 (기대 %d)' % (sum(loaded), config.AMMO - shot)
+        assert loaded == sorted(loaded, reverse=True), '채워진 칸이 앞쪽부터 이어지지 않음: %s' % loaded
+    for x, y, _ in hud.chambers():
+        assert config.HEIGHT - config.WALL <= y <= config.HEIGHT, '실린더가 위쪽 벽 밖으로 나감'
+    assert hud.zone.title == '1구역 · 술집'
+    pm.finish()
+
+
 # ---------------------------------------------------------------- 4. 벽과 장애물 반사
 
 def place(p, x, y):

@@ -25,8 +25,9 @@ SALOON_TABLES = [
     (840, 440, 980, 510),
 ]
 
-# 디버그 표시용 글꼴 (Windows 기본 글꼴, 저장소에는 넣지 않는다). 없으면 글자 없이 실행된다.
-DEBUG_FONT = 'C:/Windows/Fonts/malgun.ttf'
+# 글꼴 (Windows 기본 글꼴 맑은 고딕, 저장소에는 넣지 않는다). 없으면 글자 없이 실행된다.
+UI_FONT = 'C:/Windows/Fonts/malgun.ttf'
+DEBUG_FONT = UI_FONT
 
 # 색 (r, g, b)
 COLOR_WALL = (65, 36, 2)
@@ -44,5 +45,8 @@ COLOR_AMMO_EMPTY = (180, 178, 169)
 COLOR_BULLET_BOUNCED = (216, 90, 48)   # 튕긴 총알 (누구든 맞음)
 COLOR_HP = (226, 75, 74)
 COLOR_HP_EMPTY = (99, 56, 6)
+COLOR_CYLINDER = (44, 44, 42)          # 위쪽 HUD 리볼버 실린더
+COLOR_CHAMBER_EMPTY = (95, 94, 90)
+COLOR_HUD_TEXT = (244, 233, 212)
 COLOR_CROSSHAIR = (163, 45, 45)
 COLOR_CROSSHAIR_EMPTY = (136, 135, 128)

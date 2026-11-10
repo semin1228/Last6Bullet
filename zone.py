@@ -8,8 +8,9 @@ import config
 
 
 class Zone:
-    def __init__(self, obstacles=()):
+    def __init__(self, obstacles=(), number=1, name='술집'):
         w, h, t = config.WIDTH, config.HEIGHT, config.WALL
+        self.title = '%d구역 · %s' % (number, name)   # 위쪽 HUD 에 표시 (PRD 15-2 play_mode)
         self.inner = (t, t, w - t, h - t)      # 벽 안쪽 바닥 영역 (left, bottom, right, top)
         self.obstacles = list(obstacles)       # 장애물 사각형 목록 (left, bottom, right, top)
 
