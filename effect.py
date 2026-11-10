@@ -1,0 +1,55 @@
+# 잠깐 보였다 사라지는 연출. 정해진 시간이 지나면 스스로 월드에서 빠진다.
+# 충돌 검사나 총알 장부와는 관계없다 (Bullet 이 아니므로 장부가 세지 않는다).
+from pico2d import load_font
+
+import config
+import game_framework
+import game_world
+
+_font = None
+
+
+def font():
+    # 글꼴은 캔버스가 열린 뒤에만 불러올 수 있어서 처음 쓸 때 한 번만 연다
+    global _font
+    if _font is None:
+        try:
+            _font = load_font(config.UI_FONT, 16)
+        except Exception:
+            _font = False
+    return _font
+
+
+def spawn(effect):
+    game_world.add_object(effect, 1)   # 캐릭터·총알 위, UI 아래
+    return effect
+
+
+class Effect:
+    def __init__(self, x, y, life):
+        self.x, self.y = x, y
+        self.life = life
+        self.age = 0.0
+
+    def progress(self):
+        return min(1.0, self.age / self.life)  # 0 에서 시작해 1 이 되면 사라진다
+
+    def update(self):
+        self.age += game_framework.frame_time
+        if self.age >= self.life:
+            game_world.remove_object(self)
+
+    def draw(self):
+        pass
+
+
+class TextPop(Effect):
+    # 글자가 위로 떠오르며 사라진다 (예: 빈 총 '찰칵')
+    def __init__(self, x, y, text, color, life=0.5):
+        super().__init__(x, y, life)
+        self.text, self.color = text, color
+
+    def draw(self):
+        f = font()
+        if f:
+            f.draw(self.x - 14, self.y + 22 * self.progress(), self.text, self.color)
