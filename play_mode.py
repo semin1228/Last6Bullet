@@ -39,6 +39,8 @@ def dispatch(event):
         game_framework.quit()
     elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
         game_framework.quit()
+    elif event.type == SDL_KEYDOWN and event.key == SDLK_F1:
+        ledger.visible = not ledger.visible
     else:
         player.handle_event(event)
 
