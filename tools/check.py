@@ -236,6 +236,7 @@ def third_hit_lands_the_bullet():
         aim(p, 0)
         sim.click()
         [b] = bullets_in_world()
+        p.y += 200                 # 튕겨 돌아오는 총알에 맞지 않게 비켜선다 (반사만 확인)
         while b.state == 'FLYING':
             sim.step(1)
         assert b.bounces == config.MAX_BOUNCES + 1, '튕긴 횟수 %d' % b.bounces
@@ -254,6 +255,7 @@ def bullet_bounces_off_table():
     aim(p, 90)
     sim.click()
     [bl] = bullets_in_world()
+    p.x += 100                     # 튕겨 돌아오는 총알에 맞지 않게 비켜선다 (반사만 확인)
     sim.step(20)
     assert bl.bounces == 1 and bl.vy < 0, '테이블 아랫면에서 튕기지 않음'
     assert bl.y < b, '총알이 테이블을 통과함'

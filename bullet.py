@@ -65,10 +65,15 @@ class Bullet:
 
     def draw(self):
         if self.state == 'FLYING':
-            draw_circle(self.x, self.y, self.radius, *config.COLOR_BULLET_PLAYER, filled=True)
+            color = config.COLOR_BULLET_BOUNCED if self.bounces else config.COLOR_BULLET_PLAYER
+            draw_circle(self.x, self.y, self.radius, *color, filled=True)
         elif self.state == 'FLOOR':
             draw_circle(self.x, self.y, self.radius + 2, *config.COLOR_BULLET_EDGE, filled=True)
             draw_circle(self.x, self.y, self.radius, *config.COLOR_BULLET_FLOOR, filled=True)
+
+    def can_hit_anyone(self):
+        # 튕긴 총알은 쏜 사람까지 누구든 맞는다 (PRD 3장 규칙 5). 발사 직후는 제외한다.
+        return self.state == 'FLYING' and self.bounces > 0 and self.age > config.HIT_GRACE
 
     def get_bb(self):
         r = self.radius

@@ -120,6 +120,9 @@ class Player:
             return                 # 사각형은 겹쳐도 원끼리는 닿지 않음 (대각선 모서리)
         if other.state == 'FLOOR':
             self.pick_up(other)
+        elif other.can_hit_anyone():
+            self.hurt()
+            other.land()           # 맞힌 총알은 그 자리에 떨어진다
 
     def pick_up(self, bullet):
         bullet.pick_up()
