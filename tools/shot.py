@@ -108,9 +108,16 @@ def w1_5_self_hit():
     p.x, p.y = r - 160, (b + t) / 2
     sim.mouse_move(r, p.y)
     sim.click()
-    sim.step(21)
+    import config, game_world
+    [bl] = [o for o in game_world.objects() if getattr(o, 'state', '') == 'FLYING']
+    while bl.bounces == 0:         # 프레임 수 대신 상태로 기다려서 총알 속도를 바꿔도 같은 장면이 나온다
+        sim.step(1)
+    while bl.x > p.x + 70:         # 돌아오는 중간쯤
+        sim.step(1)
     save('w1_5_bounced_back')      # 벽에 튕겨 돌아오는 총알 (주황: 누구든 맞음)
-    sim.step(14)
+    while p.hp == config.PLAYER_HP:
+        sim.step(1)
+    sim.step(2)
     p.invincible = 0.05            # 스크린샷이 깜빡임에 걸려 캐릭터가 사라지지 않게
     sim.step(1)
     save('w1_5_hurt')              # 맞아서 왼쪽 위 체력이 3칸, 총알은 발밑에서 주워 다시 6발
