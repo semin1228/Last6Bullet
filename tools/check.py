@@ -279,6 +279,29 @@ def no_tunneling_in_500_random_shots():
     shoot_randomly(sim.DT)
 
 
+@test
+def thin_wall_is_not_tunneled_at_slowest_frame_rate():
+    # 두께 6px 벽(3주차 기차 짐받이 턱 정도)을 세우고, 가장 느린 프레임(한 프레임 26px 이동)에서
+    # 왼쪽에서 오른쪽으로 쏜 총알이 한 발도 벽 너머로 넘어가지 않는지 본다.
+    import random, game_world, game_framework
+    from bullet import Bullet
+    pm = fresh()
+    wall = (700, 40, 706, 680)
+    pm.zone.obstacles = [wall]
+    rng = random.Random(99)
+    shots = []
+    for _ in range(200):
+        bl = Bullet(pm.zone)
+        bl.fire(rng.uniform(100, 600), rng.uniform(60, 660), rng.uniform(-1.2, 1.2), 'player')
+        game_world.add_object(bl, 1)
+        shots.append(bl)
+    for frame in range(40):
+        sim.step(1, dt=game_framework.MAX_FRAME_TIME)
+        crossed = [bl for bl in shots if bl.x > wall[2]]
+        assert not crossed, '%d발이 얇은 벽을 뚫고 지나감 (%d 프레임)' % (len(crossed), frame)
+    pm.finish()
+
+
 def shoot_randomly(dt):
     import random, game_world, config
     from bullet import Bullet

@@ -58,14 +58,17 @@ class Zone:
             x, y = bullet.x, bullet.y
             if x + rad <= ol or x - rad >= o_r or y + rad <= ob or y - rad >= ot:
                 continue
-            # 겹친 깊이가 얕은 축으로 들어온 것으로 보고 그 축의 속도를 뒤집는다 (PRD 15-5)
-            over_x = min(x + rad - ol, o_r - (x - rad))
-            over_y = min(y + rad - ob, ot - (y - rad))
-            if over_x < over_y:
-                bullet.x = ol - rad if x < (ol + o_r) / 2 else o_r + rad
-                bullet.vx = -bullet.vx
+            # 날아온 방향의 면으로 들어온 깊이를 축마다 재고, 얕은 축의 속도를 뒤집는다 (PRD 15-5).
+            # 꺼낼 쪽도 위치가 아니라 날아온 방향으로 정한다. 얇은 벽에서 중심이 벽 가운데를
+            # 넘어가도 반대편으로 꺼내지지 않게 하기 위해서다.
+            vx, vy = bullet.vx, bullet.vy
+            pen_x = (x + rad - ol) if vx > 0 else (o_r - (x - rad)) if vx < 0 else math.inf
+            pen_y = (y + rad - ob) if vy > 0 else (ot - (y - rad)) if vy < 0 else math.inf
+            if pen_x < pen_y:
+                bullet.x = ol - rad if vx > 0 else o_r + rad
+                bullet.vx = -vx
             else:
-                bullet.y = ob - rad if y < (ob + ot) / 2 else ot + rad
-                bullet.vy = -bullet.vy
+                bullet.y = ob - rad if vy > 0 else ot + rad
+                bullet.vy = -vy
             hit = True
         return hit
