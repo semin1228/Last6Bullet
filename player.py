@@ -60,6 +60,7 @@ class Player:
     def fire(self):
         if not self.held or self.fire_cooldown > 0:
             return None
+        self.update_aim()          # 같은 프레임에 마우스를 움직이고 바로 쏴도 새 방향으로 나가게
         bullet = self.held.pop()
         bullet.fire(*self.gun_tip(), self.aim, 'player')
         game_world.add_object(bullet, 1)
@@ -85,9 +86,12 @@ class Player:
             dx, dy = self.direction()
             step = config.PLAYER_SPEED * game_framework.frame_time
             self.x, self.y = self.zone.push_out(self.x + dx * step, self.y + dy * step, self.radius)
+        self.update_aim()          # 움직여도 마우스를 계속 바라본다
+
+    def update_aim(self):
         mx, my = self.mouse
         if (mx, my) != (self.x, self.y):
-            self.aim = math.atan2(my - self.y, mx - self.x)  # 움직여도 마우스를 계속 바라본다
+            self.aim = math.atan2(my - self.y, mx - self.x)
 
     def draw(self):
         cx, cy = math.cos(self.aim), math.sin(self.aim)

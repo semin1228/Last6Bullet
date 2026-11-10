@@ -142,6 +142,23 @@ def start_with_six_bullets_in_hand():
 
 
 @test
+def click_fires_toward_mouse_immediately():
+    import config, math
+    pm = fresh()
+    p = pm.player
+    sim.mouse_move(p.x, p.y + 200)  # 마우스를 위로 옮기고 같은 프레임에 바로 쏜다
+    sim.click()
+    assert len(p.held) == config.AMMO - 1
+    [b] = bullets_in_world()
+    assert b.state == 'FLYING' and b.owner == 'player'
+    assert near(math.atan2(b.vy, b.vx), math.pi / 2, 0.01), '이전 조준 방향으로 나감'
+    y0 = b.y
+    sim.step(10)
+    assert near(b.y - y0, config.BULLET_SPEED * 10 / 60, 1.0)
+    pm.finish()
+
+
+@test
 def cooldown_blocks_rapid_double_click():
     import config
     pm = fresh()
