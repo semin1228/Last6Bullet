@@ -592,6 +592,21 @@ def picking_up_shows_a_small_brass_ring():
     pm.finish()
 
 
+@test
+def getting_hit_shows_a_red_ring_once():
+    import config
+    from effect import Ring
+    pm = fresh()
+    p = pm.player
+    flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
+    flying_bullet(pm, p.x + 60, p.y, -config.BULLET_SPEED, 0, bounces=1)
+    sim.step(8)
+    hits = [r for r in effects(Ring) if r.color == config.COLOR_HP]
+    assert len(hits) == 1, '피격 고리 %d개 (무적 중 두 번째 총알은 연출도 없어야 함)' % len(hits)
+    assert (hits[0].x, hits[0].y) == (p.x, p.y)
+    pm.finish()
+
+
 # ---------------------------------------------------------------- 6. 총알 장부
 
 @test

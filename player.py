@@ -150,3 +150,4 @@ class Player:
             return
         self.hp -= 1
         self.invincible = config.INVINCIBLE_TIME
+        effect.spawn(effect.hit_ring(self.x, self.y))
