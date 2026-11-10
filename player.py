@@ -96,6 +96,9 @@ class Player:
             draw_line(self.x - cy * o, self.y + cx * o, gx - cy * o, gy + cx * o, *config.COLOR_GUN)
         draw_circle(self.x, self.y, self.radius, *config.COLOR_PLAYER, filled=True)
         draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_HAT, filled=True)
+        for i in range(config.AMMO):  # 발밑에 남은 총알 표시 (리볼버 여섯 칸)
+            color = config.COLOR_BULLET_FLOOR if i < len(self.held) else config.COLOR_AMMO_EMPTY
+            draw_circle(self.x - 15 + i * 6, self.y - self.radius - 8, 2, *color, filled=True)
 
     def get_bb(self):
         r = self.radius
