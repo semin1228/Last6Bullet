@@ -1,7 +1,8 @@
-# 보안관(플레이어). 위에서 내려다본 모습: 몸통 원과 모자 원.
+# 보안관(플레이어). 위에서 내려다본 모습: 몸통 원, 모자 원, 마우스 쪽으로 향한 총.
 import math
 
-from pico2d import SDL_KEYDOWN, SDL_KEYUP, SDLK_a, SDLK_d, SDLK_s, SDLK_w, draw_circle
+from pico2d import (SDL_KEYDOWN, SDL_KEYUP, SDL_MOUSEMOTION, SDLK_a, SDLK_d, SDLK_s,
+                    SDLK_w, draw_circle, draw_line)
 from transitions import Machine
 
 import config
@@ -15,6 +16,8 @@ class Player:
         self.zone = zone
         self.x, self.y = x, y
         self.radius = config.PLAYER_RADIUS
+        self.mouse = (x + 1, y)    # 마지막 마우스 위치 (게임 좌표)
+        self.aim = 0.0             # 조준 각도 (라디안, 오른쪽이 0)
         self.pressed = set()
 
         self.machine = Machine(
@@ -41,6 +44,8 @@ class Player:
             self.pressed.add(event.key)
         elif event.type == SDL_KEYUP and event.key in MOVE_KEYS:
             self.pressed.discard(event.key)
+        elif event.type == SDL_MOUSEMOTION:
+            self.mouse = (event.x, config.HEIGHT - 1 - event.y)  # SDL 은 좌상단 원점이라 뒤집는다
         self.update_run_state()
 
     def update_run_state(self):
@@ -60,8 +65,15 @@ class Player:
             dx, dy = self.direction()
             step = config.PLAYER_SPEED * game_framework.frame_time
             self.x, self.y = self.zone.push_out(self.x + dx * step, self.y + dy * step, self.radius)
+        mx, my = self.mouse
+        if (mx, my) != (self.x, self.y):
+            self.aim = math.atan2(my - self.y, mx - self.x)  # 움직여도 마우스를 계속 바라본다
 
     def draw(self):
+        cx, cy = math.cos(self.aim), math.sin(self.aim)
+        gx, gy = self.x + cx * (self.radius + 10), self.y + cy * (self.radius + 10)
+        for o in (-1, 0, 1):  # 두께 3px 총신
+            draw_line(self.x - cy * o, self.y + cx * o, gx - cy * o, gy + cx * o, *config.COLOR_GUN)
         draw_circle(self.x, self.y, self.radius, *config.COLOR_PLAYER, filled=True)
         draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_HAT, filled=True)
 
