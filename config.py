@@ -12,8 +12,8 @@ PICKUP_REACH = 2               # 몸과 총알이 이만큼 떨어져 있어도 
 
 AMMO = 6                       # 구역 안에 존재하는 총알 수 (PRD 3장: 고정)
 BULLET_RADIUS = 4
-BULLET_SPEED = 520             # px/초
-BULLET_LIFE = 1.6              # 이 시간이 지나면 바닥에 떨어진다 (초)
+BULLET_SPEED = 800             # px/초 (체험판 520 은 쏜 뒤 기다리는 느낌이라 올림)
+BULLET_LIFE = 1.1              # 이 시간이 지나면 바닥에 떨어진다 (초). 사거리(속도x수명) 약 880px 유지
 FIRE_COOLDOWN = 0.18           # 연사 간격 (초)
 MAX_BOUNCES = 2                # 이만큼 튕긴 뒤 다시 닿으면 바닥에 떨어진다
 DRY_FLASH_TIME = 0.3           # 빈 총을 당겼을 때 HUD 실린더가 붉게 깜빡이는 시간 (초)
