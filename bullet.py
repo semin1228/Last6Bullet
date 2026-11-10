@@ -49,13 +49,17 @@ class Bullet:
             return
         dt = game_framework.frame_time
         self.age += dt
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        if self.zone.bounce(self):
-            self.bounces += 1
-            if self.bounces > config.MAX_BOUNCES:
-                self.land()
-                return
+        # 한 프레임 이동을 BULLET_SUBSTEP 이하로 나눠 움직여서 얇은 벽을 뚫고 지나가지 않게 한다
+        distance = math.hypot(self.vx, self.vy) * dt
+        steps = max(1, math.ceil(distance / config.BULLET_SUBSTEP))
+        for _ in range(steps):
+            self.x += self.vx * dt / steps
+            self.y += self.vy * dt / steps
+            if self.zone.bounce(self):
+                self.bounces += 1
+                if self.bounces > config.MAX_BOUNCES:
+                    self.land()
+                    return
         if self.age >= config.BULLET_LIFE:
             self.land()
 
