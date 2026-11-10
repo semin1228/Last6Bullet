@@ -282,7 +282,10 @@ def bullet_bounces_off_right_wall():
     aim(p, 0)
     sim.click()
     [b] = bullets_in_world()
-    sim.step(80)                   # 벽까지 약 600px, 1.15초
+    import config, math
+    l, bt, r, t = pm.zone.inner
+    distance = (r - b.radius) - b.x  # 총구에서 오른쪽 벽 면까지
+    sim.step(math.ceil(distance / config.BULLET_SPEED * 60) + 3)   # 속도를 바꿔도 벽에 닿은 직후를 본다
     assert b.state == 'FLYING' and b.bounces == 1 and b.vx < 0, '오른쪽 벽에서 튕기지 않음'
     pm.finish()
 
@@ -432,8 +435,11 @@ def shoot_randomly(dt):
 
 # ---------------------------------------------------------------- 5. 줍기와 튕긴 총알 자해
 
-def flying_bullet(pm, x, y, vx, vy, bounces, age=1.0):
-    import game_world
+def flying_bullet(pm, x, y, vx, vy, bounces, age=None):
+    # age 를 주지 않으면 '발사 직후 맞지 않는 시간'이 막 지난 총알로 만든다 (수명은 거의 그대로 남는다)
+    import config, game_world
+    if age is None:
+        age = config.HIT_GRACE + 0.01
     from bullet import Bullet
     b = pm.player.held.pop()
     b.fire(x, y, 0.0, 'player')
