@@ -431,6 +431,50 @@ def shooting_a_wall_up_close_hurts_yourself():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 6. 총알 장부
+
+@test
+def ledger_counts_hand_floor_and_air():
+    pm = fresh()
+    p = pm.player
+    aim(p, 90)
+    sim.click()
+    sim.step(12)
+    aim(p, -90)
+    sim.click()
+    sim.step(2)
+    assert pm.ledger.counts == {'hand': 4, 'floor': 0, 'air': 2}, pm.ledger.counts
+    p.x -= 200                     # 돌아오는 총알에 맞지 않게 비켜선다
+    sim.step(120)
+    assert pm.ledger.counts == {'hand': 4, 'floor': 2, 'air': 0}, pm.ledger.counts
+    assert pm.ledger.problem is None
+    pm.finish()
+
+
+@test
+def ledger_catches_a_lost_bullet():
+    # 버그 흉내: 바닥 총알을 줍지도 않고 월드에서 지워 버리면 장부가 잡아내야 한다
+    import game_world
+    pm = fresh()
+    aim(pm.player, 90)
+    sim.click()
+    [b] = bullets_in_world()
+    game_world.remove_object(b)
+    sim.step(1)
+    assert pm.ledger.problem and '5' in pm.ledger.problem, '사라진 총알을 잡지 못함'
+    pm.finish()
+
+
+@test
+def ledger_catches_a_wrong_state():
+    # 버그 흉내: 손에 있는데 상태가 FLOOR 인 총알
+    pm = fresh()
+    pm.player.held[0].state = 'FLOOR'
+    sim.step(1)
+    assert pm.ledger.problem, '상태가 틀린 총알을 잡지 못함'
+    pm.finish()
+
+
 def main():
     sim.open_game('--window' in sys.argv)
     from pico2d import close_canvas
