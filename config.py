@@ -11,11 +11,22 @@ BULLET_RADIUS = 4
 BULLET_SPEED = 520             # px/초
 BULLET_LIFE = 1.6              # 이 시간이 지나면 바닥에 떨어진다 (초)
 FIRE_COOLDOWN = 0.18           # 연사 간격 (초)
+MAX_BOUNCES = 2                # 이만큼 튕긴 뒤 다시 닿으면 바닥에 떨어진다
+BULLET_SUBSTEP = 6             # 한 번에 움직이는 최대 거리 (px). 얇은 벽을 뚫고 지나가지 않게 한다
+
+# 술집 테이블 (left, bottom, right, top)
+SALOON_TABLES = [
+    (360, 470, 500, 540),
+    (580, 180, 720, 250),
+    (840, 440, 980, 510),
+]
 
 # 색 (r, g, b)
 COLOR_WALL = (65, 36, 2)
 COLOR_FLOOR = (214, 186, 150)
 COLOR_FLOOR_LINE = (196, 166, 128)
+COLOR_TABLE = (133, 79, 11)
+COLOR_TABLE_EDGE = (99, 56, 6)
 COLOR_PLAYER = (24, 95, 165)
 COLOR_HAT = (186, 117, 23)
 COLOR_GUN = (44, 44, 42)
