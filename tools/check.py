@@ -36,7 +36,7 @@ def skeleton_runs_and_esc_quits():
     pm.finish()
 
 
-# ---------------------------------------------------------------- 2. 이동
+# ---------------------------------------------------------------- 2. 이동과 조준
 
 def near(a, b, tol=1.0):
     return abs(a - b) <= tol
@@ -101,6 +101,25 @@ def cannot_leave_the_floor():
     sim.key_down(SDLK_s)
     sim.step(600)
     assert near(p.x, l + p.radius) and near(p.y, b + p.radius), '벽 밖으로 나감: (%.1f, %.1f)' % (p.x, p.y)
+    pm.finish()
+
+
+@test
+def aim_follows_mouse_even_while_moving():
+    import math
+    from pico2d import SDLK_d
+    pm = fresh()
+    p = pm.player
+    sim.mouse_move(p.x + 100, p.y)
+    sim.step(1)
+    assert near(p.aim, 0.0, 0.02), '오른쪽 조준 %.3f' % p.aim
+    sim.mouse_move(p.x, p.y + 100)
+    sim.step(1)
+    assert near(p.aim, math.pi / 2, 0.02), '위쪽 조준 %.3f' % p.aim
+    mx = p.x
+    sim.key_down(SDLK_d)           # 마우스는 그대로 두고 오른쪽으로 이동하면 조준이 왼쪽 위로 기운다
+    sim.step(30)
+    assert p.aim > math.pi / 2 and near(p.aim, math.atan2(100, mx - p.x), 0.02)
     pm.finish()
 
 
