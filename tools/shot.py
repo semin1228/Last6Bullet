@@ -72,6 +72,34 @@ def w1_3_fire():
     pm.finish()
 
 
+@scene
+def w1_4_bounce():
+    # 총알이 지나간 자리를 기록해 점으로 찍는다 (스크린샷에서만 쓰는 표시)
+    import math
+    from pico2d import clear_canvas, draw_circle
+    import config
+    import game_world
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = config.SALOON_TABLES[0]
+    p.x, p.y = (l + r) / 2 - 30, b - 120
+    trail = []
+    for deg in (80, 20, -35):
+        a = math.radians(deg)
+        sim.mouse_move(p.x + math.cos(a) * 200, p.y + math.sin(a) * 200)
+        sim.click()
+        sim.step(12, before=lambda i: trail.extend(
+            (o.x, o.y) for o in game_world.objects() if getattr(o, 'state', '') == 'FLYING'))
+    sim.step(90, before=lambda i: trail.extend(
+        (o.x, o.y) for o in game_world.objects() if getattr(o, 'state', '') == 'FLYING'))
+    clear_canvas()
+    game_world.render()
+    for x, y in trail[::2]:
+        draw_circle(x, y, 1, 12, 68, 124, filled=True)
+    save('w1_4_bounce')
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)
