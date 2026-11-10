@@ -80,7 +80,7 @@ class Spark(Effect):
 
     def draw(self):
         p = self.progress()
-        near, far = 3 + 6 * p, 6 + 8 * p
+        near, far = 4 + 10 * p, 10 + 14 * p
         for s in self.SPREAD:
             c, d = math.cos(self.angle + s), math.sin(self.angle + s)
             draw_line(self.x + c * near, self.y + d * near, self.x + c * far, self.y + d * far,
