@@ -214,7 +214,6 @@ last_six/
 ├── main.py              # 진입점
 ├── game_framework.py    # 모드 전환과 메인 루프
 ├── game_world.py        # 레이어, 충돌 쌍
-├── state_machine.py     # 상태 머신 공용 클래스
 ├── config.py            # 난이도별 수치 (체험판 초기값)
 ├── title_mode.py  play_mode.py  poster_mode.py  badge_mode.py
 ├── duel_mode.py   ending_mode.py  gameover_mode.py
@@ -225,8 +224,11 @@ last_six/
 ├── zone.py              # 구역 규칙(튕김, 어둠, 미끄러짐), 장애물, 문
 ├── ammo_ledger.py       # 구역 총알 수 검증
 ├── hud.py               # 체력, 총알, 덜컹 예고 표시
+├── tools/               # 자동 점검(check.py), 스크린샷(shot.py)
 └── res/                 # 이미지, 효과음
 ```
+
+상태 머신은 수업(LEC12~15)과 같이 `transitions` 라이브러리의 `Machine`을 각 클래스에 붙여 쓴다. 처음 계획한 `state_machine.py`는 만들지 않는다 (1주차에 변경).
 
 ### 15-3. 주요 클래스
 
@@ -372,11 +374,13 @@ stateDiagram-v2
 
 ### 1주차: 뼈대와 공유 총알
 
-- [ ] `game_framework`, `game_world`, `state_machine`, `config.py` 구성
-- [ ] 플레이어 이동, 마우스 조준, 발사
-- [ ] 총알 상태(Held, Flying, Floor)와 벽, 장애물 반사
-- [ ] 바닥 총알 줍기
-- [ ] `AmmoLedger`로 구역 총알 수 합계 디버그 표시
+- [x] `game_framework`, `game_world`, `config.py` 구성 (상태 머신은 `transitions` 사용)
+- [x] 플레이어 이동, 마우스 조준, 발사
+- [x] 총알 상태(Held, Flying, Floor)와 벽, 장애물 반사
+- [x] 바닥 총알 줍기, 튕긴 총알 자해와 체력 표시
+- [x] `AmmoLedger`로 구역 총알 수 합계 디버그 표시 (F1)
+
+진행 기록: [docs/DEVLOG.md](docs/DEVLOG.md)
 
 ### 2주차: 적과 발차기, 첫 두 구역
 
