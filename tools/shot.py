@@ -46,6 +46,18 @@ def w1_1_skeleton():
     pm.finish()
 
 
+@scene
+def w1_2_move_and_aim():
+    from pico2d import SDLK_a, SDLK_w
+    pm = fresh()
+    sim.mouse_move(1000, 600)
+    sim.key_down(SDLK_w)
+    sim.key_down(SDLK_a)
+    sim.step(40)                   # 왼쪽 위로 이동하면서도 마우스(오른쪽 위)를 바라본다
+    save('w1_2_move_and_aim')
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)
