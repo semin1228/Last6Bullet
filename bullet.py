@@ -55,9 +55,11 @@ class Bullet:
         # 손에서 바닥으로 떨어뜨릴 때 (적이 쓰러지거나 발차기에 맞을 때)
         self.x, self.y = self.zone.push_out(x, y, self.radius)
 
-    def roll(self, angle):
-        self.vx = math.cos(angle) * config.ROLL_SPEED
-        self.vy = math.sin(angle) * config.ROLL_SPEED
+    def roll(self, angle, speed=None):
+        # 플레이어 발차기는 ROLL_SPEED, 술꾼 패스는 더 세게 (speed)
+        speed = speed or config.ROLL_SPEED
+        self.vx = math.cos(angle) * speed
+        self.vy = math.sin(angle) * speed
         self.bounces = 0
 
     def add_to_world(self):

@@ -342,6 +342,37 @@ def w2_5_game_over():
     pm.finish()
 
 
+@scene
+def w2_6_drunk_pass():
+    # 술꾼 패스: 바닥 총알을 빈손 줍줍이에게 차 준다 ('HEY!'), 굴러간 총알을 줍줍이가 줍는다
+    from drunk import Drunk
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 160, 620
+    mate = pm.add_enemy(Picker, 1080, 330)
+    mate.state = 'FLEE'
+    b = p.held.pop()
+    b.drop(700, 330)
+    b.add_to_world()
+    d = pm.add_enemy(Drunk, 600, 300)
+    d.pass_cooldown = 0
+    sim.mouse_move(400, 400)
+    for _ in range(120):
+        sim.step(1)
+        if b.state == 'ROLLING':
+            break
+    sim.step(6)
+    save('w2_6_drunk_pass')        # 'HEY!' 와 줍줍이 쪽으로 굴러가는 총알
+    for _ in range(120):
+        sim.step(1)
+        if mate.target is not None:
+            break
+    sim.step(5)
+    save('w2_6_pass_received')     # 줍줍이가 패스 받은 총알을 줍는 중 (막대)
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)

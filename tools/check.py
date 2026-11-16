@@ -1069,6 +1069,70 @@ def drunk_takes_two_bullets():
     pm.finish()
 
 
+def pass_setup(pm, picker_at=(1050, 200), bullet_at=(760, 200), drunk_at=(700, 200)):
+    # 술꾼 옆에 바닥 총알, 멀리 빈손 줍줍이(움직이지 않음), 플레이어는 구석
+    from drunk import Drunk
+    p = pm.player
+    p.x, p.y = 100, 650
+    mate = still_picker(pm, *picker_at)
+    ball = floor_bullet(pm, *bullet_at)
+    d = pm.add_enemy(Drunk, *drunk_at)
+    d.pass_cooldown = 0
+    return d, ball, mate
+
+
+@test
+def drunk_kicks_a_nearby_bullet_to_an_empty_picker():
+    # 사용자 제안: 총알을 쓰지 않는 술꾼도 쟁탈전에 끼도록, 바닥 총알을 빈손 줍줍이에게 차서 넘긴다
+    import config, math
+    pm = fresh()
+    d, ball, mate = pass_setup(pm)
+    sim.step(1)
+    assert d.state == 'PASS', '패스할 상황인데 돌진만 함 (%s)' % d.state
+    run_until(lambda: ball.state == 'ROLLING', 120)
+    angle = math.atan2(ball.vy, ball.vx)
+    to_mate = math.atan2(mate.y - ball.y, mate.x - ball.x)
+    assert abs(angle - to_mate) < 0.05, '줍줍이 쪽으로 차지 않음'
+    assert abs(math.hypot(ball.vx, ball.vy) - config.DRUNK_PASS_SPEED) < 15
+    d0 = math.hypot(mate.x - ball.x, mate.y - ball.y)
+    assert d.state == 'CHARGE', '찬 뒤 다시 돌진하지 않음'
+    run_until(lambda: ball.state != 'ROLLING', 120)
+    d1 = math.hypot(mate.x - ball.x, mate.y - ball.y)
+    assert d1 < 80, '총알이 줍줍이 근처까지 가지 않음 (%.0f -> %.0f px)' % (d0, d1)
+    assert pm.ledger.problem is None
+    pm.finish()
+
+
+@test
+def drunk_does_not_pass_without_empty_picker_and_waits_cooldown():
+    import config
+    pm = fresh()
+    d, ball, mate = pass_setup(pm)
+    mate.held = [pm.player.held.pop()]       # 줍줍이가 총알을 가졌으면 패스하지 않는다
+    sim.step(5)
+    assert d.state == 'CHARGE' and ball.state == 'FLOOR', '총알 가진 줍줍이에게 패스함'
+    pm.finish()
+    pm = fresh()
+    d, ball, mate = pass_setup(pm)
+    run_until(lambda: ball.state == 'ROLLING', 120)
+    second = floor_bullet(pm, d.x + 40, d.y + 40)
+    sim.step(int(config.DRUNK_PASS_COOLDOWN * 60) - 20)
+    assert second.state == 'FLOOR', '쿨타임 3초 안에 또 패스함'
+    pm.finish()
+
+
+@test
+def drunk_gives_up_the_pass_when_the_bullet_is_taken():
+    pm = fresh()
+    d, ball, mate = pass_setup(pm, bullet_at=(900, 200), drunk_at=(780, 200))
+    sim.step(1)
+    assert d.state == 'PASS'
+    pm.player.x, pm.player.y = ball.x, ball.y   # 플레이어가 먼저 줍는다
+    sim.step(2)
+    assert ball in pm.player.held and d.state == 'CHARGE', '총알이 사라졌는데 패스를 포기하지 않음 (%s)' % d.state
+    pm.finish()
+
+
 @test
 def hound_swallows_bullets_and_kick_makes_it_spit_all():
     from dog import Dog
