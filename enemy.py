@@ -38,6 +38,7 @@ class Enemy:
         self.target = None         # 줍는 중인 총알
         self.push = (0.0, 0.0)     # 발차기로 밀려나는 속도
         self.alive = True
+        self.flash = 0.0           # 맞은 직후 몸이 하얗게 번쩍이는 남은 시간 (초)
         self.detour = 0.0          # 장애물에 막혔을 때 옆으로 비켜 걷는 남은 시간
         self.detour_dir = (0.0, 0.0)
         self.detour_side = random.choice((-1, 1))   # 비켜 걷는 쪽 (막힐 때마다 바꾸지 않고 유지)
@@ -187,12 +188,21 @@ class Enemy:
     def kick_drop_count(self):
         return config.KICK_DROPS
 
-    def hit_by(self, bullet):
-        bullet.land()              # 맞힌 총알은 그 자리에 떨어진다 (PRD 3장 규칙 2)
+    def hit_by(self, bullet, point=None):
+        angle = math.atan2(bullet.vy, bullet.vx)
+        x, y = point or (bullet.x, bullet.y)
+        bullet.hit_at(x, y)        # 맞힌 총알은 그 자리에 떨어진다 (PRD 3장 규칙 2)
         self.hp -= 1
+        self.flash = config.HIT_FLASH_TIME
         effect.spawn(effect.Ring(self.x, self.y, self.COLOR, 14, 30, 0.25))
         if self.hp <= 0:
             self.die()
+        else:
+            self.on_hit_survived(angle)
+
+    def on_hit_survived(self, angle):
+        # 맞고 버틴 적 (술꾼, 3주차 두목). 종류마다 반응을 정한다.
+        pass
 
     def die(self):
         self.alive = False
@@ -212,8 +222,10 @@ class Enemy:
         if not self.alive:
             return
         if group == 'enemy:bullet':
-            if self.touching(other, 0) and self.can_be_hit_by(other):
-                self.hit_by(other)
+            if self.can_be_hit_by(other):
+                d, point = other.closest_on_path(self.x, self.y)   # 이번 프레임에 지나온 길 전체로 판정
+                if d <= self.radius + other.radius:
+                    self.hit_by(other, point)
         elif group == 'player:enemy':
             # 서로 밀어 내서 딱 붙은 거리에 있으므로 3px 여유를 둔다
             if self.TOUCH_DAMAGE and self.state != 'STUN' and self.touching(other, 3):
@@ -235,6 +247,7 @@ class Enemy:
         if not self.alive:
             return
         dt = game_framework.frame_time
+        self.flash = max(0.0, self.flash - dt)
         if self.state == 'STUN':
             px, py = self.push
             self.x, self.y = self.zone.push_out(self.x + px * dt, self.y + py * dt, self.radius)
@@ -256,6 +269,8 @@ class Enemy:
     def draw(self):
         cx, cy = math.cos(self.facing), math.sin(self.facing)
         self.draw_body(cx, cy)
+        if self.flash > 0:                  # 맞은 순간: 몸 전체가 하얗게 번쩍인다
+            draw_circle(self.x, self.y, self.radius, *config.COLOR_HIT_FLASH, filled=True)
         for i in range(len(self.held)):     # 가진 총알 수 (머리 위 점)
             draw_circle(self.x - (len(self.held) - 1) * 3 + i * 6, self.y + self.radius + 6, 2,
                         *config.COLOR_BULLET_FLOOR, filled=True)

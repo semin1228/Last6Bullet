@@ -24,6 +24,7 @@ class Bullet:
         self.owner = None          # 마지막으로 쏜 쪽 ('player' 또는 쏜 적 객체)
         self.age = 0.0             # 날아간 시간 (초)
         self.bounces = 0           # 벽이나 장애물에 튕긴 횟수 (날 때, 구를 때 따로 센다)
+        self.trail = []            # 이번 프레임에 지나온 점들 (사람 맞히기 판정용, 느린 프레임에도 뚫고 지나가지 않게)
 
         self.machine = Machine(
             model=self,
@@ -50,6 +51,7 @@ class Bullet:
         self.owner = owner
         self.age = 0.0
         self.bounces = 0
+        self.trail = [(x, y)]
 
     def place(self, x, y):
         # 손에서 바닥으로 떨어뜨릴 때 (적이 쓰러지거나 발차기에 맞을 때)
@@ -78,6 +80,7 @@ class Bullet:
     def update(self):
         dt = game_framework.frame_time
         if self.state == 'FLYING':
+            self.trail = [(self.x, self.y)]
             self.age += dt
             self.advance(dt)
             if self.state == 'FLYING' and self.age >= config.BULLET_LIFE:
@@ -102,6 +105,8 @@ class Bullet:
         for _ in range(steps):
             self.x += self.vx * dt / steps
             self.y += self.vy * dt / steps
+            if self.state == 'FLYING':
+                self.trail.append((self.x, self.y))
             if self.zone.bounce(self):
                 self.bounces += 1
                 if self.state == 'ROLLING':
@@ -138,8 +143,31 @@ class Bullet:
         return self.state == 'FLYING' and self.bounces > 0 and self.age > config.HIT_GRACE
 
     def get_bb(self):
+        # 날아가는 총알은 이번 프레임에 지나온 길 전체를 감싼다. 한 프레임에 40px 까지 움직여도
+        # 그 사이에 있던 사람과 충돌 검사가 이뤄지게 하기 위해서다.
         r = self.radius
-        return self.x - r, self.y - r, self.x + r, self.y + r
+        pts = self.trail if self.state == 'FLYING' and self.trail else [(self.x, self.y)]
+        xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+        return min(xs) - r, min(ys) - r, max(xs) + r, max(ys) + r
+
+    def closest_on_path(self, cx, cy):
+        # 이번 프레임 경로(trail) 위에서 (cx, cy) 에 가장 가까운 점과 그 거리
+        pts = self.trail if self.state == 'FLYING' and len(self.trail) > 1 else [(self.x, self.y)]
+        best = (math.hypot(pts[0][0] - cx, pts[0][1] - cy), pts[0])
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            dx, dy = bx - ax, by - ay
+            seg = dx * dx + dy * dy
+            t = 0.0 if seg == 0 else max(0.0, min(1.0, ((cx - ax) * dx + (cy - ay) * dy) / seg))
+            px, py = ax + dx * t, ay + dy * t
+            d = math.hypot(px - cx, py - cy)
+            if d < best[0]:
+                best = (d, (px, py))
+        return best
+
+    def hit_at(self, x, y):
+        # 사람에게 맞음: 맞은 자리에 떨어진다
+        self.x, self.y = x, y
+        self.land()
 
     def handle_collision(self, group, other):
         pass

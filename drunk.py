@@ -82,6 +82,14 @@ class Drunk(Enemy):
             else:
                 self.move_toward(self.ball.x, self.ball.y)
 
+    def on_hit_survived(self, angle):
+        # 맞으면 총알이 날아온 쪽으로 휘청이며 0.4초 멈추고, 패스 쿨타임을 처음부터 다시 센다.
+        # 그러지 않으면 자기를 맞힌 총알(발밑에 떨어짐)을 바로 줍줍이에게 차 넘겨서
+        # '쐈는데 안 맞고 바로 찬다' 처럼 보였다 (사용자 플레이 테스트).
+        self.ball = None
+        self.pass_cooldown = config.DRUNK_PASS_COOLDOWN
+        self.knock_back(angle, config.DRUNK_HIT_STUN)
+
     def stop_passing(self, passed):
         self.ball = None
         self.pass_cooldown = config.DRUNK_PASS_COOLDOWN

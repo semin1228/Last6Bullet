@@ -199,14 +199,20 @@ class Player:
     def handle_collision(self, group, other):
         if group != 'player:bullet':
             return
+        if other.state == 'FLYING':
+            # 튕긴 총알은 누구 것이든, 적이 쏜 총알은 튕기지 않아도 맞는다 (PRD 15-5).
+            # 이번 프레임에 지나온 길 중 가장 가까운 점으로 판정해서 느린 프레임에도 뚫고 지나가지 않는다.
+            if not (other.can_hit_anyone() or other.owner != 'player'):
+                return
+            d, (hx, hy) = other.closest_on_path(self.x, self.y)
+            if d <= self.radius + other.radius:
+                self.hurt()
+                other.hit_at(hx, hy)   # 맞힌 총알은 그 자리에 떨어진다
+            return
         if math.hypot(other.x - self.x, other.y - self.y) > self.radius + other.radius + config.PICKUP_REACH:
             return                 # 사각형은 겹쳐도 원끼리는 닿지 않음 (대각선 모서리)
         if other.state == 'FLOOR':
             self.pick_up(other)
-        elif other.can_hit_anyone() or (other.state == 'FLYING' and other.owner != 'player'):
-            # 튕긴 총알은 누구 것이든, 적이 쏜 총알은 튕기지 않아도 맞는다 (PRD 15-5)
-            self.hurt()
-            other.land()           # 맞힌 총알은 그 자리에 떨어진다
 
     def shoved(self, angle, x, y):
         # 빈손 줍줍이에게 밀침: angle 쪽으로 밀려나고, 손의 총알 1발이 (x, y)(줍줍이 발밑)에 떨어진다.

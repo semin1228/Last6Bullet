@@ -1134,6 +1134,63 @@ def drunk_gives_up_the_pass_when_the_bullet_is_taken():
 
 
 @test
+def fast_bullet_does_not_pass_through_people_at_slowest_frame_rate():
+    # 사용자 플레이 테스트에서 찾은 문제: 맞히기 판정을 프레임 끝 위치로만 해서, 느린 프레임(0.05초,
+    # 한 프레임 40px)에는 정면으로 쏜 총알 60발 중 15발이 반지름 13px 적을 건너뛰었다.
+    import config, game_framework
+    for start in range(0, 40, 2):
+        for off in (0, 6, 12):
+            pm = fresh()
+            p = pm.player
+            p.x, p.y = 300 + start, 360
+            e = still_picker(pm, 700, 360 + off)
+            aim(p, 0)
+            p.fire()
+            for _ in range(40):
+                sim.step(1, dt=game_framework.MAX_FRAME_TIME)
+                if not e.alive:
+                    break
+            assert not e.alive, '느린 프레임에 총알이 적을 지나침 (출발 +%d, 비켜 %d)' % (start, off)
+            pm.finish()
+    for start in range(0, 40, 4):          # 적 총알이 플레이어를 건너뛰지 않는지도
+        pm = fresh()
+        p = pm.player
+        e = still_picker(pm, 900, 360)
+        e.held = [p.held.pop()]
+        p.x = 400 + start
+        e.shoot()
+        for _ in range(40):
+            sim.step(1, dt=game_framework.MAX_FRAME_TIME)
+            if p.hp < config.PLAYER_HP:
+                break
+        assert p.hp == config.PLAYER_HP - 1, '느린 프레임에 적 총알이 플레이어를 지나침 (+%d)' % start
+        pm.finish()
+
+
+@test
+def shot_drunk_staggers_and_does_not_pass_the_bullet_that_hit_it():
+    # 사용자 플레이 테스트: '술꾼을 쐈는데 안 맞고 바로 찬다'. 실제로는 맞았는데(체력 2 -> 1),
+    # 발밑에 떨어진 그 총알을 다음 프레임에 줍줍이에게 차 넘겨서 안 맞은 것처럼 보였다.
+    import config
+    from drunk import Drunk
+    pm = fresh()
+    p = pm.player
+    still_picker(pm, 1100, 600)                    # 패스 받을 빈손 줍줍이
+    d = pm.add_enemy(Drunk, p.x + 250, p.y)
+    d.pass_cooldown = 0
+    aim(p, 0)
+    p.fire()
+    run_until(lambda: d.hp == 1, 60)
+    hit_bullet = [b for b in bullets_in_world() if b.state == 'FLOOR'][0]
+    assert d.state == 'STUN' and d.flash > 0, '맞았는데 휘청이거나 번쩍이지 않음 (%s)' % d.state
+    assert d.pass_cooldown > config.DRUNK_PASS_COOLDOWN - 0.1, '맞았는데 패스 쿨타임이 다시 시작되지 않음'
+    for _ in range(60):
+        sim.step(1)
+        assert hit_bullet.state != 'ROLLING', '자기를 맞힌 총알을 1초 안에 차 넘김'
+    pm.finish()
+
+
+@test
 def hound_swallows_bullets_and_kick_makes_it_spit_all():
     from dog import Dog
     pm = fresh()
