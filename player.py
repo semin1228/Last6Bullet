@@ -26,6 +26,7 @@ class Player:
         self.hp = config.PLAYER_HP
         self.invincible = 0.0      # 남은 무적 시간 (초)
         self.dry_flash = 0.0       # 빈 총을 당긴 뒤 HUD 실린더가 붉게 보이는 남은 시간 (초)
+        self.bounty = 0            # 쓰러뜨린 수배자 현상금 합계 (점수)
 
         self.machine = Machine(
             model=self,
@@ -73,8 +74,7 @@ class Player:
         bullet.fire(self.x, self.y, self.aim, 'player')
         bullet.travel(self.gun_reach())
         effect.spawn(effect.MuzzleFlash(bullet.x, bullet.y, self.aim))
-        game_world.add_object(bullet, 1)
-        game_world.add_collision_pair('player:bullet', None, bullet)
+        bullet.add_to_world()
         self.fire_cooldown = config.FIRE_COOLDOWN
         return bullet
 
@@ -106,6 +106,13 @@ class Player:
             self.x, self.y = self.zone.push_out(self.x + dx * step, self.y + dy * step, self.radius)
         self.update_aim()          # 움직여도 마우스를 계속 바라본다
 
+    def velocity(self):
+        # 지금 움직이는 속도 (px/초). 적이 조준을 예측할 때 쓴다.
+        if self.state == 'IDLE':
+            return 0.0, 0.0
+        dx, dy = self.direction()
+        return dx * config.PLAYER_SPEED, dy * config.PLAYER_SPEED
+
     def update_aim(self):
         mx, my = self.mouse
         if (mx, my) != (self.x, self.y):
@@ -120,7 +127,7 @@ class Player:
             draw_line(self.x - cy * o, self.y + cx * o, gx - cy * o, gy + cx * o, *config.COLOR_GUN)
         draw_circle(self.x, self.y, self.radius, *config.COLOR_PLAYER, filled=True)
         draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_HAT, filled=True)
-        for i in range(config.AMMO):  # 발밑에 남은 총알 표시 (리볼버 여섯 칸)
+        for i in range(self.zone.ammo):  # 발밑에 남은 총알 표시 (구역 총알 수만큼)
             color = config.COLOR_BULLET_FLOOR if i < len(self.held) else config.COLOR_AMMO_EMPTY
             draw_circle(self.x - 15 + i * 6, self.y - self.radius - 8, 2, *color, filled=True)
 
@@ -135,7 +142,8 @@ class Player:
             return                 # 사각형은 겹쳐도 원끼리는 닿지 않음 (대각선 모서리)
         if other.state == 'FLOOR':
             self.pick_up(other)
-        elif other.can_hit_anyone():
+        elif other.can_hit_anyone() or (other.state == 'FLYING' and other.owner != 'player'):
+            # 튕긴 총알은 누구 것이든, 적이 쏜 총알은 튕기지 않아도 맞는다 (PRD 15-5)
             self.hurt()
             other.land()           # 맞힌 총알은 그 자리에 떨어진다
 

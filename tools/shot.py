@@ -30,10 +30,12 @@ def save(name):
     print('  saved', os.path.relpath(path, sim.ROOT))
 
 
-def fresh():
+def fresh(enemies=False):
     import game_framework
     import play_mode
     game_framework.running = True
+    game_framework.stack = [play_mode]
+    play_mode.SPAWN_ENEMIES = enemies
     play_mode.init()
     return play_mode
 

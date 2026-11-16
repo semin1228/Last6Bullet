@@ -23,11 +23,32 @@ ROLL_FRICTION = 520            # 구르는 총알이 1초에 잃는 속도 (px/�
 ROLL_STOP_SPEED = 20           # 이보다 느려지면 멈춘다 (px/초)
 BULLET_SUBSTEP = 6             # 한 번에 움직이는 최대 거리 (px). 얇은 벽을 뚫고 지나가지 않게 한다
 
+# 적 (PRD 8장, 11장 '보통' 기준)
+ENEMY_PICK_TIME = 0.25         # 적이 바닥 총알을 줍는 동작 시간 (초)
+ENEMY_STUN_TIME = 0.7          # 발차기에 맞은 적의 기절 시간 (초)
+ENEMY_BULLET_SPEED = 560       # 적 총알은 플레이어 총알(800)보다 느리게 해서 피할 틈을 준다 (px/초)
+ENEMY_AIM_LEAD = 0.5           # 플레이어 이동을 얼마나 예측해서 겨누는지 (0: 안 함, 1: 완전)
+PICKER_SPEED = 120
+PICKER_KEEP_NEAR = 180         # 줍줍이가 쏠 때 유지하는 거리 (이보다 가까우면 물러난다)
+PICKER_KEEP_FAR = 340          # (이보다 멀면 다가간다)
+PICKER_FIRST_SHOT = 0.35       # 줍고 나서 첫 발까지 (초)
+PICKER_SHOOT_INTERVAL = 0.9    # 쏘는 간격 (초)
+KICK_DROPS = 1                 # 발차기에 맞은 적이 떨어뜨리는 총알 수
+KICK_PUSH_SPEED = 380          # 발차기에 맞은 적이 밀려나는 처음 속도 (px/초)
+
 # 술집 테이블 (left, bottom, right, top)
 SALOON_TABLES = [
     (360, 470, 500, 540),
     (580, 180, 720, 250),
     (840, 440, 980, 510),
+]
+
+# 광산 바위·버팀목 (left, bottom, right, top)
+MINE_ROCKS = [
+    (300, 430, 370, 600),
+    (540, 110, 690, 190),
+    (800, 400, 880, 560),
+    (960, 200, 1040, 300),
 ]
 
 # 글꼴 (Windows 기본 글꼴 맑은 고딕, 저장소에는 넣지 않는다). 없으면 글자 없이 실행된다.
@@ -56,5 +77,8 @@ COLOR_CHAMBER_EMPTY = (95, 94, 90)
 COLOR_HUD_TEXT = (244, 233, 212)
 COLOR_FLASH = (255, 190, 30)           # 총구 불꽃 (나무 바닥 위에서 보이게 진한 노랑)
 COLOR_FLASH_CORE = (255, 250, 235)
+COLOR_PICKER = (59, 109, 17)
+COLOR_BANDANA = (163, 45, 45)
+COLOR_BOUNTY = (99, 153, 34)
 COLOR_CROSSHAIR = (163, 45, 45)
 COLOR_CROSSHAIR_EMPTY = (136, 135, 128)

@@ -7,28 +7,63 @@ from ammo_ledger import AmmoLedger
 from bullet import Bullet
 from crosshair import Crosshair
 from hud import Hud
+from picker import Picker
 from player import Player
-from zone import Zone
+from zone import ZONES, Zone
+
+ENEMY_KINDS = {'picker': Picker}
+SPAWN_ENEMIES = True               # 자동 점검에서 플레이어·총알만 볼 때 끈다
 
 zone = None
 player = None
 ledger = None
+enemies = []
+zone_index = 0
 
 
 def init():
-    global zone, player, ledger
-    zone = Zone(config.SALOON_TABLES, 1, 'SALOON')
+    global zone_index
+    zone_index = 0
+    start_zone(0)
+
+
+def start_zone(index, keep=None):
+    # 구역 하나를 만든다. keep 은 다음 구역으로 넘어갈 때 이어받는 플레이어 (체력, 현상금)
+    global zone, player, ledger, enemies, zone_index
+    zone_index = index
+    data = ZONES[index]
+    game_world.clear()
+    zone = Zone(data['obstacles'], data['number'], data['name'], data['ammo'])
     game_world.add_object(zone, 0)
-    player = Player(zone, config.WIDTH // 2, config.HEIGHT // 2)
+    x, y = data['start']
+    player = Player(zone, x, y)
+    if keep is not None:
+        player.hp, player.bounty = keep.hp, keep.bounty
+        player.mouse = keep.mouse
     game_world.add_object(player, 1)
     # 구역의 총알은 여기서만 만든다. 이후에는 상태만 바뀌므로 총알 수가 늘거나 줄지 않는다.
-    player.held = [Bullet(zone) for _ in range(config.AMMO)]
+    player.held = [Bullet(zone) for _ in range(zone.ammo)]
     game_world.add_collision_pair('player:bullet', player, None)
+    enemies = []
+    if SPAWN_ENEMIES:
+        for kind, ex, ey in data['enemies']:
+            add_enemy(ENEMY_KINDS[kind], ex, ey)
     game_world.add_object(Hud(player, zone), 2)
-    ledger = AmmoLedger([player], config.AMMO)
+    ledger = AmmoLedger([player] + enemies, zone.ammo)
     game_world.add_object(ledger, 2)
     game_world.add_object(Crosshair(player), 2)     # UI 중 가장 위에 그린다
     hide_cursor()
+
+
+def add_enemy(cls, x, y):
+    e = cls(zone, player, x, y)
+    enemies.append(e)
+    if ledger is not None:
+        ledger.holders.append(e)
+    game_world.add_object(e, 1)
+    game_world.add_collision_pair('enemy:bullet', e, None)
+    game_world.add_collision_pair('player:enemy', player, e)
+    return e
 
 
 def handle_events():

@@ -14,10 +14,13 @@ def test(fn):
     return fn
 
 
-def fresh():
+def fresh(enemies=False):
+    # 기본은 적 없이 시작한다 (1주차 테스트는 플레이어와 총알만 본다). 적 테스트는 enemies=True 나 add_enemy 로.
     import game_framework
     import play_mode
     game_framework.running = True
+    game_framework.stack = [play_mode]
+    play_mode.SPAWN_ENEMIES = enemies
     play_mode.init()
     return play_mode
 
@@ -444,8 +447,7 @@ def flying_bullet(pm, x, y, vx, vy, bounces, age=None):
     b = pm.player.held.pop()
     b.fire(x, y, 0.0, 'player')
     b.vx, b.vy, b.bounces, b.age = vx, vy, bounces, age
-    game_world.add_object(b, 1)
-    game_world.add_collision_pair('player:bullet', None, b)
+    b.add_to_world()
     return b
 
 
@@ -770,8 +772,7 @@ def floor_bullet(pm, x, y):
     import game_world
     b = pm.player.held.pop()
     b.drop(x, y)
-    game_world.add_object(b, 1)
-    game_world.add_collision_pair('player:bullet', None, b)
+    b.add_to_world()
     return b
 
 
@@ -858,6 +859,106 @@ def dropped_bullet_lands_inside_the_floor():
     b = floor_bullet(pm, r + 50, t + 50)    # 벽 밖 좌표를 줘도 바닥 안으로 꺼낸다
     assert l <= b.x <= r and bt <= b.y <= t and b.state == 'FLOOR'
     assert pm.ledger.check()
+    pm.finish()
+
+
+# ---------------------------------------------------------------- 9. 2주차: 적 공통과 줍줍이
+
+def run_until(cond, limit=600):
+    # cond() 가 참이 될 때까지 프레임을 돌린다. 걸린 프레임 수를 돌려주고, 넘치면 실패
+    for i in range(limit):
+        if cond():
+            return i
+        sim.step(1)
+    raise AssertionError('%d 프레임 안에 조건이 이뤄지지 않음' % limit)
+
+
+@test
+def picker_walks_to_floor_bullet_picks_it_slowly_and_shoots_at_player():
+    import config, math
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 300, 360
+    b = floor_bullet(pm, 800, 360)
+    pk = pm.add_enemy(Picker, 950, 360)
+    run_until(lambda: pk.state == 'PICK')
+    assert b.state == 'PINNED' and pk.target is b, '줍기 시작 때 총알이 밟히지 않음'
+    frames = run_until(lambda: pk.state != 'PICK')
+    assert pk.state == 'SHOOT' and b in pk.held, '줍기 뒤 SHOOT 가 아님 (%s)' % pk.state
+    assert abs(frames - config.ENEMY_PICK_TIME * 60) <= 2, '줍기 동작 %d 프레임 (기대 약 %d)' % (frames, config.ENEMY_PICK_TIME * 60)
+    run_until(lambda: b.state == 'FLYING')
+    assert b.owner is pk
+    angle = math.atan2(b.vy, b.vx)
+    to_player = math.atan2(p.y - b.y, p.x - b.x)
+    assert abs(angle - to_player) < 0.1, '플레이어 쪽으로 쏘지 않음'
+    assert abs(math.hypot(b.vx, b.vy) - config.ENEMY_BULLET_SPEED) < 1
+    assert pm.ledger.problem is None and pm.ledger.counts['foes'] == 0
+    pm.finish()
+
+
+@test
+def picker_flees_when_there_is_nothing_to_pick():
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    pk = pm.add_enemy(Picker, p.x + 150, p.y + 40)
+    d0 = pk.distance_to(p)
+    sim.step(30)
+    assert pk.state == 'FLEE' and pk.distance_to(p) > d0 + 30, '총알이 없는데 도망가지 않음'
+    floor_bullet(pm, 200, 200)
+    sim.step(2)
+    assert pk.state in ('SEEK', 'PICK'), '바닥 총알이 생겼는데 주우러 가지 않음'
+    pm.finish()
+
+
+@test
+def shooting_a_picker_kills_it_drops_its_bullets_and_pays_bounty():
+    import config
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    pk = pm.add_enemy(Picker, p.x + 250, p.y)
+    pk.held = [p.held.pop(), p.held.pop()]   # 줍줍이가 두 발을 가진 상태
+    pk.state = 'FLEE'                        # 움직임 대신 맞는 것만 본다
+    pk.SPEED = 0
+    aim(p, 0)
+    p.fire()
+    run_until(lambda: not pk.alive, 60)
+    assert p.bounty == 50, '현상금 %d' % p.bounty
+    sim.step(1)
+    floor = [b for b in bullets_in_world() if b.state == 'FLOOR']
+    assert len(floor) == 3, '바닥 총알 %d발 (맞힌 1발 + 떨어뜨린 2발)' % len(floor)
+    assert pm.ledger.problem is None and sum(pm.ledger.counts.values()) == config.AMMO
+    pm.finish()
+
+
+@test
+def enemy_bullet_hurts_player_but_passes_other_enemies_until_it_bounces():
+    import config, math
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    shooter = pm.add_enemy(Picker, p.x + 300, p.y)
+    middle = pm.add_enemy(Picker, p.x + 150, p.y)
+    for e in (shooter, middle):
+        e.state, e.SPEED = 'FLEE', 0
+    shooter.held = [p.held.pop()]
+    shooter.shoot()
+    run_until(lambda: p.hp < config.PLAYER_HP, 60)
+    assert middle.alive and middle.hp == 1, '튕기지 않은 적 총알에 다른 적이 맞음'
+    pm.finish()
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 200, 600
+    l, b, r, t = pm.zone.inner
+    e = pm.add_enemy(Picker, r - 120, 360)
+    e.state, e.SPEED = 'FLEE', 0
+    bl = p.held.pop()
+    bl.fire(e.x, e.y, 0.0, e, speed=config.ENEMY_BULLET_SPEED)   # 벽 쪽으로 쏘게 한다
+    bl.add_to_world()
+    run_until(lambda: not e.alive, 60)
+    assert bl.bounces == 1, '자기 총알에 튕기기 전에 맞음'
     pm.finish()
 
 

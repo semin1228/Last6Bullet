@@ -8,8 +8,9 @@ import config
 
 
 class Zone:
-    def __init__(self, obstacles=(), number=1, name='SALOON'):
+    def __init__(self, obstacles=(), number=1, name='SALOON', ammo=config.AMMO):
         w, h, t = config.WIDTH, config.HEIGHT, config.WALL
+        self.number, self.name, self.ammo = number, name, ammo
         self.title = 'ZONE %d · %s' % (number, name)  # 위쪽 HUD 에 표시 (PRD 15-2 play_mode). 화면 글자는 영어 (PRD 14장)
         self.inner = (t, t, w - t, h - t)      # 벽 안쪽 바닥 영역 (left, bottom, right, top)
         self.obstacles = list(obstacles)       # 장애물 사각형 목록 (left, bottom, right, top)
@@ -77,3 +78,14 @@ class Zone:
                 bullet.vy = -vy
             hit = True
         return hit
+
+
+# 구역 데이터 (PRD 7장). 적은 (종류, x, y). 플레이어는 start 에서 시작하고, 적을 모두 쓰러뜨리면 오른쪽 문이 열린다.
+ZONES = [
+    {'number': 1, 'name': 'SALOON', 'ammo': 6, 'obstacles': config.SALOON_TABLES, 'dark': False,
+     'start': (config.WIDTH // 2, config.HEIGHT // 2),
+     'enemies': [('picker', 1120, 600), ('picker', 1120, 130)]},
+    {'number': 2, 'name': 'MINE', 'ammo': 5, 'obstacles': config.MINE_ROCKS, 'dark': True,
+     'start': (110, config.HEIGHT // 2),
+     'enemies': [('picker', 1100, 610), ('picker', 760, 640)]},
+]

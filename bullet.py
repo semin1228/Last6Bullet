@@ -12,6 +12,7 @@ from transitions import Machine
 import config
 import effect
 import game_framework
+import game_world
 
 
 class Bullet:
@@ -58,6 +59,12 @@ class Bullet:
         self.vx = math.cos(angle) * config.ROLL_SPEED
         self.vy = math.sin(angle) * config.ROLL_SPEED
         self.bounces = 0
+
+    def add_to_world(self):
+        # 손을 떠난 총알을 월드에 넣고, 플레이어·적과의 충돌 검사에 등록한다
+        game_world.add_object(self, 1)
+        game_world.add_collision_pair('player:bullet', None, self)
+        game_world.add_collision_pair('enemy:bullet', None, self)
 
     def on_enter_FLOOR(self, *args, **kwargs):   # drop(x, y) 처럼 트리거 인자가 같이 넘어온다
         self.vx = self.vy = 0.0
