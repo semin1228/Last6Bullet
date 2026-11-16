@@ -101,10 +101,13 @@ class Player:
         self.kick_cooldown = config.KICK_COOLDOWN
         self.kick_time = config.KICK_TIME
         self.start_kick()
-        targets = [o for o in game_world.objects() if self.in_kick_fan(o)]
-        floor = [o for o in targets if getattr(o, 'state', None) == 'FLOOR' and hasattr(o, 'roll')]
+        from bullet import Bullet
+        from enemy import Enemy
+        # 찰 수 있는 것은 적과 총알뿐이다 (연출 Ring 처럼 x, radius 를 가진 다른 오브젝트는 제외)
+        targets = [o for o in game_world.objects() if isinstance(o, (Enemy, Bullet)) and self.in_kick_fan(o)]
+        floor = [o for o in targets if isinstance(o, Bullet) and o.state == 'FLOOR']
         for o in targets:
-            if hasattr(o, 'on_kicked'):
+            if isinstance(o, Enemy):
                 o.on_kicked(self.aim)
         for b in floor:            # 적이 떨어뜨린 총알은 굴리지 않고, 원래 바닥에 있던 것만 굴린다
             b.kick(self.aim)
@@ -112,8 +115,6 @@ class Player:
         return True
 
     def in_kick_fan(self, o):
-        if o is self or not hasattr(o, 'radius') or not hasattr(o, 'x'):
-            return False
         dx, dy = o.x - self.x, o.y - self.y
         d = math.hypot(dx, dy)
         if d > self.radius + config.KICK_RANGE + o.radius:
