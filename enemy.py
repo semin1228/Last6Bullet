@@ -39,6 +39,7 @@ class Enemy:
         self.alive = True
         self.detour = 0.0          # 장애물에 막혔을 때 옆으로 비켜 걷는 남은 시간
         self.detour_dir = (0.0, 0.0)
+        self.detour_side = random.choice((-1, 1))   # 비켜 걷는 쪽 (막힐 때마다 바꾸지 않고 유지)
         self.machine = Machine(
             model=self,
             states=self.STATES + ['STUN'],
@@ -68,9 +69,11 @@ class Enemy:
         return self.distance_to(o) <= self.radius + o.radius + reach
 
     def move(self, dx, dy, speed):
-        # (dx, dy) 방향으로 speed 만큼 움직인다. 장애물에 막혀 거의 못 가면 잠깐 옆으로 비켜 걷는다.
+        # (dx, dy) 방향으로 speed 만큼 움직인다. 장애물 면에 정면으로 막혀 거의 못 가면
+        # 테이블 하나를 돌아갈 만큼(DETOUR_DIST) 옆으로 비켜 걷는다. 비켜 걷다가도 막히면 반대쪽으로.
         dt = game_framework.frame_time
-        if self.detour > 0:
+        detouring = self.detour > 0
+        if detouring:
             self.detour -= dt
             dx, dy = self.detour_dir
         length = math.hypot(dx, dy)
@@ -81,10 +84,15 @@ class Enemy:
         nx, ny = self.zone.push_out(self.x + dx * speed * dt, self.y + dy * speed * dt, self.radius)
         moved = math.hypot(nx - self.x, ny - self.y)
         self.x, self.y = nx, ny
-        if self.detour <= 0 and moved < speed * dt * 0.3:
-            side = random.choice((-1, 1))
+        if moved >= speed * dt * 0.3:
+            return
+        if detouring:                                   # 비켜 걷는 쪽도 막힘: 반대쪽으로
+            self.detour_side = -self.detour_side
+            self.detour_dir = (-dx, -dy)
+        else:
+            side = self.detour_side
             self.detour_dir = (-dy * side, dx * side)   # 가려던 방향의 옆
-            self.detour = 0.4
+        self.detour = config.DETOUR_DIST / speed
 
     def move_toward(self, x, y, speed=None):
         self.move(x - self.x, y - self.y, speed or self.SPEED)
@@ -202,7 +210,8 @@ class Enemy:
             if self.touching(other, 0) and self.can_be_hit_by(other):
                 self.hit_by(other)
         elif group == 'player:enemy':
-            if self.TOUCH_DAMAGE and self.state != 'STUN' and self.touching(other, 0):
+            # 서로 밀어 내서 딱 붙은 거리에 있으므로 3px 여유를 둔다
+            if self.TOUCH_DAMAGE and self.state != 'STUN' and self.touching(other, 3):
                 other.hurt()
                 self.on_touch_player()
 

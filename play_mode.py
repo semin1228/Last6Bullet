@@ -7,11 +7,13 @@ from ammo_ledger import AmmoLedger
 from bullet import Bullet
 from crosshair import Crosshair
 from hud import Hud
+from dog import Dog
+from drunk import Drunk
 from picker import Picker
 from player import Player
 from zone import ZONES, Zone
 
-ENEMY_KINDS = {'picker': Picker}
+ENEMY_KINDS = {'picker': Picker, 'drunk': Drunk, 'dog': Dog}
 SPAWN_ENEMIES = True               # 자동 점검에서 플레이어·총알만 볼 때 끈다
 
 zone = None

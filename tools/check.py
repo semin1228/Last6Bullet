@@ -1,6 +1,7 @@
 # 자동 점검: 기능마다 명세를 테스트로 옮겨 두고, 게임 루프를 고정 프레임으로 돌려 확인한다.
 #   C:\Python313\python.exe tools\check.py            창 없이 실행
 #   C:\Python313\python.exe tools\check.py --window   창을 띄워 실행
+import random
 import sys
 import traceback
 
@@ -21,6 +22,7 @@ def fresh(enemies=False):
     game_framework.running = True
     game_framework.stack = [play_mode]
     play_mode.SPAWN_ENEMIES = enemies
+    random.seed(7)                 # 적이 비켜 걷는 방향 등 무작위 값을 매번 같게 (결과가 실행마다 달라지지 않게)
     play_mode.init()
     return play_mode
 
@@ -898,6 +900,34 @@ def picker_walks_to_floor_bullet_picks_it_slowly_and_shoots_at_player():
 
 
 @test
+def enemies_get_around_every_table_to_a_bullet_behind_it():
+    # 실제로 찾은 문제: 테이블 바로 뒤의 총알로 곧장 가다 테이블에 막히면, 매번 무작위 방향으로 0.4초만
+    # 비켜 걸어 좌우를 오가며 갇혔다 (들개 테스트가 5번 중 1번 실패).
+    import config
+    from picker import Picker
+    from dog import Dog
+    for seed in range(4):
+        for l, b, r, t in config.SALOON_TABLES:
+            for cls in (Picker, Dog):
+                for below in (True, False):
+                    pm = fresh()
+                    import random as rnd
+                    rnd.seed(seed)
+                    pm.player.x, pm.player.y = 60, 60
+                    cx = (l + r) / 2
+                    by, ey = (b - 10, t + 30) if below else (t + 10, b - 30)
+                    bl = floor_bullet(pm, cx, by)
+                    e = pm.add_enemy(cls, cx, ey)
+                    for f in range(360):
+                        sim.step(1)
+                        if bl in e.held:
+                            break
+                    assert bl in e.held, '%s 가 테이블 %s 너머 총알을 6초 안에 못 주움 (seed %d)' % (
+                        cls.__name__, (l, b, r, t), seed)
+                    pm.finish()
+
+
+@test
 def picker_flees_when_there_is_nothing_to_pick():
     from picker import Picker
     pm = fresh()
@@ -959,6 +989,68 @@ def enemy_bullet_hurts_player_but_passes_other_enemies_until_it_bounces():
     bl.add_to_world()
     run_until(lambda: not e.alive, 60)
     assert bl.bounces == 1, '자기 총알에 튕기기 전에 맞음'
+    pm.finish()
+
+
+@test
+def drunk_charges_body_hits_once_and_bounces_off():
+    import config
+    from drunk import Drunk
+    pm = fresh()
+    p = pm.player
+    d = pm.add_enemy(Drunk, p.x + 250, p.y)
+    run_until(lambda: p.hp < config.PLAYER_HP, 180)
+    assert d.state == 'STUN', '부딪힌 뒤 튕겨 나가지 않음'
+    gap = d.distance_to(p)
+    sim.step(10)
+    assert d.distance_to(p) > gap + 20, '부딪힌 뒤 떨어지지 않음'
+    assert p.hp == config.PLAYER_HP - 1, '한 번 부딪혔는데 체력이 %d 줄어듦' % (config.PLAYER_HP - p.hp)
+    pm.finish()
+
+
+@test
+def drunk_takes_two_bullets():
+    from drunk import Drunk
+    pm = fresh()
+    p = pm.player
+    d = pm.add_enemy(Drunk, p.x + 300, p.y)
+    d.SPEED = 0
+    aim(p, 0)
+    p.fire()
+    run_until(lambda: d.hp == 1, 60)
+    assert d.alive
+    sim.step(12)
+    p.fire()
+    run_until(lambda: not d.alive, 60)
+    assert p.bounty == 30
+    pm.finish()
+
+
+@test
+def hound_swallows_bullets_and_kick_makes_it_spit_all():
+    from dog import Dog
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 150, 600
+    b1, b2 = floor_bullet(pm, 700, 200), floor_bullet(pm, 820, 220)
+    dog = pm.add_enemy(Dog, 1000, 200)
+    run_until(lambda: len(dog.held) == 2, 300)
+    sim.step(1)                    # 삼킨 그 프레임은 SEEK, 주울 게 없음을 다음 프레임에 알고 ROAM
+    assert b1.state == b2.state == 'HELD' and dog.state == 'ROAM', '두 발을 삼킨 뒤 어슬렁거리지 않음 (%s)' % dog.state
+    assert pm.ledger.counts['foes'] == 2
+    dog.SPEED = 0
+    dog.state = 'ROAM'
+    p.x, p.y = dog.x - 40, dog.y
+    import config
+    config_speed = config.DOG_ROAM_SPEED
+    config.DOG_ROAM_SPEED = 0
+    try:
+        aim(p, 0)
+        p.kick()
+        assert dog.held == [] and dog.state == 'STUN', '차도 삼킨 총알을 토하지 않음'
+        assert pm.ledger.check()
+    finally:
+        config.DOG_ROAM_SPEED = config_speed
     pm.finish()
 
 
@@ -1046,6 +1138,21 @@ def kick_rolls_floor_bullet_in_aim_direction():
     p.kick()
     assert b.state == 'ROLLING', '바닥 총알이 굴러가지 않음'
     assert abs(math.atan2(b.vy, b.vx) - math.pi / 2) < 0.01, '조준 방향으로 굴러가지 않음'
+    pm.finish()
+
+
+@test
+def kicking_right_after_a_pickup_ring_does_not_crash():
+    # 실제로 찾은 버그: 줍기·피격 고리(Ring)는 radius() 메서드를 가져서, 발차기 판정이 이것을
+    # 찰 대상으로 보고 '정수 + 메서드' 로 계산하다 게임이 멈췄다.
+    pm = fresh()
+    p = pm.player
+    b = floor_bullet(pm, p.x + 10, p.y)
+    sim.step(1)                    # 주우면서 고리 연출이 생긴다
+    from effect import Ring
+    assert effects(Ring), '고리 연출이 없음 (검사 전제)'
+    aim(p, 0)
+    assert p.kick() is True
     pm.finish()
 
 
