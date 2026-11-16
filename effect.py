@@ -109,3 +109,17 @@ def pickup_ring(x, y):
 
 def hit_ring(x, y):
     return Ring(x, y, config.COLOR_HP, 16, 36, 0.3)
+
+
+class KickArc(Effect):
+    # 발차기 판정 범위를 잠깐 보여 주는 호 (조준 방향 좌우 KICK_HALF_ANGLE)
+    def __init__(self, x, y, angle, life=0.15):
+        super().__init__(x, y, life)
+        self.angle = angle
+
+    def draw(self):
+        r = config.PLAYER_RADIUS + config.KICK_RANGE * (0.6 + 0.4 * self.progress())
+        half = math.radians(config.KICK_HALF_ANGLE)
+        for i in range(9):
+            a = self.angle - half + 2 * half * i / 8
+            draw_circle(self.x + math.cos(a) * r, self.y + math.sin(a) * r, 2, *config.COLOR_BOOT, filled=True)

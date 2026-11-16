@@ -962,6 +962,109 @@ def enemy_bullet_hurts_player_but_passes_other_enemies_until_it_bounces():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 10. 2주차: 발차기
+
+def still_picker(pm, x, y):
+    from picker import Picker
+    e = pm.add_enemy(Picker, x, y)
+    e.state, e.SPEED = 'FLEE', 0           # 스스로 움직이지 않게 (발차기 효과만 본다)
+    return e
+
+
+@test
+def kick_pushes_and_stuns_enemy_in_front_without_damage():
+    import config
+    from pico2d import SDLK_SPACE
+    pm = fresh()
+    p = pm.player
+    e = still_picker(pm, p.x + 45, p.y)
+    aim(p, 0)
+    sim.key_down(SDLK_SPACE)
+    assert p.state == 'KICK' and e.state == 'STUN', '앞의 적이 기절하지 않음 (%s)' % e.state
+    assert e.hp == 1 and e.alive, '발차기에 데미지가 있음'
+    x0 = e.x
+    sim.step(10)
+    assert e.x > x0 + 30, '밀려나지 않음 (%.1f px)' % (e.x - x0)
+    assert p.state == 'IDLE', '0.15초 뒤 발차기 상태가 끝나지 않음'
+    sim.step(int(config.ENEMY_STUN_TIME * 60))
+    assert e.state != 'STUN', '0.7초 뒤 깨어나지 않음'
+    pm.finish()
+
+
+@test
+def kick_misses_enemy_behind_and_has_cooldown():
+    import config
+    from pico2d import SDLK_SPACE
+    pm = fresh()
+    p = pm.player
+    behind = still_picker(pm, p.x - 45, p.y)
+    aim(p, 0)
+    assert p.kick() is True
+    assert behind.state != 'STUN', '등 뒤의 적이 차임'
+    sim.step(12)
+    front = still_picker(pm, p.x + 45, p.y)
+    assert p.kick() is False and front.state != 'STUN', '쿨타임 중에 또 참'
+    sim.step(int(config.KICK_COOLDOWN * 60))
+    assert p.kick() is True and front.state == 'STUN'
+    pm.finish()
+
+
+@test
+def kick_knocks_one_bullet_loose_and_breaks_a_pickup():
+    import config
+    pm = fresh()
+    p = pm.player
+    e = still_picker(pm, p.x + 45, p.y)
+    e.held = [p.held.pop(), p.held.pop()]
+    aim(p, 0)
+    p.kick()
+    assert len(e.held) == 2 - config.KICK_DROPS, '떨어뜨린 총알 수가 다름'
+    assert pm.ledger.check()
+    pm.finish()
+    pm = fresh()
+    p = pm.player
+    b = floor_bullet(pm, p.x + 120, p.y)
+    e = still_picker(pm, p.x + 140, p.y)
+    e.start_pick(b)
+    e.state = 'PICK'
+    p.x = e.x - 45
+    aim(p, 0)
+    p.kick()
+    assert b.state == 'FLOOR' and e.target is None and e.state == 'STUN', '줍기가 끊기지 않음'
+    sim.step(int(config.ENEMY_PICK_TIME * 60) + 5)
+    assert b not in e.held, '끊긴 뒤에도 주움'
+    pm.finish()
+
+
+@test
+def kick_rolls_floor_bullet_in_aim_direction():
+    import math
+    pm = fresh()
+    p = pm.player
+    b = floor_bullet(pm, p.x + 30, p.y + 30)   # 45도 방향, 줍는 거리 밖
+    aim(p, 90)                                   # 위를 보고 찬다 (총알은 부채꼴 안)
+    p.kick()
+    assert b.state == 'ROLLING', '바닥 총알이 굴러가지 않음'
+    assert abs(math.atan2(b.vy, b.vx) - math.pi / 2) < 0.01, '조준 방향으로 굴러가지 않음'
+    pm.finish()
+
+
+@test
+def can_move_while_kicking_and_returns_to_run():
+    import config
+    from pico2d import SDLK_d
+    pm = fresh()
+    p = pm.player
+    sim.key_down(SDLK_d)
+    p.kick()
+    x0 = p.x
+    sim.step(5)
+    assert p.state == 'KICK' and p.x > x0, '발차기 중에 움직이지 않음'
+    sim.step(10)
+    assert p.state == 'RUN', '키를 누른 채 발차기가 끝나면 RUN 이어야 함 (%s)' % p.state
+    pm.finish()
+
+
 def main():
     sim.open_game('--window' in sys.argv)
     from pico2d import close_canvas

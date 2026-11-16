@@ -1,8 +1,8 @@
 # 보안관(플레이어). 위에서 내려다본 모습: 몸통 원, 모자 원, 마우스 쪽으로 향한 총.
 import math
 
-from pico2d import (SDL_BUTTON_LEFT, SDL_KEYDOWN, SDL_KEYUP, SDL_MOUSEBUTTONDOWN,
-                    SDL_MOUSEMOTION, SDLK_a, SDLK_d, SDLK_s, SDLK_w, draw_circle, draw_line)
+from pico2d import (SDL_BUTTON_LEFT, SDL_BUTTON_RIGHT, SDL_KEYDOWN, SDL_KEYUP, SDL_MOUSEBUTTONDOWN,
+                    SDL_MOUSEMOTION, SDLK_SPACE, SDLK_a, SDLK_d, SDLK_s, SDLK_w, draw_circle, draw_line)
 from transitions import Machine
 
 import config
@@ -27,13 +27,19 @@ class Player:
         self.invincible = 0.0      # 남은 무적 시간 (초)
         self.dry_flash = 0.0       # 빈 총을 당긴 뒤 HUD 실린더가 붉게 보이는 남은 시간 (초)
         self.bounty = 0            # 쓰러뜨린 수배자 현상금 합계 (점수)
+        self.kick_cooldown = 0.0   # 다음 발차기까지 남은 시간 (초)
+        self.kick_time = 0.0       # 발차기 동작(KICK 상태) 남은 시간 (초)
 
         self.machine = Machine(
             model=self,
-            states=['IDLE', 'RUN'],
+            states=['IDLE', 'RUN', 'KICK'],
             transitions=[
                 {'trigger': 'start_run', 'source': 'IDLE', 'dest': 'RUN'},
                 {'trigger': 'stop_run', 'source': 'RUN', 'dest': 'IDLE'},
+                {'trigger': 'start_kick', 'source': ['IDLE', 'RUN'], 'dest': 'KICK'},
+                # 발차기가 끝나면 이동 키를 누르고 있는지에 따라 RUN 또는 IDLE 로 (PRD 15-4: Kick -> Idle 0.15초)
+                {'trigger': 'end_kick', 'source': 'KICK', 'dest': 'RUN', 'conditions': 'is_moving'},
+                {'trigger': 'end_kick', 'source': 'KICK', 'dest': 'IDLE'},
             ],
             initial='IDLE',
             auto_transitions=False,
@@ -56,6 +62,8 @@ class Player:
             self.mouse = (event.x, config.HEIGHT - 1 - event.y)  # SDL 은 좌상단 원점이라 뒤집는다
         elif event.type == SDL_MOUSEBUTTONDOWN and event.button == SDL_BUTTON_LEFT:
             self.fire()
+        elif (event.type == SDL_KEYDOWN and event.key == SDLK_SPACE) or                 (event.type == SDL_MOUSEBUTTONDOWN and event.button == SDL_BUTTON_RIGHT):
+            self.kick()
         self.update_run_state()
 
     def gun_reach(self):
@@ -84,7 +92,43 @@ class Player:
         self.fire_cooldown = config.FIRE_COOLDOWN   # 연타해도 글자가 겹겹이 쌓이지 않게
         effect.spawn(effect.TextPop(self.x, self.y + self.radius + 6, 'CLICK', config.COLOR_CROSSHAIR))
 
+    def kick(self):
+        # 발차기 (PRD 6장): 데미지 없음. 조준 방향 앞 부채꼴 안의 적을 밀치고 기절시키며,
+        # 줍기를 끊고 1발을 떨어뜨리게 한다. 부채꼴 안의 바닥 총알은 조준 방향으로 굴린다.
+        if self.kick_cooldown > 0 or self.state == 'KICK':
+            return False
+        self.update_aim()
+        self.kick_cooldown = config.KICK_COOLDOWN
+        self.kick_time = config.KICK_TIME
+        self.start_kick()
+        targets = [o for o in game_world.objects() if self.in_kick_fan(o)]
+        floor = [o for o in targets if getattr(o, 'state', None) == 'FLOOR' and hasattr(o, 'roll')]
+        for o in targets:
+            if hasattr(o, 'on_kicked'):
+                o.on_kicked(self.aim)
+        for b in floor:            # 적이 떨어뜨린 총알은 굴리지 않고, 원래 바닥에 있던 것만 굴린다
+            b.kick(self.aim)
+        effect.spawn(effect.KickArc(self.x, self.y, self.aim))
+        return True
+
+    def in_kick_fan(self, o):
+        if o is self or not hasattr(o, 'radius') or not hasattr(o, 'x'):
+            return False
+        dx, dy = o.x - self.x, o.y - self.y
+        d = math.hypot(dx, dy)
+        if d > self.radius + config.KICK_RANGE + o.radius:
+            return False
+        if d <= self.radius + o.radius:
+            return True            # 몸에 붙어 있으면 방향과 상관없이 찬다
+        diff = (math.atan2(dy, dx) - self.aim + math.pi) % (2 * math.pi) - math.pi
+        return abs(diff) <= math.radians(config.KICK_HALF_ANGLE)
+
+    def is_moving(self):
+        return self.direction() != (0.0, 0.0)
+
     def update_run_state(self):
+        if self.state == 'KICK':
+            return                 # 발차기 중에는 끝날 때 end_kick 이 정한다
         moving = self.direction() != (0.0, 0.0)
         if moving and self.state == 'IDLE':
             self.start_run()
@@ -100,7 +144,12 @@ class Player:
         self.fire_cooldown = max(0.0, self.fire_cooldown - game_framework.frame_time)
         self.invincible = max(0.0, self.invincible - game_framework.frame_time)
         self.dry_flash = max(0.0, self.dry_flash - game_framework.frame_time)
-        if self.state == 'RUN':
+        self.kick_cooldown = max(0.0, self.kick_cooldown - game_framework.frame_time)
+        if self.state == 'KICK':
+            self.kick_time -= game_framework.frame_time
+            if self.kick_time <= 0:
+                self.end_kick()
+        if self.state in ('RUN', 'KICK'):   # 발차기 중에도 걷던 방향으로는 계속 움직인다
             dx, dy = self.direction()
             step = config.PLAYER_SPEED * game_framework.frame_time
             self.x, self.y = self.zone.push_out(self.x + dx * step, self.y + dy * step, self.radius)
@@ -125,6 +174,11 @@ class Player:
         gx, gy = self.x + cx * self.gun_reach(), self.y + cy * self.gun_reach()
         for o in (-1, 0, 1):  # 두께 3px 총신
             draw_line(self.x - cy * o, self.y + cx * o, gx - cy * o, gy + cx * o, *config.COLOR_GUN)
+        if self.state == 'KICK':  # 차는 발: 몸에서 조준 방향으로 뻗는 굵은 선
+            reach = self.radius + config.KICK_RANGE * 0.6
+            for o in (-2, -1, 0, 1, 2):
+                draw_line(self.x - cy * o, self.y + cx * o, self.x + cx * reach - cy * o,
+                          self.y + cy * reach + cx * o, *config.COLOR_BOOT)
         draw_circle(self.x, self.y, self.radius, *config.COLOR_PLAYER, filled=True)
         draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_HAT, filled=True)
         for i in range(self.zone.ammo):  # 발밑에 남은 총알 표시 (구역 총알 수만큼)
