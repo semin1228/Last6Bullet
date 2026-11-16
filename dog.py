@@ -27,7 +27,6 @@ class Dog(Enemy):
         {'trigger': 'lost_bullet', 'source': 'PICK', 'dest': 'SEEK'},
         {'trigger': 'nothing_to_pick', 'source': 'SEEK', 'dest': 'ROAM'},
         {'trigger': 'bullet_appeared', 'source': 'ROAM', 'dest': 'SEEK'},
-        {'trigger': 'bump', 'source': ['SEEK', 'ROAM'], 'dest': 'STUN'},
     ]
 
     def __init__(self, zone, player, x, y):
@@ -64,13 +63,6 @@ class Dog(Enemy):
                 self.roam_to = (random.uniform(l + 40, r - 40), random.uniform(b + 40, t - 40))
                 self.timer = config.DOG_ROAM_TIME
             self.move_toward(*self.roam_to, config.DOG_ROAM_SPEED)
-
-    def on_touch_player(self):
-        p = self.player
-        a = math.atan2(self.y - p.y, self.x - p.x)
-        self.bump()
-        self.timer = config.BUMP_STUN_TIME
-        self.push = (math.cos(a) * config.KICK_PUSH_SPEED, math.sin(a) * config.KICK_PUSH_SPEED)
 
     def draw_body(self, cx, cy):
         # 들개: 몸통 원 + 바라보는 쪽 머리 원 + 귀

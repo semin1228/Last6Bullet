@@ -19,9 +19,7 @@ class Drunk(Enemy):
     TOUCH_DAMAGE = True
     START = 'CHARGE'
     STATES = ['CHARGE']
-    TRANSITIONS = [
-        {'trigger': 'bump', 'source': 'CHARGE', 'dest': 'STUN'},
-    ]
+    TRANSITIONS = []               # CHARGE 하나뿐. STUN 은 Enemy 공통 (발차기, 부딪힌 뒤 튕김)
 
     def __init__(self, zone, player, x, y):
         super().__init__(zone, player, x, y)
@@ -32,14 +30,6 @@ class Drunk(Enemy):
         p = self.player
         a = math.atan2(p.y - self.y, p.x - self.x) + math.sin(self.sway) * config.DRUNK_SWAY_ANGLE
         self.move(math.cos(a), math.sin(a), self.SPEED)
-
-    def on_touch_player(self):
-        # 부딪힌 뒤에는 튕겨 나가 잠깐 멈춘다 (붙어서 계속 때리지 않게)
-        p = self.player
-        a = math.atan2(self.y - p.y, self.x - p.x)
-        self.bump()
-        self.timer = config.BUMP_STUN_TIME
-        self.push = (math.cos(a) * config.KICK_PUSH_SPEED, math.sin(a) * config.KICK_PUSH_SPEED)
 
     def draw_body(self, cx, cy):
         # 술꾼: 보라색 큰 몸, 손에 든 술병

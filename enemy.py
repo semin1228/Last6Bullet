@@ -1,6 +1,7 @@
 # 적 공통 부모 (PRD 15-3 Enemy). 가까운 바닥 총알 찾기, 줍기 동작(PINNED), 기절, 맞기, 쓰러질 때 총알 떨어뜨리기.
 # 행동(상태 머신)은 Picker / Drunk / Dog 가 각자 정한다. 모든 적은 STUN 상태를 갖고,
-# 'kicked' 트리거로 어느 상태에서든 STUN 에 들어가며 'recover' 로 처음 상태로 돌아간다.
+# 'stagger' 트리거로 어느 상태에서든(줍는 중 포함) STUN 에 들어가며 'recover' 로 처음 상태로 돌아간다.
+# 발차기에 맞을 때와 몸으로 부딪힌 뒤 튕겨 나갈 때 모두 stagger 를 쓴다.
 import math
 import random
 
@@ -44,7 +45,7 @@ class Enemy:
             model=self,
             states=self.STATES + ['STUN'],
             transitions=self.TRANSITIONS + [
-                {'trigger': 'kicked', 'source': '*', 'dest': 'STUN'},
+                {'trigger': 'stagger', 'source': '*', 'dest': 'STUN'},
                 {'trigger': 'recover', 'source': 'STUN', 'dest': self.START, 'after': 'after_recover'},
             ],
             initial=self.START,
@@ -173,11 +174,15 @@ class Enemy:
         # 발차기: 데미지 없음. 밀려나고 0.7초 기절, 줍기는 끊기고 총알 1발을 떨어뜨린다 (PRD 6장)
         if not self.alive:
             return
-        self.cancel_pick()
-        self.kicked()
-        self.timer = config.ENEMY_STUN_TIME
-        self.push = (math.cos(angle) * config.KICK_PUSH_SPEED, math.sin(angle) * config.KICK_PUSH_SPEED)
+        self.knock_back(angle, config.ENEMY_STUN_TIME)
         self.drop_bullets(self.kick_drop_count())
+
+    def knock_back(self, angle, stun_time):
+        # angle 쪽으로 밀려나며 stun_time 동안 기절. 줍는 중이었으면 줍기가 끊긴다.
+        self.cancel_pick()
+        self.stagger()
+        self.timer = stun_time
+        self.push = (math.cos(angle) * config.KICK_PUSH_SPEED, math.sin(angle) * config.KICK_PUSH_SPEED)
 
     def kick_drop_count(self):
         return config.KICK_DROPS
@@ -216,7 +221,9 @@ class Enemy:
                 self.on_touch_player()
 
     def on_touch_player(self):
-        pass
+        # 부딪힌 뒤에는 튕겨 나가 잠깐 멈춘다 (붙어서 계속 때리지 않게)
+        p = self.player
+        self.knock_back(math.atan2(self.y - p.y, self.x - p.x), config.BUMP_STUN_TIME)
 
     def after_recover(self):
         # 기절에서 깨어난 직후 (트리거 이름과 같은 메서드를 만들면 transitions 가 트리거를 붙이지 않아서 따로 둔다)
