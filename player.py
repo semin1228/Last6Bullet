@@ -29,6 +29,7 @@ class Player:
         self.bounty = 0            # 쓰러뜨린 수배자 현상금 합계 (점수)
         self.kick_cooldown = 0.0   # 다음 발차기까지 남은 시간 (초)
         self.kick_time = 0.0       # 발차기 동작(KICK 상태) 남은 시간 (초)
+        self.push = (0.0, 0.0)     # 밀쳐져서 밀려나는 속도 (px/초)
 
         self.machine = Machine(
             model=self,
@@ -150,6 +151,11 @@ class Player:
             self.kick_time -= game_framework.frame_time
             if self.kick_time <= 0:
                 self.end_kick()
+        px, py = self.push
+        if (px, py) != (0.0, 0.0):          # 밀쳐져서 밀려나는 중 (점점 줄어든다)
+            dt = game_framework.frame_time
+            self.x, self.y = self.zone.push_out(self.x + px * dt, self.y + py * dt, self.radius)
+            self.push = (px * 0.85, py * 0.85) if math.hypot(px, py) > 10 else (0.0, 0.0)
         if self.state in ('RUN', 'KICK'):   # 발차기 중에도 걷던 방향으로는 계속 움직인다
             dx, dy = self.direction()
             step = config.PLAYER_SPEED * game_framework.frame_time
@@ -201,6 +207,18 @@ class Player:
             # 튕긴 총알은 누구 것이든, 적이 쏜 총알은 튕기지 않아도 맞는다 (PRD 15-5)
             self.hurt()
             other.land()           # 맞힌 총알은 그 자리에 떨어진다
+
+    def shoved(self, angle, x, y):
+        # 빈손 줍줍이에게 밀침: angle 쪽으로 밀려나고, 손의 총알 1발이 (x, y)(줍줍이 발밑)에 떨어진다.
+        # 플레이어는 밀려나서 바로 다시 줍지 못하고, 줍줍이가 줍는 0.25초 사이에 발차기로 끊을 수 있다.
+        if not self.held:
+            return False
+        b = self.held.pop()
+        b.drop(x, y)
+        b.add_to_world()
+        self.push = (math.cos(angle) * config.SHOVE_PUSH_SPEED, math.sin(angle) * config.SHOVE_PUSH_SPEED)
+        effect.spawn(effect.Ring(b.x, b.y, config.COLOR_BULLET_ENEMY, 5, 16, 0.25))
+        return True
 
     def pick_up(self, bullet):
         bullet.pick_up()

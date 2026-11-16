@@ -2,11 +2,14 @@
 #   SEEK -> PICK(바닥 총알에 닿음) -> SHOOT(줍기 완료) -> SEEK(총알 다 씀)
 #   SEEK -> FLEE(주울 총알도, 가진 총알도 없음) -> SEEK(바닥 총알 생김)
 #   어느 상태든 발차기 -> STUN(0.7초) -> SEEK
+#   빈손일 때(SEEK, FLEE) 플레이어에게 닿으면 밀쳐서 플레이어 총알 1발을 발밑에 떨어뜨리게 한다 (1.5초 간격).
+#   총알을 쥐고 쫓아가 가까이에서 쏘는 것만 하면 위험이 없던 문제를 막는다 (기획서 리뷰 반영).
 import math
 
 from pico2d import draw_circle, draw_line
 
 import config
+import effect
 import game_framework
 from enemy import Enemy
 
@@ -29,12 +32,31 @@ class Picker(Enemy):
         {'trigger': 'armed', 'source': 'SEEK', 'dest': 'SHOOT'},
     ]
 
+    def __init__(self, zone, player, x, y):
+        super().__init__(zone, player, x, y)
+        self.shove_cooldown = 0.0
+
+    def try_shove(self):
+        # 빈손이고, 총알을 가진 플레이어가 몸에 닿았으면 밀친다
+        p = self.player
+        if self.held or not p.held or self.shove_cooldown > 0 or not self.touching(p, config.SHOVE_REACH):
+            return False
+        angle = math.atan2(p.y - self.y, p.x - self.x)
+        self.facing = angle
+        p.shoved(angle, self.x, self.y)
+        self.shove_cooldown = config.SHOVE_COOLDOWN
+        effect.spawn(effect.TextPop(self.x, self.y + self.radius + 4, 'SHOVE', config.COLOR_BULLET_ENEMY))
+        return True
+
     def after_recover(self):
         if self.held:              # 기절에서 깨어났는데 총알이 남아 있으면 바로 쏘러 간다
             self.armed()
 
     def think(self):
         p = self.player
+        self.shove_cooldown = max(0.0, self.shove_cooldown - game_framework.frame_time)
+        if self.state in ('SEEK', 'FLEE') and self.try_shove():
+            return
         if self.state == 'SEEK':
             b = self.nearest_loose_bullet()
             if b is None:

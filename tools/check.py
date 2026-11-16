@@ -928,6 +928,49 @@ def enemies_get_around_every_table_to_a_bullet_behind_it():
 
 
 @test
+def empty_picker_shoves_player_and_takes_one_bullet():
+    # 리뷰 반영: 총알을 쥐고 쫓아가 가까이에서 쏘기만 하면 위험이 없었다. 빈손 줍줍이는 밀쳐서 1발을 빼앗는다.
+    import config
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    pk = pm.add_enemy(Picker, p.x + 30, p.y)
+    pk.state = 'FLEE'
+    x0 = p.x
+    sim.step(1)
+    assert len(p.held) == config.AMMO - 1, '밀쳤는데 총알을 떨어뜨리지 않음'
+    sim.step(5)
+    assert p.x < x0 - 15, '밀쳐졌는데 밀려나지 않음 (%.1f px)' % (x0 - p.x)
+    run_until(lambda: len(pk.held) == 1, 60)
+    assert len(p.held) == config.AMMO - 1, '밀려난 플레이어가 떨어진 총알을 바로 다시 주움'
+    assert pm.ledger.problem is None
+    pm.finish()
+
+
+@test
+def shove_needs_empty_picker_loaded_player_and_cooldown():
+    import config
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    pk = pm.add_enemy(Picker, p.x + 30, p.y)
+    pk.state, pk.SPEED = 'FLEE', 0
+    p.held_backup, p.held = p.held, []
+    sim.step(2)
+    assert p.push == (0.0, 0.0), '빈손 플레이어를 밀침'
+    p.held = p.held_backup
+    pk.shove_cooldown = 0
+    assert pk.try_shove() is True
+    p.x, p.y = pk.x - 30, pk.y
+    assert pk.try_shove() is False, '쿨타임 중에 또 밀침'
+    loaded = still_picker(pm, 200, 600)
+    loaded.held = [p.held.pop()]
+    p.x, p.y = loaded.x + 28, loaded.y
+    assert loaded.try_shove() is False, '총알을 가진 줍줍이가 밀침'
+    pm.finish()
+
+
+@test
 def picker_flees_when_there_is_nothing_to_pick():
     from picker import Picker
     pm = fresh()
