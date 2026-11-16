@@ -1,5 +1,6 @@
 # 들개 THE HOUND ($20, 체력 1). 빠르게 달려가 바닥 총알을 삼킨다. 쏘지는 않는다 (PRD 8장).
-#   SEEK -> PICK -> SEEK (삼킨 총알은 몸 안에 보관), 주울 총알이 없으면 ROAM(어슬렁거림)
+#   SEEK -> PICK -> SEEK (삼킨 총알은 몸 안에 보관), 주울 총알이 없거나 배가 차면(DOG_MAX_SWALLOW) ROAM(어슬렁거림)
+#   배가 찬 들개는 느리게 어슬렁거리므로 쫓아가 차기 쉽다 (혼자 구역 총알을 다 가져가 판이 막히지 않게)
 #   발차기에 맞으면 STUN, 삼킨 총알을 모두 토해 낸다. 몸으로 부딪히면 플레이어 체력 -1.
 import math
 import random
@@ -33,12 +34,15 @@ class Dog(Enemy):
         super().__init__(zone, player, x, y)
         self.roam_to = (x, y)
 
+    def full(self):
+        return len(self.held) >= config.DOG_MAX_SWALLOW
+
     def kick_drop_count(self):
         return len(self.held)      # 차면 삼킨 총알을 모두 토해 낸다
 
     def think(self):
         if self.state == 'SEEK':
-            b = self.nearest_loose_bullet()
+            b = None if self.full() else self.nearest_loose_bullet()
             if b is None:
                 self.nothing_to_pick()
             elif self.touching(b):
@@ -53,7 +57,7 @@ class Dog(Enemy):
             elif done is False:
                 self.lost_bullet()
         elif self.state == 'ROAM':
-            if self.nearest_loose_bullet() is not None:
+            if not self.full() and self.nearest_loose_bullet() is not None:
                 self.bullet_appeared()
                 return
             self.timer -= game_framework.frame_time

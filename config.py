@@ -39,6 +39,7 @@ DRUNK_SWAY_SPEED = 3.0         # 비틀거리는 빠르기 (라디안/초)
 DRUNK_SWAY_ANGLE = 0.6         # 비틀거리며 벗어나는 각도 (라디안)
 DOG_SPEED = 230                # 들개는 플레이어(200)보다 빠르게 총알로 달려간다
 DOG_ROAM_SPEED = 110
+DOG_MAX_SWALLOW = 2            # 들개가 삼킬 수 있는 최대 총알 수 (리뷰 반영: 다 삼켜 판이 막히는 것 방지)
 DOG_ROAM_TIME = 1.5            # 어슬렁거릴 때 새 목적지를 고르는 간격 (초)
 BUMP_STUN_TIME = 0.5           # 몸으로 부딪힌 적이 튕겨 나가 멈추는 시간 (초)
 KICK_COOLDOWN = 0.65           # 발차기 쿨타임 (초, PRD 6장)

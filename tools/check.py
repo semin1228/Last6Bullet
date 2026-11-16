@@ -1034,7 +1034,7 @@ def hound_swallows_bullets_and_kick_makes_it_spit_all():
     p.x, p.y = 150, 600
     b1, b2 = floor_bullet(pm, 700, 200), floor_bullet(pm, 820, 220)
     dog = pm.add_enemy(Dog, 1000, 200)
-    run_until(lambda: len(dog.held) == 2, 300)
+    run_until(lambda: len(dog.held) == 2, 300)   # 들개 최대(DOG_MAX_SWALLOW)도 2발
     sim.step(1)                    # 삼킨 그 프레임은 SEEK, 주울 게 없음을 다음 프레임에 알고 ROAM
     assert b1.state == b2.state == 'HELD' and dog.state == 'ROAM', '두 발을 삼킨 뒤 어슬렁거리지 않음 (%s)' % dog.state
     assert pm.ledger.counts['foes'] == 2
@@ -1051,6 +1051,23 @@ def hound_swallows_bullets_and_kick_makes_it_spit_all():
         assert pm.ledger.check()
     finally:
         config.DOG_ROAM_SPEED = config_speed
+    pm.finish()
+
+
+@test
+def hound_swallows_at_most_two_and_then_roams_slowly():
+    # 리뷰 반영: 무작위 전투에서 들개가 광산 총알 5발을 모두 삼켜 판이 막혔다. 2발이면 배가 찬다.
+    import config
+    from dog import Dog
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 150, 600
+    bullets = [floor_bullet(pm, 700 + i * 60, 200) for i in range(3)]
+    dog = pm.add_enemy(Dog, 1000, 200)
+    run_until(lambda: len(dog.held) == config.DOG_MAX_SWALLOW, 400)
+    sim.step(120)
+    assert len(dog.held) == config.DOG_MAX_SWALLOW, '배가 찼는데 더 삼킴 (%d발)' % len(dog.held)
+    assert dog.state == 'ROAM' and sum(b.state == 'FLOOR' for b in bullets) == 1
     pm.finish()
 
 
