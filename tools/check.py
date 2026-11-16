@@ -1065,6 +1065,27 @@ def can_move_while_kicking_and_returns_to_run():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 11. 2주차: 체력 0 과 게임 오버
+
+@test
+def hp_zero_shows_game_over_and_r_restarts():
+    import config, game_framework, gameover_mode
+    from pico2d import SDL_KEYDOWN, SDLK_r
+    pm = fresh()
+    p = pm.player
+    p.hp = 1
+    p.bounty = 120
+    flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
+    sim.step(10)
+    assert p.hp == 0 and game_framework.stack[-1] is gameover_mode, '체력 0 인데 게임 오버가 아님'
+    assert p.pressed == set(), '게임 오버로 넘어갈 때 누르던 키를 놓지 않음'
+    gameover_mode.dispatch(sim.FakeEvent(SDL_KEYDOWN, SDLK_r))
+    assert game_framework.stack == [pm], '다시 하기 뒤 모드 스택 %s' % game_framework.stack
+    assert pm.player is not p and pm.player.hp == config.PLAYER_HP and pm.player.bounty == 0
+    assert len(pm.player.held) == pm.zone.ammo and pm.zone.number == 1
+    pm.finish()
+
+
 def main():
     sim.open_game('--window' in sys.argv)
     from pico2d import close_canvas

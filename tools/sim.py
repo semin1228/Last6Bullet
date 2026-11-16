@@ -52,11 +52,13 @@ def send(event):
 
 
 def step(frames=1, before=None, dt=DT):
+    # 실제 게임 루프처럼 모드 스택 맨 위 모드만 갱신하고 그린다 (게임 오버가 올라오면 전투가 멈춘다)
     import game_framework
     import play_mode
     for i in range(frames):
         if before:
             before(i)
         game_framework.frame_time = dt
-        play_mode.update()
-        play_mode.render()
+        mode = game_framework.stack[-1] if game_framework.stack else play_mode
+        mode.update()
+        mode.render()

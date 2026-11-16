@@ -22,8 +22,11 @@ zone_index = 0
 
 
 def init():
-    global zone_index
-    zone_index = 0
+    start_zone(0)
+
+
+def restart():
+    # 게임 오버 뒤 다시 하기: 체력과 현상금도 처음으로
     start_zone(0)
 
 
@@ -87,6 +90,9 @@ def update():
     game_world.update()
     game_world.handle_collisions()
     ledger.check()                 # 충돌 처리(줍기 등)까지 끝난 뒤 총알 수를 검사한다
+    if player.hp <= 0:
+        import gameover_mode       # gameover_mode 도 play_mode 를 불러서, 서로 맨 위에서 부르지 않는다
+        game_framework.push_mode(gameover_mode)
 
 
 def render():
