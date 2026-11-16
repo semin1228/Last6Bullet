@@ -18,6 +18,9 @@ FIRE_COOLDOWN = 0.18           # 연사 간격 (초)
 MAX_BOUNCES = 2                # 이만큼 튕긴 뒤 다시 닿으면 바닥에 떨어진다
 DRY_FLASH_TIME = 0.3           # 빈 총을 당겼을 때 HUD 실린더가 붉게 깜빡이는 시간 (초)
 HIT_GRACE = 0.12              # 발사 직후 이 시간 동안은 사람에게 맞지 않는다 (초)
+ROLL_SPEED = 420               # 발차기로 찬 바닥 총알의 처음 속도 (px/초)
+ROLL_FRICTION = 520            # 구르는 총알이 1초에 잃는 속도 (px/초)
+ROLL_STOP_SPEED = 20           # 이보다 느려지면 멈춘다 (px/초)
 BULLET_SUBSTEP = 6             # 한 번에 움직이는 최대 거리 (px). 얇은 벽을 뚫고 지나가지 않게 한다
 
 # 술집 테이블 (left, bottom, right, top)
@@ -45,6 +48,7 @@ COLOR_BULLET_FLOOR = (239, 159, 39)
 COLOR_BULLET_EDGE = (99, 56, 6)
 COLOR_AMMO_EMPTY = (180, 178, 169)
 COLOR_BULLET_BOUNCED = (216, 90, 48)   # 튕긴 총알 (누구든 맞음)
+COLOR_BULLET_ENEMY = (153, 53, 86)     # 적이 쏜 총알, 적이 밟고 줍는 총알 테두리
 COLOR_HP = (226, 75, 74)
 COLOR_HP_EMPTY = (99, 56, 6)
 COLOR_CYLINDER = (44, 44, 42)          # 위쪽 HUD 리볼버 실린더

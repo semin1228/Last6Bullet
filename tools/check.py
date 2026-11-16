@@ -625,10 +625,10 @@ def ledger_counts_hand_floor_and_air():
     aim(p, -90)
     sim.click()
     sim.step(2)
-    assert pm.ledger.counts == {'hand': 4, 'floor': 0, 'air': 2}, pm.ledger.counts
+    assert pm.ledger.counts == {'hand': 4, 'foes': 0, 'floor': 0, 'air': 2}, pm.ledger.counts
     p.x -= 200                     # 돌아오는 총알에 맞지 않게 비켜선다
     sim.step(120)
-    assert pm.ledger.counts == {'hand': 4, 'floor': 2, 'air': 0}, pm.ledger.counts
+    assert pm.ledger.counts == {'hand': 4, 'foes': 0, 'floor': 2, 'air': 0}, pm.ledger.counts
     assert pm.ledger.problem is None
     pm.finish()
 
@@ -760,6 +760,104 @@ def random_play_for_50_seconds_keeps_six_bullets():
             assert l <= bl.x <= r and b <= bl.y <= t, '총알이 벽 밖에 있음'
     assert picked > 0, '50초 동안 한 번도 줍지 않음 (검사가 의미 없음)'
     print('       (50초 동안 주운 총알 %d발)' % picked)
+    pm.finish()
+
+
+# ---------------------------------------------------------------- 8. 2주차: 총알 새 상태 (구름, 밟힘, 떨굼)
+
+def floor_bullet(pm, x, y):
+    # 손의 총알 하나를 (x, y) 바닥에 내려놓는다
+    import game_world
+    b = pm.player.held.pop()
+    b.drop(x, y)
+    game_world.add_object(b, 1)
+    game_world.add_collision_pair('player:bullet', None, b)
+    return b
+
+
+@test
+def kicked_bullet_rolls_slows_and_stops():
+    import config
+    pm = fresh()
+    b = floor_bullet(pm, 300, 200)
+    pm.player.x, pm.player.y = 900, 500     # 굴러가는 길에서 비켜 둔다
+    b.kick(0.0)
+    assert b.state == 'ROLLING' and b.vx == config.ROLL_SPEED
+    sim.step(10)
+    assert 0 < b.vx < config.ROLL_SPEED, '마찰로 느려지지 않음 (vx=%.1f)' % b.vx
+    frames = 0
+    while b.state == 'ROLLING':
+        sim.step(1)
+        frames += 1
+        assert frames < 300, '멈추지 않음'
+    # 처음 속도 v, 마찰 a 이면 약 v^2/(2a) 만큼 간다
+    expect = config.ROLL_SPEED ** 2 / (2 * config.ROLL_FRICTION)
+    assert abs((b.x - 300) - expect) < 25, '굴러간 거리 %.0f (기대 약 %.0f)' % (b.x - 300, expect)
+    assert b.state == 'FLOOR' and (b.vx, b.vy) == (0, 0)
+    pm.finish()
+
+
+@test
+def rolling_bullet_halves_at_first_wall_and_stops_at_second():
+    import config
+    pm = fresh()
+    l, bt, r, t = pm.zone.inner
+    b = floor_bullet(pm, r - 30, 600)       # 오른쪽 벽 바로 앞 (벽에 붙은 총알 꺼내기)
+    pm.player.x, pm.player.y = 200, 100
+    b.kick(0.0)
+    while b.bounces == 0:
+        sim.step(1)
+    assert b.vx < 0 and abs(b.vx) <= config.ROLL_SPEED / 2 + 1, '첫 벽에서 속도 절반으로 튕기지 않음 (vx=%.1f)' % b.vx
+    pm.finish()
+    pm = fresh()
+    b = floor_bullet(pm, (l + r) / 2, t - 40)
+    pm.player.x, pm.player.y = 200, 100
+    b.vx = 0
+    b.kick(math_atan(1, 0.02))              # 위쪽 벽에 거의 수직으로
+    b.vx, b.vy = 0.0, 3000.0                # 두 번 튕길 만큼 세게 (테스트용)
+    for _ in range(60):
+        sim.step(1)
+        if b.state != 'ROLLING':
+            break
+    assert b.state == 'FLOOR' and b.bounces == 2, '두 번째 벽에서 멈추지 않음 (%s, %d)' % (b.state, b.bounces)
+    pm.finish()
+
+
+def math_atan(y, x):
+    import math
+    return math.atan2(y, x)
+
+
+@test
+def rolling_and_pinned_bullets_hurt_nobody_and_player_cannot_take_pinned():
+    import config
+    pm = fresh()
+    p = pm.player
+    b = floor_bullet(pm, p.x - 80, p.y)
+    b.kick(0.0)                             # 플레이어 쪽으로 굴린다
+    sim.step(20)
+    assert p.hp == config.PLAYER_HP, '구르는 총알에 맞음'
+    pm.finish()
+    pm = fresh()
+    p = pm.player
+    b = floor_bullet(pm, p.x + 200, p.y)
+    b.pin()
+    p.x = b.x                               # 적이 밟고 있는 총알 위에 선다
+    sim.step(2)
+    assert b.state == 'PINNED' and b not in p.held, '적이 줍는 중인 총알을 플레이어가 가져감'
+    b.unpin()
+    sim.step(1)
+    assert b in p.held, '줍기가 끊긴 뒤에는 주울 수 있어야 함'
+    pm.finish()
+
+
+@test
+def dropped_bullet_lands_inside_the_floor():
+    pm = fresh()
+    l, bt, r, t = pm.zone.inner
+    b = floor_bullet(pm, r + 50, t + 50)    # 벽 밖 좌표를 줘도 바닥 안으로 꺼낸다
+    assert l <= b.x <= r and bt <= b.y <= t and b.state == 'FLOOR'
+    assert pm.ledger.check()
     pm.finish()
 
 

@@ -10,10 +10,10 @@ from bullet import Bullet
 
 class AmmoLedger:
     def __init__(self, holders, expected):
-        self.holders = holders     # 총알을 손에 드는 쪽 목록 (지금은 플레이어, 2주차부터 적도 추가)
+        self.holders = holders     # 총알을 손에 드는 쪽 목록 (플레이어와 적. 쓰러진 적도 손이 비어 있으니 그대로 둔다)
         self.expected = expected
         self.visible = False
-        self.counts = {'hand': 0, 'floor': 0, 'air': 0}
+        self.counts = {'hand': 0, 'foes': 0, 'floor': 0, 'air': 0}
         self.problem = None        # 마지막으로 찾은 문제 (없으면 None)
         self.reported = False
         self.fps = 0.0             # 최근 프레임 속도 (부드럽게 평균 낸 값)
@@ -25,9 +25,11 @@ class AmmoLedger:
     def check(self):
         hand = [b for h in self.holders for b in h.held]
         loose = [o for o in game_world.objects() if isinstance(o, Bullet)]
+        mine = len(self.holders[0].held) if self.holders else 0   # 첫 번째가 플레이어
         self.counts = {
-            'hand': len(hand),
-            'floor': sum(1 for b in loose if b.state == 'FLOOR'),
+            'hand': mine,
+            'foes': len(hand) - mine,
+            'floor': sum(1 for b in loose if b.state in ('FLOOR', 'ROLLING', 'PINNED')),
             'air': sum(1 for b in loose if b.state == 'FLYING'),
         }
         total = len(hand) + len(loose)
@@ -52,7 +54,8 @@ class AmmoLedger:
 
     def text(self):
         c = self.counts
-        text = 'HAND %d · FLOOR %d · AIR %d = %d' % (c['hand'], c['floor'], c['air'], sum(c.values()))
+        text = 'HAND %d · FOES %d · FLOOR %d · AIR %d = %d' % (
+            c['hand'], c['foes'], c['floor'], c['air'], sum(c.values()))
         if self.visible:
             text = 'FPS %3d    ' % round(self.fps) + text
         if self.problem:
@@ -63,4 +66,4 @@ class AmmoLedger:
         if not self.font or not (self.visible or self.problem):
             return
         color = (240, 149, 149) if self.problem else (244, 233, 212)
-        self.font.draw(config.WIDTH - 500, config.HEIGHT - config.WALL // 2, self.text(), color)
+        self.font.draw(config.WIDTH - 560, config.HEIGHT - config.WALL // 2, self.text(), color)

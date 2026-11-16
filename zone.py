@@ -27,6 +27,10 @@ class Zone:
             draw_rectangle(ol, ob, o_r, ot, *config.COLOR_TABLE, filled=True)
             draw_rectangle(ol, ob, o_r, ob + 8, *config.COLOR_TABLE_EDGE, filled=True)  # 앞면 (3/4 느낌)
 
+    def shows_floor_bullet(self, bullet):
+        # 바닥 총알을 그릴지. 밝은 구역은 항상 보인다 (광산은 Mine 에서 바꾼다)
+        return True
+
     def push_out(self, x, y, radius):
         # 반지름 radius 인 원이 벽 안쪽에 머물고 장애물과 겹치지 않도록 위치를 고쳐 돌려준다
         for ol, ob, o_r, ot in self.obstacles:
