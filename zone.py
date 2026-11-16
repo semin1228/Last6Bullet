@@ -1,36 +1,75 @@
-# 구역: 바깥 벽, 바닥, 장애물(테이블). 움직이는 것들이 벽과 장애물을 통과하지 못하게 하고,
-# 총알이 벽과 장애물에 닿으면 튕겨 낸다.
+# 구역: 바깥 벽, 바닥, 장애물(테이블, 바위). 움직이는 것들이 벽과 장애물을 통과하지 못하게 하고,
+# 총알이 벽과 장애물에 닿으면 튕겨 낸다. 적을 모두 쓰러뜨리면 오른쪽 벽의 문이 열린다.
+# 어두운 구역(광산)은 랜턴(플레이어) 빛 반경 안의 바닥 총알만 보이고, 바깥 총알은 가끔 반짝인다 (PRD 7장).
 import math
 
-from pico2d import draw_line, draw_rectangle
+from pico2d import draw_circle, draw_line, draw_rectangle
 
 import config
+import game_framework
 
 
 class Zone:
-    def __init__(self, obstacles=(), number=1, name='SALOON', ammo=config.AMMO):
+    def __init__(self, obstacles=(), number=1, name='SALOON', ammo=config.AMMO, dark=False):
         w, h, t = config.WIDTH, config.HEIGHT, config.WALL
         self.number, self.name, self.ammo = number, name, ammo
         self.title = 'ZONE %d · %s' % (number, name)  # 위쪽 HUD 에 표시 (PRD 15-2 play_mode). 화면 글자는 영어 (PRD 14장)
         self.inner = (t, t, w - t, h - t)      # 벽 안쪽 바닥 영역 (left, bottom, right, top)
         self.obstacles = list(obstacles)       # 장애물 사각형 목록 (left, bottom, right, top)
+        self.dark = dark
+        self.light = None                      # 랜턴을 든 쪽 (play_mode 가 플레이어로 정한다)
+        self.door_open = False
+        self.clock = 0.0                       # 반짝임 주기용 시간
+
+    def door_span(self):
+        cy = config.HEIGHT // 2
+        return cy - config.DOOR_HALF, cy + config.DOOR_HALF
+
+    def at_door(self, x, y, radius):
+        # 문이 열렸고, 몸이 오른쪽 벽 문 앞에 닿았는지
+        l, b, r, t = self.inner
+        lo, hi = self.door_span()
+        return self.door_open and x >= r - radius - 1 and lo + radius <= y <= hi - radius
 
     def update(self):
-        pass
+        self.clock += game_framework.frame_time
 
     def draw(self):
-        draw_rectangle(0, 0, config.WIDTH, config.HEIGHT, *config.COLOR_WALL, filled=True)
+        wall = config.COLOR_MINE_WALL if self.dark else config.COLOR_WALL
+        draw_rectangle(0, 0, config.WIDTH, config.HEIGHT, *wall, filled=True)
         l, b, r, t = self.inner
-        draw_rectangle(l, b, r, t, *config.COLOR_FLOOR, filled=True)
-        for y in range(b + 40, t, 40):  # 나무 바닥 결
-            draw_line(l, y, r, y, *config.COLOR_FLOOR_LINE)
+        if self.dark:
+            draw_rectangle(l, b, r, t, *config.COLOR_MINE_FLOOR, filled=True)
+            if self.light is not None:     # 랜턴 빛: 바깥 고리와 안쪽 밝은 원
+                lx, ly = self.light.x, self.light.y
+                draw_circle(lx, ly, config.LIGHT_RADIUS, *config.COLOR_MINE_LIGHT, filled=True)
+                draw_circle(lx, ly, int(config.LIGHT_RADIUS * 0.6), *config.COLOR_MINE_LIGHT_CORE, filled=True)
+        else:
+            draw_rectangle(l, b, r, t, *config.COLOR_FLOOR, filled=True)
+            for y in range(b + 40, t, 40):  # 나무 바닥 결
+                draw_line(l, y, r, y, *config.COLOR_FLOOR_LINE)
+        top, edge = (config.COLOR_ROCK, config.COLOR_ROCK_EDGE) if self.dark else (config.COLOR_TABLE, config.COLOR_TABLE_EDGE)
         for ol, ob, o_r, ot in self.obstacles:
-            draw_rectangle(ol, ob, o_r, ot, *config.COLOR_TABLE, filled=True)
-            draw_rectangle(ol, ob, o_r, ob + 8, *config.COLOR_TABLE_EDGE, filled=True)  # 앞면 (3/4 느낌)
+            draw_rectangle(ol, ob, o_r, ot, *top, filled=True)
+            draw_rectangle(ol, ob, o_r, ob + 8, *edge, filled=True)  # 앞면 (3/4 느낌)
+        lo, hi = self.door_span()          # 오른쪽 벽의 문: 닫히면 판자, 열리면 바닥이 이어진다
+        if self.door_open:
+            draw_rectangle(r, lo, config.WIDTH, hi, *config.COLOR_DOOR_OPEN, filled=True)
+        else:
+            draw_rectangle(r, lo, config.WIDTH - 6, hi, *config.COLOR_DOOR, filled=True)
+            for y in range(lo + 10, hi, 14):
+                draw_line(r, y, config.WIDTH - 6, y, *config.COLOR_TABLE_EDGE)
 
     def shows_floor_bullet(self, bullet):
-        # 바닥 총알을 그릴지. 밝은 구역은 항상 보인다 (광산은 Mine 에서 바꾼다)
-        return True
+        # 바닥 총알을 그릴지. 밝은 구역은 항상, 어두운 구역은 랜턴 빛 안에서만 보인다.
+        if not self.dark or self.light is None:
+            return True
+        return math.hypot(bullet.x - self.light.x, bullet.y - self.light.y) <= config.LIGHT_RADIUS
+
+    def glints(self, bullet):
+        # 빛 밖 바닥 총알이 잠깐 반짝일 차례인지 (총알마다 주기를 어긋나게)
+        phase = (id(bullet) // 16) % 97 / 97 * config.GLINT_PERIOD
+        return (self.clock + phase) % config.GLINT_PERIOD < config.GLINT_TIME
 
     def push_out(self, x, y, radius):
         # 반지름 radius 인 원이 벽 안쪽에 머물고 장애물과 겹치지 않도록 위치를 고쳐 돌려준다

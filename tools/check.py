@@ -1054,6 +1054,24 @@ def hound_swallows_bullets_and_kick_makes_it_spit_all():
     pm.finish()
 
 
+@test
+def hound_bumping_player_while_picking_does_not_crash():
+    # 실제로 찾은 버그(무작위 전투 검사): 들개가 줍는 중(PICK)에 플레이어와 부딪히면
+    # PICK -> STUN 전이가 없어 MachineError 로 게임이 멈췄다.
+    import config
+    from dog import Dog
+    pm = fresh()
+    p = pm.player
+    b = floor_bullet(pm, p.x + 30, p.y)
+    b.pin()                        # 플레이어가 먼저 줍지 않게 (들개가 밟은 상태로)
+    dog = pm.add_enemy(Dog, p.x + 20, p.y)   # 몸이 겹친 상태 (부딪힘)
+    dog.target, dog.timer, dog.state = b, config.ENEMY_PICK_TIME, 'PICK'
+    sim.step(2)
+    assert dog.state == 'STUN' and p.hp == config.PLAYER_HP - 1
+    assert b.state == 'FLOOR', '부딪혀 끊긴 줍기의 총알이 바닥으로 돌아가지 않음'
+    pm.finish()
+
+
 # ---------------------------------------------------------------- 10. 2주차: 발차기
 
 def still_picker(pm, x, y):
@@ -1191,6 +1209,166 @@ def hp_zero_shows_game_over_and_r_restarts():
     assert pm.player is not p and pm.player.hp == config.PLAYER_HP and pm.player.bounty == 0
     assert len(pm.player.held) == pm.zone.ammo and pm.zone.number == 1
     pm.finish()
+
+
+# ---------------------------------------------------------------- 12. 2주차: 구역 클리어, 문, 광산
+
+@test
+def door_opens_only_when_every_enemy_is_down_and_leads_to_the_mine():
+    import config
+    from pico2d import SDLK_d
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    a, b = still_picker(pm, 900, 600), still_picker(pm, 900, 150)
+    a.die()
+    sim.step(1)
+    assert not pm.zone.door_open, '적이 남았는데 문이 열림'
+    b.die()
+    sim.step(1)
+    assert pm.zone.door_open, '적을 모두 쓰러뜨렸는데 문이 닫혀 있음'
+    p.hp = 3
+    p.y = config.HEIGHT // 2
+    sim.key_down(SDLK_d)
+    run_until(lambda: pm.zone.number == 2, 400)
+    q = pm.player
+    assert pm.zone.name == 'MINE' and pm.zone.dark and pm.zone.ammo == 5
+    assert q.hp == 3 and q.bounty == 100, '체력·현상금이 이어지지 않음 (%d, %d)' % (q.hp, q.bounty)
+    assert len(q.held) == 5 and pm.ledger.expected == 5
+    assert q.x < 200, '광산은 왼쪽에서 시작해야 함'
+    pm.finish()
+
+
+@test
+def closed_door_is_just_a_wall():
+    from pico2d import SDLK_d
+    import config
+    pm = fresh()
+    p = pm.player
+    still_picker(pm, 300, 600)
+    p.y = config.HEIGHT // 2
+    sim.key_down(SDLK_d)
+    sim.step(300)
+    assert pm.zone.number == 1, '문이 닫혔는데 다음 구역으로 감'
+    pm.finish()
+
+
+@test
+def mine_shows_floor_bullets_only_in_lantern_light_and_glints_outside():
+    import config, game_world
+    pm = fresh()
+    pm.start_zone(1)
+    p = pm.player
+    near = floor_bullet(pm, p.x + 60, p.y + 40)
+    far = floor_bullet(pm, 900, 600)
+    assert pm.zone.shows_floor_bullet(near) and not pm.zone.shows_floor_bullet(far)
+    seen = 0
+    for _ in range(int(config.GLINT_PERIOD * 60) + 2):
+        sim.step(1)
+        seen += pm.zone.glints(far)
+    assert 0 < seen <= int(config.GLINT_TIME * 60) + 2, '빛 밖 총알이 한 주기에 %d 프레임 반짝임' % seen
+    p.x, p.y = 860, 560                # 다가가면 보인다
+    assert pm.zone.shows_floor_bullet(far)
+    pm.finish()
+
+
+@test
+def leaving_the_last_zone_shows_to_be_continued():
+    import game_framework, gameover_mode
+    pm = fresh()
+    pm.start_zone(1)
+    still_picker(pm, 900, 600).die()
+    sim.step(1)
+    p = pm.player
+    l, b, r, t = pm.zone.inner
+    p.x, p.y = r - p.radius, 360
+    sim.step(1)
+    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TO BE CONTINUED'
+    game_framework.stack = [pm]
+    pm.finish()
+
+
+# ---------------------------------------------------------------- 13. 2주차: 적과 함께 무작위 플레이
+
+@test
+def random_battle_for_50_seconds_keeps_ammo_in_both_zones():
+    # 적 3~4명과 함께 무작위로 움직이고, 쏘고, 차는 3000프레임(50초)을 구역마다 돌린다.
+    # 매 프레임: 장부(손 + 적 + 바닥 + 공중 = 구역 총알 수), 모두 벽 안·장애물 밖, 게임이 멈추지 않음.
+    # 적이 다 쓰러지면 다시 세운다. 체력 0 처리는 따로 검사하므로 여기서는 유지한다.
+    import random, config, game_world
+    from pico2d import SDLK_a, SDLK_d, SDLK_s, SDLK_w
+    from bullet import Bullet
+    from enemy import Enemy
+    from zone import ZONES
+    for index in (0, 1):
+        pm = fresh(enemies=True)
+        if index:
+            pm.start_zone(1)
+        p = pm.player
+        rng = random.Random(100 + index)
+        keys = [SDLK_w, SDLK_a, SDLK_s, SDLK_d]
+        l, b, r, t = pm.zone.inner
+        kills = kicks = enemy_shots = 0
+
+        def walk_toward(tx, ty):
+            want = set()
+            if tx > p.x + 4: want.add(SDLK_d)
+            if tx < p.x - 4: want.add(SDLK_a)
+            if ty > p.y + 4: want.add(SDLK_w)
+            if ty < p.y - 4: want.add(SDLK_s)
+            for k in keys:
+                (sim.key_down if k in want else sim.key_up)(k)
+
+        def act(i):
+            nonlocal kicks
+            hoarder = [e for e in pm.enemies if e.alive and e.held]
+            if not p.held and hoarder and (i // 120) % 2 == 0:
+                # 실제 공략처럼: 빈 총이면 총알을 가진 적(들개 등)을 쫓아가 찬다
+                e = min(hoarder, key=lambda e: e.distance_to(p))
+                walk_toward(e.x, e.y)
+                sim.mouse_move(e.x, e.y)
+                if e.distance_to(p) < p.radius + e.radius + config.KICK_RANGE and p.kick():
+                    kicks += 1
+                p.hp = config.PLAYER_HP
+                p.invincible = 0.0
+                pm.zone.door_open = False
+                return
+            if i % 20 == 0:
+                for k in keys:
+                    (sim.key_down if rng.random() < 0.4 else sim.key_up)(k)
+            if i % 7 == 0:
+                alive = [e for e in pm.enemies if e.alive]
+                if alive and rng.random() < 0.5:   # 절반은 실제 적을 겨눈다 (아무 데나 쏘면 거의 안 맞음)
+                    e = rng.choice(alive)
+                    sim.mouse_move(e.x, e.y)
+                else:
+                    sim.mouse_move(rng.uniform(l, r), rng.uniform(b, t))
+            if rng.random() < 0.06:
+                sim.click()
+            if rng.random() < 0.03 and p.kick():
+                kicks += 1
+            p.hp = config.PLAYER_HP
+            p.invincible = 0.0
+            pm.zone.door_open = False          # 문으로 나가지 않게 (구역 전환은 따로 검사)
+
+        for i in range(3000):
+            before = sum(1 for e in pm.enemies if e.alive)
+            sim.step(1, before=lambda _, i=i: act(i))
+            kills += before - sum(1 for e in pm.enemies if e.alive)
+            enemy_shots += sum(1 for o in game_world.objects()
+                               if isinstance(o, Bullet) and o.state == 'FLYING' and o.owner != 'player' and o.age == 1 / 60)
+            assert pm.ledger.problem is None, '%s %d 프레임: %s' % (pm.zone.name, i, pm.ledger.problem)
+            for o in game_world.objects():
+                if isinstance(o, (Bullet, Enemy)) or o is p:
+                    assert l <= o.x <= r and b <= o.y <= t, '%s 가 벽 밖 (%d 프레임)' % (type(o).__name__, i)
+                    for ol, ob, o_r, ot in pm.zone.obstacles:
+                        assert not (ol < o.x < o_r and ob < o.y < ot), '%s 가 장애물 안 (%d 프레임)' % (type(o).__name__, i)
+            if not any(e.alive for e in pm.enemies):
+                for kind, ex, ey in ZONES[index]['enemies']:
+                    pm.add_enemy(pm.ENEMY_KINDS[kind], ex, ey)
+        assert kills > 0 and kicks > 0, '검사가 의미 없음 (쓰러뜨림 %d, 발차기 %d)' % (kills, kicks)
+        print('       (%s: 쓰러뜨림 %d, 발차기 %d, 적 발사 %d)' % (pm.zone.name, kills, kicks, enemy_shots))
+        pm.finish()
 
 
 def main():

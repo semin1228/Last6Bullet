@@ -38,10 +38,11 @@ def start_zone(index, keep=None):
     zone_index = index
     data = ZONES[index]
     game_world.clear()
-    zone = Zone(data['obstacles'], data['number'], data['name'], data['ammo'])
+    zone = Zone(data['obstacles'], data['number'], data['name'], data['ammo'], data['dark'])
     game_world.add_object(zone, 0)
     x, y = data['start']
     player = Player(zone, x, y)
+    zone.light = player            # 광산에서는 플레이어가 랜턴을 든다
     if keep is not None:
         player.hp, player.bounty = keep.hp, keep.bounty
         player.mouse = keep.mouse
@@ -92,9 +93,25 @@ def update():
     game_world.update()
     game_world.handle_collisions()
     ledger.check()                 # 충돌 처리(줍기 등)까지 끝난 뒤 총알 수를 검사한다
-    if player.hp <= 0:
-        import gameover_mode       # gameover_mode 도 play_mode 를 불러서, 서로 맨 위에서 부르지 않는다
-        game_framework.push_mode(gameover_mode)
+    if enemies and not zone.door_open and all(not e.alive for e in enemies):
+        zone.door_open = True      # 구역의 적을 모두 쓰러뜨리면 오른쪽 문이 열린다 (PRD 4장)
+    if zone.at_door(player.x, player.y, player.radius):
+        next_zone()
+    elif player.hp <= 0:
+        show_result('GAME OVER')
+
+
+def next_zone():
+    if zone_index + 1 < len(ZONES):
+        start_zone(zone_index + 1, keep=player)   # 체력과 현상금은 이어진다 (PRD 10장: 구역 사이 회복 없음)
+    else:
+        show_result('TO BE CONTINUED')            # 기차와 은행은 3주차
+
+
+def show_result(title):
+    import gameover_mode           # gameover_mode 도 play_mode 를 불러서, 서로 맨 위에서 부르지 않는다
+    gameover_mode.title = title
+    game_framework.push_mode(gameover_mode)
 
 
 def render():

@@ -55,6 +55,11 @@ SALOON_TABLES = [
     (840, 440, 980, 510),
 ]
 
+LIGHT_RADIUS = 110             # 광산 랜턴 빛 반경 (px, PRD 7장)
+GLINT_PERIOD = 2.2             # 빛 밖 바닥 총알이 반짝이는 주기 (초)
+GLINT_TIME = 0.12              # 한 번 반짝이는 시간 (초)
+DOOR_HALF = 44                 # 오른쪽 벽 문 높이의 절반 (px)
+
 # 광산 바위·버팀목 (left, bottom, right, top)
 MINE_ROCKS = [
     (300, 430, 370, 600),
@@ -84,6 +89,15 @@ COLOR_BULLET_BOUNCED = (216, 90, 48)   # 튕긴 총알 (누구든 맞음)
 COLOR_BULLET_ENEMY = (153, 53, 86)     # 적이 쏜 총알, 적이 밟고 줍는 총알 테두리
 COLOR_HP = (226, 75, 74)
 COLOR_HP_EMPTY = (99, 56, 6)
+COLOR_MINE_WALL = (30, 26, 22)
+COLOR_MINE_FLOOR = (46, 40, 34)
+COLOR_MINE_LIGHT = (98, 82, 60)
+COLOR_MINE_LIGHT_CORE = (128, 106, 76)
+COLOR_ROCK = (88, 84, 78)
+COLOR_ROCK_EDGE = (60, 57, 52)
+COLOR_GLINT = (255, 244, 210)
+COLOR_DOOR = (110, 64, 10)
+COLOR_DOOR_OPEN = (150, 130, 100)
 COLOR_CYLINDER = (44, 44, 42)          # 위쪽 HUD 리볼버 실린더
 COLOR_CHAMBER_EMPTY = (95, 94, 90)
 COLOR_HUD_TEXT = (244, 233, 212)

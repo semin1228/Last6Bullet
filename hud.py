@@ -51,3 +51,6 @@ class Hud:
 
         if self.font:
             self.font.draw(config.WIDTH // 2 - 70, y, self.zone.title, config.COLOR_HUD_TEXT)
+            self.font.draw(CYLINDER_X + 26, y, '$%d' % self.player.bounty, config.COLOR_BULLET_FLOOR)
+            if self.zone.door_open:
+                self.font.draw(config.WIDTH - 200, y, 'EXIT  >>>', config.COLOR_BOUNTY)

@@ -124,7 +124,9 @@ class Bullet:
             draw_circle(self.x, self.y, self.radius, *color, filled=True)
         elif self.state in ('FLOOR', 'ROLLING', 'PINNED'):
             if not self.zone.shows_floor_bullet(self):
-                return             # 광산: 랜턴 빛 밖의 바닥 총알은 안 보인다 (가끔 반짝임은 zone 이 그림)
+                if self.zone.glints(self):     # 광산: 빛 밖 총알은 안 보이고 가끔 반짝이기만 한다
+                    draw_circle(self.x, self.y, 2, *config.COLOR_GLINT, filled=True)
+                return
             edge = config.COLOR_BULLET_ENEMY if self.state == 'PINNED' else config.COLOR_BULLET_EDGE
             draw_circle(self.x, self.y, self.radius + 2, *edge, filled=True)
             draw_circle(self.x, self.y, self.radius, *config.COLOR_BULLET_FLOOR, filled=True)

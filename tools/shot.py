@@ -226,6 +226,122 @@ def w1_9_thin_wall_fix():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 2주차
+
+def flying_or(state):
+    import game_world
+    from bullet import Bullet
+    return [o for o in game_world.objects() if isinstance(o, Bullet) and o.state == state]
+
+
+@scene
+def w2_1_picker_steals():
+    # 술집: 내가 쏜 총알이 바닥에 떨어지자 줍줍이들이 주우러 오고, 하나는 줍는 중(막대), 하나는 쏜다
+    import random
+    random.seed(3)
+    pm = fresh(enemies=True)
+    p = pm.player
+    for tx, ty in ((1000, 520), (1050, 230), (820, 640)):
+        sim.mouse_move(tx, ty)
+        sim.click()
+        sim.step(12)
+    sim.mouse_move(900, 360)
+    for _ in range(400):
+        sim.step(1)
+        p.hp = 4
+        picking = [e for e in pm.enemies if e.state == 'PICK']
+        if picking and any(e.state == 'SHOOT' for e in pm.enemies):
+            break
+    save('w2_1_picker_steals')
+    for _ in range(200):
+        sim.step(1)
+        p.hp = 4
+        if [b for b in flying_or('FLYING') if b.owner != 'player']:
+            break
+    sim.step(8)
+    save('w2_1_enemy_fires')       # 줍줍이가 내 총알로 쏜다 (자주색 총알)
+    pm.finish()
+
+
+@scene
+def w2_2_kick():
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    e = pm.add_enemy(Picker, p.x + 48, p.y + 10)
+    e.held = [p.held.pop(), p.held.pop()]
+    e.state, e.SPEED = 'FLEE', 0
+    b = p.held.pop()
+    b.drop(p.x + 40, p.y - 30)
+    b.add_to_world()
+    sim.mouse_move(p.x + 200, p.y)
+    sim.step(1)
+    p.kick()
+    sim.step(4)
+    save('w2_2_kick')              # 발차기: 부채꼴 호, 적 기절 별, 떨어뜨린 총알, 굴러가는 바닥 총알
+    pm.finish()
+
+
+@scene
+def w2_3_mine():
+    import random
+    random.seed(5)
+    pm = fresh(enemies=True)
+    pm.start_zone(1)
+    p = pm.player
+    for tx, ty in ((700, 600), (900, 200), (600, 120)):
+        sim.mouse_move(tx, ty)
+        sim.click()
+        sim.step(12)
+    p.x, p.y = 420, 300
+    sim.mouse_move(800, 360)
+    for _ in range(60):
+        sim.step(1)
+        p.hp = 4
+    save('w2_3_mine')              # 광산: 랜턴 빛 안만 바닥 총알이 보인다. 들개·술꾼·줍줍이
+    pm.finish()
+
+
+@scene
+def w2_4_door_open():
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    e = pm.add_enemy(Picker, 1000, 330)   # 테이블에 가리지 않는 자리
+    e.held = [p.held.pop()]
+    e.state, e.SPEED = 'FLEE', 0
+    sim.mouse_move(1000, 330)
+    sim.step(1)
+    p.fire()
+    for _ in range(60):
+        sim.step(1)
+        if pm.zone.door_open:
+            break
+    sim.step(20)
+    save('w2_4_door_open')         # 마지막 적을 쓰러뜨리면 오른쪽 문이 열리고 EXIT, 현상금 $50
+    pm.finish()
+
+
+@scene
+def w2_5_game_over():
+    import config
+    from drunk import Drunk
+    pm = fresh()
+    p = pm.player
+    p.hp = 1
+    pm.add_enemy(Drunk, p.x + 200, p.y)
+    for _ in range(200):
+        sim.step(1)
+        import game_framework
+        if game_framework.stack[-1] is not pm:
+            break
+    sim.step(1)
+    save('w2_5_game_over')
+    import game_framework
+    game_framework.stack = [pm]
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)
