@@ -894,7 +894,7 @@ def picker_walks_to_floor_bullet_picks_it_slowly_and_shoots_at_player():
     angle = math.atan2(b.vy, b.vx)
     to_player = math.atan2(p.y - b.y, p.x - b.x)
     assert abs(angle - to_player) < 0.1, '플레이어 쪽으로 쏘지 않음'
-    assert abs(math.hypot(b.vx, b.vy) - config.ENEMY_BULLET_SPEED) < 1
+    assert abs(math.hypot(b.vx, b.vy) - config.BULLET_SPEED) < 1, '적 총알 속도가 플레이어 총알과 다름'
     assert pm.ledger.problem is None and pm.ledger.counts['foes'] == 0
     pm.finish()
 
@@ -971,6 +971,31 @@ def shove_needs_empty_picker_loaded_player_and_cooldown():
 
 
 @test
+def picker_telegraphs_and_locks_aim_before_firing():
+    # 총알 속도를 하나로 통일한 대신, 줍줍이는 쏘기 0.3초 전에 멈춰 서서 총구가 반짝이고 조준을 고정한다.
+    # 예고를 보고 옆으로 움직이면 피할 수 있어야 한다.
+    import config, math
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 300, 360
+    pk = still_picker(pm, 700, 360)
+    pk.SPEED = config.PICKER_SPEED
+    pk.held = [p.held.pop()]
+    pk.state, pk.timer = 'SHOOT', 0.6
+    run_until(lambda: pk.aiming(), 60)
+    x0, y0 = pk.x, pk.y
+    p.y += 90                                      # 예고를 보고 옆으로 피한다
+    run_until(lambda: not pk.held, 60)
+    assert (pk.x, pk.y) == (x0, y0), '조준 예고 중에 움직임'
+    [b] = [o for o in bullets_in_world() if o.state == 'FLYING']
+    angle = math.atan2(b.vy, b.vx)
+    assert abs(angle - math.pi) < 0.05, '고정한 방향이 아니라 피한 자리를 겨눔'
+    run_until(lambda: b.state != 'FLYING', 120)
+    assert p.hp == config.PLAYER_HP, '예고를 보고 피했는데 맞음'
+    pm.finish()
+
+
+@test
 def picker_flees_when_there_is_nothing_to_pick():
     from picker import Picker
     pm = fresh()
@@ -1028,7 +1053,7 @@ def enemy_bullet_hurts_player_but_passes_other_enemies_until_it_bounces():
     e = pm.add_enemy(Picker, r - 120, 360)
     e.state, e.SPEED = 'FLEE', 0
     bl = p.held.pop()
-    bl.fire(e.x, e.y, 0.0, e, speed=config.ENEMY_BULLET_SPEED)   # 벽 쪽으로 쏘게 한다
+    bl.fire(e.x, e.y, 0.0, e)      # 벽 쪽으로 쏘게 한다
     bl.add_to_world()
     run_until(lambda: not e.alive, 60)
     assert bl.bounces == 1, '자기 총알에 튕기기 전에 맞음'

@@ -150,13 +150,15 @@ class Enemy:
         t = math.hypot(px - self.x, py - self.y) / speed * config.ENEMY_AIM_LEAD
         return math.atan2(py + vy * t - self.y, px + vx * t - self.x)
 
-    def shoot(self):
+    def shoot(self, angle=None):
+        # angle 을 주면 그 방향(조준 예고 때 고정한 방향)으로, 없으면 지금 플레이어를 겨눠 쏜다
         if not self.held:
             return None
-        angle = self.aim_at_player(config.ENEMY_BULLET_SPEED)
+        if angle is None:
+            angle = self.aim_at_player(config.BULLET_SPEED)
         self.facing = angle
         b = self.held.pop()
-        b.fire(self.x, self.y, angle, self, speed=config.ENEMY_BULLET_SPEED)
+        b.fire(self.x, self.y, angle, self)
         b.travel(self.radius + 8)
         b.add_to_world()
         effect.spawn(effect.MuzzleFlash(b.x, b.y, angle))

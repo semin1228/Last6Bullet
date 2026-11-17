@@ -373,6 +373,25 @@ def w2_6_drunk_pass():
     pm.finish()
 
 
+@scene
+def w2_7_aim_telegraph():
+    # 줍줍이가 쏘기 직전: 멈춰 서서 총구가 반짝인다 (총알 속도는 플레이어와 같음)
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 420, 360
+    pk = pm.add_enemy(Picker, 760, 420)
+    pk.held = [p.held.pop()]
+    pk.state, pk.timer = 'SHOOT', 0.6
+    sim.mouse_move(760, 420)
+    for _ in range(60):
+        sim.step(1)
+        if pk.aiming() and pk.timer < 0.08:
+            break
+    save('w2_7_aim_telegraph')
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)
