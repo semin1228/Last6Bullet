@@ -42,6 +42,7 @@ class Picker(Enemy):
         self.shove_cooldown = 0.0
         self.locked_aim = None     # 조준 예고 중 고정한 방향 (라디안)
         self.cover = None          # 빈손일 때 숨어 있는 장애물 (left, bottom, right, top)
+        self.passed_corners = set()  # 엄폐물을 돌아갈 때 이미 지나온 모서리 번호
 
     def aiming(self):
         return self.state == 'SHOOT' and self.held and self.timer <= config.ENEMY_AIM_TIME
@@ -115,7 +116,7 @@ class Picker(Enemy):
             if spot is None:
                 self.move_away(p.x, p.y)
             elif math.hypot(spot[0] - self.x, spot[1] - self.y) > config.COVER_ARRIVE:
-                self.move_toward(*spot)
+                self.move_toward(*self.route_to(spot))
             else:
                 self.facing = math.atan2(p.y - self.y, p.x - self.x)   # 숨어서 플레이어 쪽을 엿본다
 
@@ -137,6 +138,42 @@ class Picker(Enemy):
             return None
         return sx, sy
 
+    def route_to(self, spot):
+        # 숨을 자리로 가는 길이 엄폐물을 가로지르면, 엄폐물에서 COVER_GAP 만큼 떨어진 모서리를 거쳐 돌아간다.
+        # 곧장 가면 엄폐물 가장자리에 몸을 비비며 미끄러진다 (사용자 플레이 테스트).
+        # 지나온 모서리는 기억해서 다시 고르지 않는다 (안 그러면 두 모서리 사이를 오가며 제자리걸음한다).
+        if self.cover is None:
+            return spot
+        l, b, r, t = self.cover
+        body = (l - self.radius, b - self.radius, r + self.radius, t + self.radius)
+        if not self.segment_hits_rect((self.x, self.y), spot, body):
+            self.passed_corners.clear()
+            return spot
+        m = self.radius + config.COVER_GAP - 2
+        corners = [self.zone.push_out(cx, cy, self.radius)
+                   for cx, cy in ((l - m, b - m), (l - m, t + m), (r + m, b - m), (r + m, t + m))]
+        for i, (cx, cy) in enumerate(corners):
+            if math.hypot(cx - self.x, cy - self.y) <= config.COVER_ARRIVE * 2:
+                self.passed_corners.add(i)
+        options = [i for i in range(4) if i not in self.passed_corners
+                   and not self.segment_hits_rect((self.x, self.y), corners[i], body)]
+        if not options:
+            self.passed_corners.clear()
+            return spot
+        best = min(options, key=lambda i: math.hypot(corners[i][0] - self.x, corners[i][1] - self.y)
+                   + math.hypot(spot[0] - corners[i][0], spot[1] - corners[i][1]))
+        return corners[best]
+
+    @staticmethod
+    def segment_hits_rect(a, b, rect):
+        # 선분 a-b 가 사각형 안을 지나는지 (24등분 점으로 본다)
+        l, bt, r, t = rect
+        for k in range(1, 24):
+            x, y = a[0] + (b[0] - a[0]) * k / 24, a[1] + (b[1] - a[1]) * k / 24
+            if l < x < r and bt < y < t:
+                return True
+        return False
+
     def cover_spot(self):
         # 숨을 장애물을 고른다. 지금 쓰는 엄폐물은 쓸 수 없게 되거나 훨씬 가까운 곳이 생길 때만 바꾼다
         # (매 프레임 가장 가까운 것으로 바꾸면 두 테이블 사이를 오가며 떨린다)
@@ -152,6 +189,8 @@ class Picker(Enemy):
         current = [s for s in spots if s[1] == self.cover]
         if current and current[0][0] <= best[0] / config.COVER_SWITCH_RATIO:
             return current[0][2]
+        if best[1] != self.cover:
+            self.passed_corners.clear()
         self.cover = best[1]
         return best[2]
 

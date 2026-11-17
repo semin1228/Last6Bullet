@@ -1049,6 +1049,37 @@ def hiding_picker_moves_around_cover_as_player_moves():
 
 
 @test
+def hiding_picker_keeps_distance_from_cover_while_circling():
+    # 사용자 플레이 테스트: 숨을 때 장애물에 몸을 붙이고, 돌아갈 때 가장자리에 비볐다
+    # (측정: 플레이어가 테이블을 한 바퀴 도는 동안 17% 프레임을 장애물에 닿아 있음).
+    # 숨을 자리는 36px 떨어지고, 돌아갈 때는 모서리를 거친다.
+    import config, math
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    pk = pm.add_enemy(Picker, 700, 620)
+    pk.state = 'FLEE'
+    l, b, r, t = config.SALOON_TABLES[0]
+    cx, cy = (l + r) / 2, (b + t) / 2
+
+    def gap(rect):
+        ol, ob, o_r, ot = rect
+        return math.hypot(max(ol - pk.x, 0, pk.x - o_r), max(ob - pk.y, 0, pk.y - ot)) - pk.radius
+
+    touch = hidden = 0
+    N = 900
+    for i in range(N):
+        a = math.pi + 2 * math.pi * i / N           # 테이블에서 220px 떨어져 15초에 한 바퀴
+        p.x, p.y = pm.zone.push_out(cx + math.cos(a) * 220, cy + math.sin(a) * 220, p.radius)
+        sim.step(1)
+        touch += min(gap(o) for o in pm.zone.obstacles) < 4
+        hidden += blocked_by_obstacle(pm.zone, p, pk)
+    assert touch < N * 0.03, '장애물에 %d%% 프레임 닿음' % (touch * 100 // N)
+    assert hidden > N * 0.9, '장애물 뒤에 있던 시간이 %d%%' % (hidden * 100 // N)
+    pm.finish()
+
+
+@test
 def picker_without_any_cover_just_runs_away():
     from picker import Picker
     pm = fresh()
