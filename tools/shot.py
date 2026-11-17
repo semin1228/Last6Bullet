@@ -407,6 +407,27 @@ def w2_8_hide_behind_cover():
     pm.finish()
 
 
+@scene
+def w2_9_pounce():
+    # 빈손 줍줍이가 가까운 플레이어에게 덤벼든다: 웅크림('!', 붉은 테두리) -> 달려들어 밀치기('SHOVE')
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 640, 300
+    pk = pm.add_enemy(Picker, 640 + 27 + 60, 300)
+    pk.state = 'FLEE'
+    sim.mouse_move(900, 300)
+    sim.step(8)
+    save('w2_9_pounce_windup')
+    for _ in range(40):
+        sim.step(1)
+        if len(p.held) < 6:
+            break
+    sim.step(3)
+    save('w2_9_pounce_shove')
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)

@@ -9,6 +9,9 @@
 #   총알 속도는 플레이어와 같으므로, 플레이어는 총알 대신 이 예고를 보고 피한다.
 #   빈손일 때(SEEK, FLEE) 플레이어에게 닿으면 밀쳐서 플레이어 총알 1발을 발밑에 떨어뜨리게 한다 (1.5초 간격).
 #   총알을 쥐고 쫓아가 가까이에서 쏘는 것만 하면 위험이 없던 문제를 막는다 (기획서 리뷰 반영).
+#   SEEK/FLEE -> LUNGE: 빈손인데 총알을 가진 플레이어가 몸 사이 80px 안에 오면, 0.25초 '!' 를 띄우고 웅크렸다가
+#   그 순간 방향으로 280px/s 로 0.4초 달려든다. 닿으면 밀쳐서 빼앗고, 빗나가면 1.5초 쉰다. -> SEEK
+#   (붙어야만 빼앗아서 숨기만 하는 줍줍이에게 빼앗길 일이 거의 없었다: 사용자 플레이 테스트)
 import math
 import random
 
@@ -27,7 +30,7 @@ class Picker(Enemy):
     BOUNTY = 50
     COLOR = config.COLOR_PICKER
     START = 'SEEK'
-    STATES = ['SEEK', 'PICK', 'SHOOT', 'FLEE']
+    STATES = ['SEEK', 'PICK', 'SHOOT', 'FLEE', 'LUNGE']
     TRANSITIONS = [
         {'trigger': 'reach_bullet', 'source': 'SEEK', 'dest': 'PICK'},
         {'trigger': 'picked', 'source': 'PICK', 'dest': 'SHOOT'},
@@ -36,6 +39,8 @@ class Picker(Enemy):
         {'trigger': 'nothing_to_pick', 'source': 'SEEK', 'dest': 'FLEE'},
         {'trigger': 'bullet_appeared', 'source': 'FLEE', 'dest': 'SEEK'},
         {'trigger': 'armed', 'source': 'SEEK', 'dest': 'SHOOT'},
+        {'trigger': 'pounce', 'source': ['SEEK', 'FLEE'], 'dest': 'LUNGE'},
+        {'trigger': 'pounce_end', 'source': 'LUNGE', 'dest': 'SEEK'},
     ]
 
     def __init__(self, zone, player, x, y):
@@ -48,6 +53,8 @@ class Picker(Enemy):
         self.hide_target = None    # 지금 숨으러 가는 자리 (가끔만 다시 고른다)
         self.replan = 0.0          # 숨을 자리를 다시 고를 때까지 남은 시간 (초)
         self.since_plan = 0.0      # 마지막으로 고른 뒤 지난 시간 (초)
+        self.lunge_time = 0.0      # 덤벼들기 시작 뒤 지난 시간 (초)
+        self.lunge_dir = None      # 달려드는 방향 (준비 동작이 끝나는 순간 고정)
 
     def aiming(self):
         return self.state == 'SHOOT' and self.held and self.timer <= config.ENEMY_AIM_TIME
@@ -64,6 +71,42 @@ class Picker(Enemy):
         effect.spawn(effect.TextPop(self.x, self.y + self.radius + 4, 'SHOVE', config.COLOR_BULLET_ENEMY))
         return True
 
+    def wants_to_pounce(self):
+        p = self.player
+        if self.held or not p.held or self.shove_cooldown > 0:
+            return False
+        return self.distance_to(p) - self.radius - p.radius <= config.LUNGE_RANGE
+
+    def start_pounce(self):
+        self.lunge_time = 0.0
+        self.lunge_dir = None
+        self.cover = self.hide_target = None
+        self.pounce()
+        effect.spawn(effect.TextPop(self.x, self.y + self.radius + 4, '!', config.COLOR_BULLET_ENEMY,
+                                    config.LUNGE_WINDUP))
+
+    def lunge(self):
+        # 준비(웅크림) -> 고정한 방향으로 달려들기 -> 닿으면 밀치기
+        p = self.player
+        self.lunge_time += game_framework.frame_time
+        if self.lunge_time < config.LUNGE_WINDUP:
+            self.facing = math.atan2(p.y - self.y, p.x - self.x)
+            return
+        if self.lunge_dir is None:
+            self.lunge_dir = math.atan2(p.y - self.y, p.x - self.x)
+            self.facing = self.lunge_dir
+        if self.try_shove():
+            self.pounce_end()
+            return
+        self.detour = 0.0          # 달려드는 동안은 장애물을 돌아가지 않고 곧게 간다
+        self.move(math.cos(self.lunge_dir), math.sin(self.lunge_dir), config.LUNGE_SPEED)
+        self.detour = 0.0
+        if self.try_shove():
+            self.pounce_end()
+        elif self.lunge_time >= config.LUNGE_WINDUP + config.LUNGE_DASH:
+            self.shove_cooldown = config.SHOVE_COOLDOWN    # 빗나감: 잠깐 쉰다
+            self.pounce_end()
+
     def after_recover(self):
         if self.held:              # 기절에서 깨어났는데 총알이 남아 있으면 바로 쏘러 간다
             self.armed()
@@ -71,7 +114,13 @@ class Picker(Enemy):
     def think(self):
         p = self.player
         self.shove_cooldown = max(0.0, self.shove_cooldown - game_framework.frame_time)
+        if self.state == 'LUNGE':
+            self.lunge()
+            return
         if self.state in ('SEEK', 'FLEE') and self.try_shove():
+            return
+        if self.state in ('SEEK', 'FLEE') and self.wants_to_pounce():
+            self.start_pounce()
             return
         if self.state == 'SEEK':
             b = self.nearest_loose_bullet()
@@ -272,6 +321,9 @@ class Picker(Enemy):
         draw_line(self.x + 1, self.y, gx + 1, gy, *config.COLOR_GUN)
         draw_circle(self.x, self.y, self.radius, *self.COLOR, filled=True)
         draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_BANDANA, filled=True)
+        if self.state == 'LUNGE' and self.lunge_time < config.LUNGE_WINDUP:   # 웅크림: 몸 테두리가 붉게
+            draw_circle(self.x, self.y, self.radius + 3, *config.COLOR_BULLET_ENEMY)
+            draw_circle(self.x, self.y, self.radius + 4, *config.COLOR_BULLET_ENEMY)
         if self.aiming():                  # 조준 예고: 총구가 커지며 반짝인다
             r = 3 + int(5 * (1 - max(0.0, self.timer) / config.ENEMY_AIM_TIME))
             draw_circle(gx, gy, r + 2, *config.COLOR_BULLET_ENEMY, filled=True)

@@ -974,6 +974,82 @@ def shoving_picker_runs_off_with_the_bullet_before_firing():
     pm.finish()
 
 
+def lunge_setup(pm, gap=60):
+    # 빈손 줍줍이 오른쪽 gap px 옆에 총알 6발을 든 플레이어 (장애물 없는 곳)
+    from picker import Picker
+    p = pm.player
+    p.x, p.y = 640, 360
+    pk = pm.add_enemy(Picker, p.x + p.radius + 13 + gap, p.y)
+    pk.state = 'FLEE'
+    return pk
+
+
+@test
+def empty_picker_winds_up_then_pounces_and_steals():
+    # 사용자 플레이 테스트: 바로 옆(몸 사이 약 55px)에 있어도 빼앗지 않았다. 닿아야만 빼앗고 스스로 오지 않아서.
+    import config
+    pm = fresh()
+    p = pm.player
+    pk = lunge_setup(pm, 60)
+    sim.step(1)
+    assert pk.state == 'LUNGE', '80px 안인데 덤벼들지 않음 (%s)' % pk.state
+    x0 = pk.x
+    sim.step(int(config.LUNGE_WINDUP * 60) - 2)
+    assert abs(pk.x - x0) < 1, '준비 동작(웅크림) 중에 움직임'
+    run_until(lambda: len(p.held) < config.AMMO, 40)
+    assert pk.state == 'SEEK', '밀친 뒤 SEEK 로 돌아가지 않음'
+    pm.finish()
+
+
+@test
+def stepping_aside_during_windup_dodges_the_pounce():
+    import config
+    pm = fresh()
+    p = pm.player
+    pk = lunge_setup(pm, 60)
+    run_until(lambda: pk.lunge_dir is not None, 30)   # 방향이 고정된 직후 (1/60 을 더해 가므로 프레임 수로 세지 않는다)
+    p.y += 90                                        # 옆으로 피한다
+    sim.step(int(config.LUNGE_DASH * 60) + 5)
+    assert len(p.held) == config.AMMO, '피했는데 빼앗김'
+    assert pk.state in ('SEEK', 'FLEE') and pk.shove_cooldown > 0, '빗나간 뒤 쉬지 않음'
+    sim.step(30)
+    assert pk.state != 'LUNGE', '빗나가고 0.5초 만에 또 덤빔'
+    pm.finish()
+
+
+@test
+def kicking_during_windup_stops_the_pounce():
+    import config
+    pm = fresh()
+    p = pm.player
+    pk = lunge_setup(pm, 40)
+    sim.step(5)
+    assert pk.state == 'LUNGE'
+    aim(p, 0)
+    p.kick()
+    assert pk.state == 'STUN'
+    sim.step(int(config.ENEMY_STUN_TIME * 60) - 5)
+    assert len(p.held) == config.AMMO, '차서 막았는데 빼앗김'
+    pm.finish()
+
+
+@test
+def empty_picker_does_not_pounce_on_empty_handed_player():
+    pm = fresh()
+    p = pm.player
+    pk = lunge_setup(pm, 40)
+    for b in p.held:
+        b.state = 'FLOOR'
+    p.held_backup, p.held = p.held, []
+    pk.state, pk.SPEED = 'FLEE', 0
+    sim.step(1)
+    assert pk.state != 'LUNGE', '빼앗을 총알이 없는데 덤빔'
+    p.held = p.held_backup
+    for b in p.held:
+        b.state = 'HELD'
+    pm.finish()
+
+
 @test
 def shove_needs_empty_picker_loaded_player_and_cooldown():
     import config
