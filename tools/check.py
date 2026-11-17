@@ -1413,11 +1413,23 @@ def door_opens_only_when_every_enemy_is_down_and_leads_to_the_mine():
     sim.key_down(SDLK_d)
     run_until(lambda: pm.zone.number == 2, 400)
     q = pm.player
-    assert pm.zone.name == 'MINE' and pm.zone.dark and pm.zone.ammo == 5
+    assert pm.zone.name == 'MINE' and pm.zone.dark and pm.zone.ammo == config.AMMO
     assert q.hp == 3 and q.bounty == 100, '체력·현상금이 이어지지 않음 (%d, %d)' % (q.hp, q.bounty)
-    assert len(q.held) == 5 and pm.ledger.expected == 5
+    assert len(q.held) == config.AMMO and pm.ledger.expected == config.AMMO
     assert q.x < 200, '광산은 왼쪽에서 시작해야 함'
     pm.finish()
+
+
+@test
+def every_zone_has_exactly_six_bullets():
+    # 제목이 Last 6 Bullet 이다. 어느 구역이든 총알은 여섯 발 (사용자 결정으로 광산 5발을 없앰)
+    from zone import ZONES
+    for i, data in enumerate(ZONES):
+        assert data['ammo'] == 6, '%s 구역 총알이 %d발' % (data['name'], data['ammo'])
+        pm = fresh()
+        pm.start_zone(i)
+        assert len(pm.player.held) == 6 and pm.ledger.expected == 6
+        pm.finish()
 
 
 @test

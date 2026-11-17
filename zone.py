@@ -124,7 +124,7 @@ ZONES = [
     {'number': 1, 'name': 'SALOON', 'ammo': 6, 'obstacles': config.SALOON_TABLES, 'dark': False,
      'start': (config.WIDTH // 2, config.HEIGHT // 2),
      'enemies': [('picker', 1120, 600), ('picker', 1120, 130), ('drunk', 1180, 360)]},
-    {'number': 2, 'name': 'MINE', 'ammo': 5, 'obstacles': config.MINE_ROCKS, 'dark': True,
+    {'number': 2, 'name': 'MINE', 'ammo': 6, 'obstacles': config.MINE_ROCKS, 'dark': True,
      'start': (110, config.HEIGHT // 2),
      'enemies': [('picker', 1100, 610), ('picker', 760, 640), ('dog', 1100, 110), ('drunk', 1180, 360)]},
 ]
