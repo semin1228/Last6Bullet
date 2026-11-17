@@ -30,6 +30,7 @@ class Player:
         self.kick_cooldown = 0.0   # 다음 발차기까지 남은 시간 (초)
         self.kick_time = 0.0       # 발차기 동작(KICK 상태) 남은 시간 (초)
         self.push = (0.0, 0.0)     # 밀쳐져서 밀려나는 속도 (px/초)
+        self.dazed = 0.0           # 밀쳐진 뒤 쏘지 못하는 남은 시간 (초). 이동과 발차기는 된다
 
         self.machine = Machine(
             model=self,
@@ -72,6 +73,12 @@ class Player:
 
     def fire(self):
         if self.fire_cooldown > 0:
+            return None
+        if self.dazed > 0:
+            # 밀쳐진 직후: 바로 쏘면 총알을 줍는 줍줍이를 코앞에서 쏴 빼앗기가 의미 없어진다 (사용자 제안)
+            self.fire_cooldown = config.FIRE_COOLDOWN
+            effect.spawn(effect.TextPop(self.x, self.y + self.radius + 6, 'DAZED', config.COLOR_BULLET_ENEMY,
+                                        self.dazed))
             return None
         if not self.held:
             self.dry_fire()
@@ -147,6 +154,7 @@ class Player:
         self.invincible = max(0.0, self.invincible - game_framework.frame_time)
         self.dry_flash = max(0.0, self.dry_flash - game_framework.frame_time)
         self.kick_cooldown = max(0.0, self.kick_cooldown - game_framework.frame_time)
+        self.dazed = max(0.0, self.dazed - game_framework.frame_time)
         if self.state == 'KICK':
             self.kick_time -= game_framework.frame_time
             if self.kick_time <= 0:
@@ -188,6 +196,11 @@ class Player:
                           self.y + cy * reach + cx * o, *config.COLOR_BOOT)
         draw_circle(self.x, self.y, self.radius, *config.COLOR_PLAYER, filled=True)
         draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_HAT, filled=True)
+        if self.dazed > 0:        # 밀쳐져 경직: 머리 위를 도는 별 두 개 (적 기절 표시와 같은 모양)
+            a = self.dazed * 14
+            for k in (0, math.pi):
+                draw_circle(self.x + math.cos(a + k) * 10, self.y + self.radius + 5 + math.sin(a + k) * 3, 2,
+                            *config.COLOR_FLASH, filled=True)
         for i in range(self.zone.ammo):  # 발밑에 남은 총알 표시 (구역 총알 수만큼)
             color = config.COLOR_BULLET_FLOOR if i < len(self.held) else config.COLOR_AMMO_EMPTY
             draw_circle(self.x - 15 + i * 6, self.y - self.radius - 8, 2, *color, filled=True)
@@ -223,6 +236,7 @@ class Player:
         b.drop(x, y)
         b.add_to_world()
         self.push = (math.cos(angle) * config.SHOVE_PUSH_SPEED, math.sin(angle) * config.SHOVE_PUSH_SPEED)
+        self.dazed = config.SHOVE_DAZE_TIME
         effect.spawn(effect.Ring(b.x, b.y, config.COLOR_BULLET_ENEMY, 5, 16, 0.25))
         return True
 

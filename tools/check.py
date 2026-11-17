@@ -1051,6 +1051,39 @@ def empty_picker_does_not_pounce_on_empty_handed_player():
 
 
 @test
+def shoved_player_cannot_fire_for_a_moment_but_can_move_and_kick():
+    # 사용자 제안: 밀쳐진 직후 바로 쏘면 줍줍이가 줍는 0.25초 사이에 코앞에서 쏴서 빼앗기가 의미 없어진다.
+    # 0.4초 동안 사격만 막는다. 이동과 발차기는 된다 (발차기로 줍기를 끊는 대응은 남긴다).
+    import config
+    from pico2d import SDLK_a
+    pm = fresh()
+    p = pm.player
+    pk = pm.add_enemy(Picker_cls(), p.x + 32, p.y)
+    pk.state = 'FLEE'
+    sim.step(1)
+    assert len(p.held) == config.AMMO - 1 and p.dazed > 0, '밀쳐졌는데 경직이 없음'
+    aim(p, 0)
+    p.fire_cooldown = 0
+    assert p.fire() is None and len(p.held) == config.AMMO - 1, '경직 중에 쏨'
+    x0 = p.x
+    sim.key_down(SDLK_a)
+    sim.step(5)
+    assert p.x < x0 - 5, '경직 중에 움직이지 못함'
+    sim.key_up(SDLK_a)
+    p.kick_cooldown = 0
+    assert p.kick() is True, '경직 중에 발차기를 못함'
+    sim.step(int(config.SHOVE_DAZE_TIME * 60))
+    p.fire_cooldown = 0
+    assert p.dazed == 0 and p.fire() is not None, '경직이 끝났는데 못 쏨'
+    pm.finish()
+
+
+def Picker_cls():
+    from picker import Picker
+    return Picker
+
+
+@test
 def shove_needs_empty_picker_loaded_player_and_cooldown():
     import config
     from picker import Picker
