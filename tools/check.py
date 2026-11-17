@@ -1807,11 +1807,21 @@ def mine_shows_floor_bullets_only_in_lantern_light_and_glints_outside():
     near = floor_bullet(pm, p.x + 60, p.y + 40)
     far = floor_bullet(pm, 900, 600)
     assert pm.zone.shows_floor_bullet(near) and not pm.zone.shows_floor_bullet(far)
-    seen = 0
+    # 한 주기보다 조금 길게 지켜보면서, 반짝임이 한 번 이상 있고 한 번의 반짝임이 GLINT_TIME 쯤인지 본다.
+    # (처음엔 반짝인 프레임 수의 합으로 봤는데, 지켜보는 구간이 주기보다 길어 처음과 끝에서 두 번 걸리면
+    #  합이 넘쳐 드물게 실패했다. 총알 주기의 위상이 id() 에 따라 달라서 실행마다 달랐다.)
+    runs, run = [], 0
     for _ in range(int(config.GLINT_PERIOD * 60) + 2):
         sim.step(1)
-        seen += pm.zone.glints(far)
-    assert 0 < seen <= int(config.GLINT_TIME * 60) + 2, '빛 밖 총알이 한 주기에 %d 프레임 반짝임' % seen
+        if pm.zone.glints(far):
+            run += 1
+        elif run:
+            runs.append(run)
+            run = 0
+    if run:
+        runs.append(run)
+    assert runs, '빛 밖 총알이 한 주기 동안 한 번도 반짝이지 않음'
+    assert max(runs) <= int(config.GLINT_TIME * 60) + 2, '한 번에 %d 프레임 반짝임' % max(runs)
     p.x, p.y = 860, 560                # 다가가면 보인다
     assert pm.zone.shows_floor_bullet(far)
     pm.finish()
