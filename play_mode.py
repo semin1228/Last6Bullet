@@ -85,6 +85,8 @@ def dispatch(event):
         game_framework.quit()
     elif event.type == SDL_KEYDOWN and event.key == SDLK_F1:
         ledger.visible = not ledger.visible
+    elif event.type == SDL_KEYDOWN and event.key == SDLK_F2:
+        next_zone()                # 디버그: 적을 다 쓰러뜨리지 않고 다음 구역으로 (확인·발표 촬영용)
     else:
         player.handle_event(event)
 

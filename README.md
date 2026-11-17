@@ -22,7 +22,8 @@
 | 마우스 | 조준 | 1주차 완료 |
 | 마우스 왼쪽 클릭 | 발사 | 1주차 완료 |
 | Space 또는 마우스 오른쪽 클릭 | 발차기 | 2주차 완료 |
-| F1 | FPS와 총알 장부(손·바닥·공중 합계) 표시 | 디버그 |
+| F1 | FPS와 총알 장부(손·적·바닥·공중 합계) 표시 | 디버그 |
+| F2 | 다음 구역으로 바로 이동 | 디버그 |
 | R | 게임 오버 뒤 다시 하기 | 2주차 완료 |
 | ESC | 종료 | |
 
@@ -41,7 +42,7 @@ C:\Python313\python.exe tools\shot.py        # 장면 스크린샷을 docs/shots
 | 단계 | 자료 |
 |---|---|
 | 1차 발표 | 기획서 [PPT](docs/Last6Bullet_Design.pptx) · [PDF](docs/Last6Bullet_Design.pdf), 발표 [PPT](docs/Last6Bullet_Presentation1.pptx) · [PDF](docs/Last6Bullet_Presentation1.pdf), 발표 영상: [YouTube (1분 30초)](https://youtu.be/8qBhjlhKIVo) |
-| 2차 발표 | 예정 |
+| 2차 발표 | 발표 자료는 docs/ 에 추가 예정, [스크립트와 데모 촬영 순서](docs/Presentation2_Script.md) |
 | 3차 발표 | 예정 |
 
 ## 개발 진행
@@ -49,6 +50,6 @@ C:\Python313\python.exe tools\shot.py        # 장면 스크린샷을 docs/shots
 | 주차 | 목표 | 상태 |
 |---|---|---|
 | 1주차 | 뼈대, 이동과 조준, 발사와 반사, 바닥 총알과 줍기, HUD·조준점·연출 다듬기 | 완료 (자동 점검 38개 통과) |
-| 2주차 | 적 3종(줍줍이·술꾼·들개), 발차기, 술집과 광산, 게임 오버 | 완료 (자동 점검 63개 통과) |
+| 2주차 | 적 3종(줍줍이·술꾼·들개), 발차기, 술집과 광산, 게임 오버 | 완료 (자동 점검 73개 통과) |
 | 3주차 | 기차 구역, 정오의 결투, 두목 | 예정 |
 | 4주차 | AI 이미지 교체, 사운드, 난이도 조정 | 예정 |

@@ -1433,6 +1433,16 @@ def every_zone_has_exactly_six_bullets():
 
 
 @test
+def f2_skips_to_the_next_zone_keeping_hp_and_bounty():
+    from pico2d import SDLK_F2
+    pm = fresh()
+    pm.player.hp, pm.player.bounty = 2, 80
+    sim.key_down(SDLK_F2)
+    assert pm.zone.number == 2 and pm.player.hp == 2 and pm.player.bounty == 80
+    pm.finish()
+
+
+@test
 def closed_door_is_just_a_wall():
     from pico2d import SDLK_d
     import config
