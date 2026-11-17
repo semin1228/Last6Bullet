@@ -43,7 +43,7 @@ C:\Python313\python.exe tools\record.py      # 발표 데모 장면을 자동 �
 | 단계 | 자료 |
 |---|---|
 | 1차 발표 | 기획서 [PPT](docs/Last6Bullet_Design.pptx) · [PDF](docs/Last6Bullet_Design.pdf), 발표 [PPT](docs/Last6Bullet_Presentation1.pptx) · [PDF](docs/Last6Bullet_Presentation1.pdf), 발표 영상: [YouTube (1분 30초)](https://youtu.be/8qBhjlhKIVo) |
-| 2차 발표 | 발표 자료는 docs/ 에 추가 예정, [스크립트와 데모 촬영 순서](docs/Presentation2_Script.md) |
+| 2차 발표 | 발표 영상: [YouTube (1분 30초)](https://youtu.be/5ouVvSuv2iM), [스크립트와 데모 촬영 순서](docs/Presentation2_Script.md), 발표 자료는 docs/ 에 추가 예정 |
 | 3차 발표 | 예정 |
 
 ## 개발 진행
