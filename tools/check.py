@@ -948,6 +948,33 @@ def empty_picker_shoves_player_and_takes_one_bullet():
 
 
 @test
+def shoving_picker_runs_off_with_the_bullet_before_firing():
+    # 사용자 플레이 테스트: '바로 옆에 있는데 안 뺏는다'. 실제로는 밀쳐서 빼앗았지만, 0.35초 뒤 코앞에서
+    # 쏴서 맞힌 총알이 내 발밑에 떨어져 0.7초 만에 되돌아왔다. 이제 빼앗은 총알을 들고 물러난 뒤 쏜다.
+    import config, math
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    pk = pm.add_enemy(Picker, p.x + 32, p.y)
+    pk.state = 'FLEE'
+    sim.step(1)
+    assert len(p.held) == config.AMMO - 1, '밀치지 않음'
+    run_until(lambda: pk.held, 60)
+    gap_at_shot = None
+    for i in range(int(config.PICKER_CORNERED * 60) + 60):
+        before = len(pk.held)
+        sim.step(1)
+        if before and not pk.held:
+            gap_at_shot = pk.distance_to(p)
+            break
+        if i < 60:
+            assert len(p.held) == config.AMMO - 1, '빼앗긴 총알이 1초 안에 되돌아옴'
+    assert gap_at_shot is not None, '빼앗은 총알을 끝내 쏘지 않음'
+    assert gap_at_shot > 120, '빼앗고 코앞(%.0fpx)에서 쏨' % gap_at_shot
+    pm.finish()
+
+
+@test
 def shove_needs_empty_picker_loaded_player_and_cooldown():
     import config
     from picker import Picker

@@ -42,6 +42,7 @@ class Picker(Enemy):
         super().__init__(zone, player, x, y)
         self.shove_cooldown = 0.0
         self.locked_aim = None     # 조준 예고 중 고정한 방향 (라디안)
+        self.shoot_wait = 0.0      # 쏠 준비가 된 뒤 너무 가까워 쏘지 못하고 기다린 시간 (초)
         self.cover = None          # 빈손일 때 숨어 있는 장애물 (left, bottom, right, top)
         self.passed_corners = set()  # 엄폐물을 돌아갈 때 이미 지나온 모서리 번호
         self.hide_target = None    # 지금 숨으러 가는 자리 (가끔만 다시 고른다)
@@ -88,11 +89,21 @@ class Picker(Enemy):
             done = self.pick_done()
             if done:
                 self.timer = config.PICKER_FIRST_SHOT   # 줍자마자 쏘지 않고 잠깐 겨눈다
+                self.shoot_wait = 0.0
                 self.picked()
             elif done is False:
                 self.lost_bullet()
         elif self.state == 'SHOOT':
-            self.timer -= game_framework.frame_time
+            dt = game_framework.frame_time
+            self.timer -= dt
+            self.shoot_wait += dt
+            d = self.distance_to(p)
+            # 너무 가까우면 쏘지 않고 먼저 물러난다. 안 그러면 밀쳐서 빼앗은 총알을 바로 코앞에서 쏘고,
+            # 맞은 총알이 내 발밑에 떨어져 곧바로 되돌아와서 '안 빼앗는다' 처럼 보였다 (사용자 플레이 테스트).
+            # 구석에 몰려 물러날 수 없으면 PICKER_CORNERED 초 뒤에는 쏜다.
+            if (d < config.PICKER_KEEP_NEAR and self.timer < config.ENEMY_AIM_TIME + 0.05
+                    and self.locked_aim is None and self.shoot_wait < config.PICKER_CORNERED):
+                self.timer = config.ENEMY_AIM_TIME + 0.05
             if self.timer > config.ENEMY_AIM_TIME:
                 self.locked_aim = None
                 d = self.distance_to(p)
@@ -109,6 +120,7 @@ class Picker(Enemy):
                 self.shoot(self.locked_aim)
                 self.locked_aim = None
                 self.timer = config.PICKER_SHOOT_INTERVAL
+                self.shoot_wait = 0.0
             if not self.held:
                 self.out_of_ammo()
         elif self.state == 'FLEE':
