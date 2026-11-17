@@ -1120,6 +1120,26 @@ def hiding_picker_does_not_shake_and_peeks_when_player_is_still():
 
 
 @test
+def two_empty_pickers_hide_behind_different_cover():
+    # 사용자 플레이 테스트: 빈손 줍줍이 둘이 같은 테이블 뒤로 몰렸다 (술집에서 시간의 75%)
+    from picker import Picker
+    for px, py in ((200, 360), (640, 120), (1100, 360), (640, 620)):
+        pm = fresh()
+        p = pm.player
+        p.x, p.y = px, py
+        a = pm.add_enemy(Picker, 1100, 620)
+        b = pm.add_enemy(Picker, 1100, 100)
+        a.state = b.state = 'FLEE'
+        sim.step(180)
+        same = 0
+        for _ in range(300):
+            sim.step(1)
+            same += a.cover is not None and a.cover == b.cover
+        assert same < 30, '플레이어 %s: 둘이 같은 엄폐물에 %d%% 몰림' % ((px, py), same * 100 // 300)
+        pm.finish()
+
+
+@test
 def picker_without_any_cover_just_runs_away():
     from picker import Picker
     pm = fresh()

@@ -42,6 +42,7 @@ COVER_REPLAN_URGENT = 0.25     # 지금 자리가 플레이어에게 보이면 �
 COVER_REPLAN_MIN = 25          # 새 자리가 이보다 가까우면 옮기지 않는다 (잔걸음 방지, px)
 COVER_PEEK = 25                # 다시 고를 때 자리를 옆으로 흔드는 최대 거리 (엿보기, px)
 COVER_PEEK_MIN = 12            # 엿보기로 옮길 때 지금 자리와 최소한 이만큼은 다르게 (px)
+COVER_SHARE_PENALTY = 600      # 다른 줍줍이가 쓰는 엄폐물은 이만큼 멀리 있는 것으로 친다 (px)
 COVER_SWITCH_RATIO = 0.6       # 다른 엄폐물이 지금 것보다 이 비율 이하로 가까울 때만 옮긴다
 SHOVE_REACH = 6                # 빈손 줍줍이가 플레이어를 밀칠 수 있는 거리 (몸이 닿은 뒤 여유, px)
 SHOVE_COOLDOWN = 1.5           # 밀치기 간격 (초)

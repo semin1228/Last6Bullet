@@ -223,14 +223,24 @@ class Picker(Enemy):
                 return True
         return False
 
+    def zone_pickers(self):
+        import game_world
+        return [o for o in game_world.objects() if isinstance(o, Picker) and o.alive]
+
     def cover_spot(self):
         # 숨을 장애물을 고른다. 지금 쓰는 엄폐물은 쓸 수 없게 되거나 훨씬 가까운 곳이 생길 때만 바꾼다
         # (매 프레임 가장 가까운 것으로 바꾸면 두 테이블 사이를 오가며 떨린다)
+        # 다른 줍줍이가 이미 숨어 있는 엄폐물은 멀리 있는 것으로 쳐서, 다른 엄폐물이 있으면 그쪽으로 흩어진다
+        # (안 그러면 술집에서 둘이 같은 테이블 뒤에 몰렸다: 사용자 플레이 테스트, 시간의 75%)
+        taken = {o.cover for o in self.zone_pickers() if o is not self and o.cover is not None}
         spots = []
         for rect in self.zone.obstacles:
             spot = self.hide_spot(rect)
             if spot:
-                spots.append((math.hypot(spot[0] - self.x, spot[1] - self.y), rect, spot))
+                cost = math.hypot(spot[0] - self.x, spot[1] - self.y)
+                if rect in taken:
+                    cost += config.COVER_SHARE_PENALTY
+                spots.append((cost, rect, spot))
         if not spots:
             self.cover = None
             return None
