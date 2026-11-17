@@ -10,6 +10,7 @@
 #   빈손일 때(SEEK, FLEE) 플레이어에게 닿으면 밀쳐서 플레이어 총알 1발을 발밑에 떨어뜨리게 한다 (1.5초 간격).
 #   총알을 쥐고 쫓아가 가까이에서 쏘는 것만 하면 위험이 없던 문제를 막는다 (기획서 리뷰 반영).
 import math
+import random
 
 from pico2d import draw_circle, draw_line
 
@@ -43,6 +44,9 @@ class Picker(Enemy):
         self.locked_aim = None     # 조준 예고 중 고정한 방향 (라디안)
         self.cover = None          # 빈손일 때 숨어 있는 장애물 (left, bottom, right, top)
         self.passed_corners = set()  # 엄폐물을 돌아갈 때 이미 지나온 모서리 번호
+        self.hide_target = None    # 지금 숨으러 가는 자리 (가끔만 다시 고른다)
+        self.replan = 0.0          # 숨을 자리를 다시 고를 때까지 남은 시간 (초)
+        self.since_plan = 0.0      # 마지막으로 고른 뒤 지난 시간 (초)
 
     def aiming(self):
         return self.state == 'SHOOT' and self.held and self.timer <= config.ENEMY_AIM_TIME
@@ -110,15 +114,60 @@ class Picker(Enemy):
         elif self.state == 'FLEE':
             if self.nearest_loose_bullet() is not None:
                 self.cover = None
+                self.hide_target = None
                 self.bullet_appeared()
                 return
-            spot = self.cover_spot()
-            if spot is None:
+            self.plan_hiding()
+            target = self.hide_target
+            if target is None:
                 self.move_away(p.x, p.y)
-            elif math.hypot(spot[0] - self.x, spot[1] - self.y) > config.COVER_ARRIVE:
-                self.move_toward(*self.route_to(spot))
+            elif math.hypot(target[0] - self.x, target[1] - self.y) > config.COVER_ARRIVE:
+                self.move_toward(*self.route_to(target))
             else:
                 self.facing = math.atan2(p.y - self.y, p.x - self.x)   # 숨어서 플레이어 쪽을 엿본다
+
+    def plan_hiding(self):
+        # 숨을 자리를 매 프레임 다시 계산하면, 플레이어가 조금만 움직여도 목표가 따라 움직여서
+        # 섰다 걸었다를 초당 20~40번 반복하며 떨었다 (사용자 플레이 테스트: '지진').
+        # 그래서 0.8~1.4초마다만 다시 고르고, 지금 자리가 플레이어에게 보이게 됐을 때만 바로(0.25초 뒤) 고른다.
+        # 다시 고를 때 자리를 옆으로 조금(±25px) 흔들어 가만히 서 있을 때도 가끔 자리를 옮기며 엿본다.
+        dt = game_framework.frame_time
+        self.replan -= dt
+        self.since_plan += dt
+        exposed = self.hide_target is not None and not self.is_covered(self.hide_target)
+        due = self.replan <= 0 or (exposed and self.since_plan >= config.COVER_REPLAN_URGENT)
+        if self.hide_target is not None and not due:
+            return
+        self.replan = random.uniform(*config.COVER_REPLAN_TIME)
+        self.since_plan = 0.0
+        spot = self.cover_spot()
+        if spot is None:
+            self.hide_target = None
+            return
+        cur = self.hide_target
+        moved_far = cur is None or math.hypot(spot[0] - cur[0], spot[1] - cur[1]) >= config.COVER_REPLAN_MIN
+        # 엿보기 후보: 옆으로 흔든 자리 중 여전히 가려지고, 지금 자리와 조금이라도(12px) 다른 곳
+        peeks = [q for q in (self.peek_shift(spot) for _ in range(4)) if self.is_covered(q)
+                 and (cur is None or math.hypot(q[0] - cur[0], q[1] - cur[1]) >= config.COVER_PEEK_MIN)]
+        if exposed or moved_far:
+            self.hide_target = peeks[0] if peeks else spot     # 플레이어가 많이 움직였다: 새 자리로
+        elif peeks:
+            self.hide_target = peeks[0]                        # 플레이어가 그대로다: 옆으로 살짝 옮겨 엿본다
+
+    def peek_shift(self, spot):
+        # 플레이어-자리 방향의 옆으로 무작위로 조금 옮긴 자리
+        p = self.player
+        dx, dy = spot[0] - p.x, spot[1] - p.y
+        d = math.hypot(dx, dy) or 1.0
+        side = random.uniform(-config.COVER_PEEK, config.COVER_PEEK)
+        return self.zone.push_out(spot[0] - dy / d * side, spot[1] + dx / d * side, self.radius)
+
+    def is_covered(self, point):
+        # 플레이어에서 point 까지 선이 지금 엄폐물을 지나면 숨은 것
+        if self.cover is None:
+            return False
+        l, b, r, t = self.cover
+        return self.segment_hits_rect((self.player.x, self.player.y), point, (l, b, r, t))
 
     def hide_spot(self, rect):
         # 장애물 rect 를 사이에 두고 플레이어 반대편 자리. 플레이어에게 너무 가까우면 None

@@ -1080,6 +1080,46 @@ def hiding_picker_keeps_distance_from_cover_while_circling():
 
 
 @test
+def hiding_picker_does_not_shake_and_peeks_when_player_is_still():
+    # 사용자 플레이 테스트: 숨을 자리를 매 프레임 플레이어 위치로 다시 계산해서, 플레이어가 움직이면
+    # 섰다 걸었다를 초당 21~42번 반복하며 떨었고('지진'), 플레이어가 서 있으면 완전히 굳어 있었다.
+    # 이제 0.8~1.4초마다만 다시 고르고(보이면 0.25초 뒤 바로), 다시 고를 때 옆으로 살짝 옮겨 엿본다.
+    import config, math
+    from picker import Picker
+    l, b, r, t = config.SALOON_TABLES[0]
+    cx, cy = (l + r) / 2, (b + t) / 2
+    for case in ('still', 'sway', 'circle'):
+        pm = fresh()
+        p = pm.player
+        p.x, p.y = 200, 360
+        pk = pm.add_enemy(Picker, 700, 620)
+        pk.state = 'FLEE'
+        sim.step(240)
+        N = 600
+        toggles = moving = hidden = 0
+        was = None
+        for i in range(N):
+            if case == 'sway':
+                p.x, p.y = 200, 360 + math.sin(i / 60 * 2.0) * 120
+            elif case == 'circle':
+                a = math.pi + 2 * math.pi * i / 900
+                p.x, p.y = pm.zone.push_out(cx + math.cos(a) * 220, cy + math.sin(a) * 220, p.radius)
+            x0, y0 = pk.x, pk.y
+            sim.step(1)
+            now = (pk.x, pk.y) != (x0, y0)
+            toggles += was is not None and now != was
+            was = now
+            moving += now
+            hidden += blocked_by_obstacle(pm.zone, p, pk)
+        rate = toggles / (N / 60)
+        assert rate < 4, '%s: 섰다 걸었다 초당 %.1f번 (떨림)' % (case, rate)
+        assert hidden > N * 0.9, '%s: 장애물 뒤에 있던 시간 %d%%' % (case, hidden * 100 // N)
+        if case == 'still':
+            assert moving > 0, '플레이어가 서 있을 때 10초 동안 한 번도 움직이지 않음 (굳어 있음)'
+        pm.finish()
+
+
+@test
 def picker_without_any_cover_just_runs_away():
     from picker import Picker
     pm = fresh()
