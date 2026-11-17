@@ -392,6 +392,21 @@ def w2_7_aim_telegraph():
     pm.finish()
 
 
+@scene
+def w2_8_hide_behind_cover():
+    # 빈손 줍줍이: 플레이어 반대편 테이블 뒤에 숨어 엿본다
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 200, 360
+    pk = pm.add_enemy(Picker, 700, 620)
+    pk.state = 'FLEE'                 # 플레이어가 여섯 발을 다 쥐고 있어 주울 총알이 없다 (밀치기는 닿아야 함)
+    sim.mouse_move(700, 500)
+    sim.step(240)
+    save('w2_8_hide_behind_cover')
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)

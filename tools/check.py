@@ -995,6 +995,74 @@ def picker_telegraphs_and_locks_aim_before_firing():
     pm.finish()
 
 
+def blocked_by_obstacle(zone, a, b):
+    # a 와 b 사이 선분이 장애물을 지나는지 (20등분 점으로 본다)
+    for ol, ob, o_r, ot in zone.obstacles:
+        for k in range(1, 20):
+            x, y = a.x + (b.x - a.x) * k / 20, a.y + (b.y - a.y) * k / 20
+            if ol < x < o_r and ob < y < ot:
+                return True
+    return False
+
+
+@test
+def empty_picker_hides_behind_cover_instead_of_rubbing_the_wall():
+    # 사용자 플레이 테스트: 빈손 줍줍이가 플레이어 반대쪽으로만 가서 맵 끝 벽에 붙어 비볐다
+    # (측정: 서 있는 플레이어 기준 시간의 51% 를 벽 근처에서 보냄). 이제 장애물 뒤에 숨는다.
+    import math
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 200, 360
+    pk = pm.add_enemy(Picker, 700, 620)
+    pk.state = 'FLEE'
+    p.held = []                                    # 밀치기 없이 숨기만 본다
+    l, b, r, t = pm.zone.inner
+    near_wall = 0
+    for i in range(240):
+        sim.step(1)
+        near_wall += min(pk.x - l, r - pk.x, pk.y - b, t - pk.y) < pk.radius + 12
+    assert near_wall < 24, '4초 중 %d 프레임을 벽에 붙어 있음' % near_wall
+    assert blocked_by_obstacle(pm.zone, p, pk), '4초 뒤에도 장애물 뒤에 숨지 않음 (%.0f, %.0f)' % (pk.x, pk.y)
+    x0, y0 = pk.x, pk.y
+    sim.step(30)
+    assert math.hypot(pk.x - x0, pk.y - y0) < 3, '숨은 뒤에도 계속 움직임'
+    pm.finish()
+
+
+@test
+def hiding_picker_moves_around_cover_as_player_moves():
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    p.x, p.y = 200, 360
+    pk = pm.add_enemy(Picker, 700, 620)
+    pk.state = 'FLEE'
+    p.held = []
+    sim.step(240)
+    cover = pk.cover
+    l, b, r, t = cover
+    p.x, p.y = (l + r) / 2, t + 160                 # 숨은 장애물 반대편(위쪽)으로 플레이어가 돈다
+    sim.step(180)
+    assert blocked_by_obstacle(pm.zone, p, pk), '플레이어가 돌아갔는데 다시 숨지 않음'
+    pm.finish()
+
+
+@test
+def picker_without_any_cover_just_runs_away():
+    from picker import Picker
+    pm = fresh()
+    pm.zone.obstacles = []
+    p = pm.player
+    pk = pm.add_enemy(Picker, p.x + 150, p.y + 40)
+    pk.state = 'FLEE'
+    p.held = []
+    d0 = pk.distance_to(p)
+    sim.step(30)
+    assert pk.distance_to(p) > d0 + 30, '숨을 곳이 없을 때 멀어지지 않음'
+    pm.finish()
+
+
 @test
 def picker_flees_when_there_is_nothing_to_pick():
     from picker import Picker
