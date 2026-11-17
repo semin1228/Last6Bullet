@@ -1084,6 +1084,28 @@ def Picker_cls():
 
 
 @test
+def kicked_picker_does_not_fire_the_moment_it_wakes_up():
+    # 데모 녹화에서 찾은 버그: 총알을 가진 줍줍이를 차면, 깨어나는 순간 timer(기절 시간을 세던 값)가 0 이라
+    # 조준 예고 없이 바로 쐈고, '가까우면 물러난다' 도 SHOOT 에 있던 시간이 쌓여 있어 건너뛰었다.
+    import config
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    pk = pm.add_enemy(Picker, p.x + 60, p.y)
+    pk.held = [p.held.pop(), p.held.pop()]
+    pk.state, pk.timer, pk.shoot_wait = 'SHOOT', 5.0, 3.0
+    aim(p, 0)
+    p.kick()
+    assert pk.state == 'STUN'
+    run_until(lambda: pk.state != 'STUN', 60)
+    held = len(pk.held)
+    for _ in range(int((config.PICKER_FIRST_SHOT - 0.02) * 60)):
+        sim.step(1)
+        assert len(pk.held) == held, '깨어나자마자(조준 예고 없이) 쏨'
+    pm.finish()
+
+
+@test
 def shove_needs_empty_picker_loaded_player_and_cooldown():
     import config
     from picker import Picker

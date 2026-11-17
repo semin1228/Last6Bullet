@@ -108,7 +108,12 @@ class Picker(Enemy):
             self.pounce_end()
 
     def after_recover(self):
-        if self.held:              # 기절에서 깨어났는데 총알이 남아 있으면 바로 쏘러 간다
+        if self.held:              # 기절에서 깨어났는데 총알이 남아 있으면 다시 쏘러 간다
+            # 기절 시간을 세던 timer 가 0 이라 그대로 두면 깨자마자 조준 예고 없이 쐈다 (데모 녹화에서 발견).
+            # 주웠을 때처럼 잠깐 겨누고, 가까우면 물러나는 시간도 처음부터 센다.
+            self.timer = config.PICKER_FIRST_SHOT
+            self.shoot_wait = 0.0
+            self.locked_aim = None
             self.armed()
 
     def think(self):
