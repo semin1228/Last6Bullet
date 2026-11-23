@@ -220,11 +220,11 @@ class Player:
             d, (hx, hy) = other.closest_on_path(self.x, self.y)
             if d <= self.radius + other.radius:
                 self.hurt()
-                other.hit_at(hx, hy)   # 맞힌 총알은 그 자리에 떨어진다
+                other.hit_at(hx, hy, self)   # 맞힌 총알은 그 자리에 떨어지고, 나는 1초 동안 못 줍는다
             return
         if math.hypot(other.x - self.x, other.y - self.y) > self.radius + other.radius + config.PICKUP_REACH:
             return                 # 사각형은 겹쳐도 원끼리는 닿지 않음 (대각선 모서리)
-        if other.state == 'FLOOR':
+        if other.can_be_picked_by(self):
             self.pick_up(other)
 
     def shoved(self, angle, x, y):

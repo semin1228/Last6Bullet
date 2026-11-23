@@ -25,6 +25,8 @@ class Bullet:
         self.age = 0.0             # 날아간 시간 (초)
         self.bounces = 0           # 벽이나 장애물에 튕긴 횟수 (날 때, 구를 때 따로 센다)
         self.trail = []            # 이번 프레임에 지나온 점들 (사람 맞히기 판정용, 느린 프레임에도 뚫고 지나가지 않게)
+        self.no_pick_by = None     # 방금 이 총알에 맞은 사람. no_pick_time 동안 줍지 못한다
+        self.no_pick_time = 0.0
 
         self.machine = Machine(
             model=self,
@@ -52,10 +54,12 @@ class Bullet:
         self.age = 0.0
         self.bounces = 0
         self.trail = [(x, y)]
+        self.no_pick_time = 0.0    # 누가 다시 쏘면 줍기 금지는 끝난다
 
     def place(self, x, y):
         # 손에서 바닥으로 떨어뜨릴 때 (적이 쓰러지거나 발차기에 맞을 때)
         self.x, self.y = self.zone.push_out(x, y, self.radius)
+        self.no_pick_time = 0.0    # 누군가 손에 쥐었다 떨어뜨린 총알은 줍기 금지가 없다
 
     def roll(self, angle, speed=None):
         # 플레이어 발차기는 ROLL_SPEED, 술꾼 패스는 더 세게 (speed)
@@ -79,6 +83,8 @@ class Bullet:
 
     def update(self):
         dt = game_framework.frame_time
+        if self.no_pick_time > 0:
+            self.no_pick_time = max(0.0, self.no_pick_time - dt)
         if self.state == 'FLYING':
             self.trail = [(self.x, self.y)]
             self.age += dt
@@ -164,10 +170,17 @@ class Bullet:
                 best = (d, (px, py))
         return best
 
-    def hit_at(self, x, y):
-        # 사람에게 맞음: 맞은 자리에 떨어진다
+    def hit_at(self, x, y, victim=None):
+        # 사람에게 맞음: 맞은 자리에 떨어진다. 맞은 사람(victim)은 HIT_NO_PICK_TIME 동안 이 총알을 줍지 못한다
+        # (비판 점검 반영: 맞은 사람이 발밑 총알을 바로 주워 다시 쏘던 문제. 그 사이 다른 사람이 가져갈 수 있다)
         self.x, self.y = x, y
         self.land()
+        self.no_pick_by = victim
+        self.no_pick_time = config.HIT_NO_PICK_TIME if victim is not None else 0.0
+
+    def can_be_picked_by(self, who):
+        # 바닥에 있고, 방금 이 총알에 맞은 사람이 아니면 줍을 수 있다
+        return self.is_loose() and not (who is self.no_pick_by and self.no_pick_time > 0)
 
     def handle_collision(self, group, other):
         pass

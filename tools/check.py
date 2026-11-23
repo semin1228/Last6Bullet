@@ -492,8 +492,43 @@ def bounced_bullet_hurts_and_drops():
     b = flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
     sim.step(20)
     assert p.hp == config.PLAYER_HP - 1 and p.invincible > 0
-    # 맞힌 총알은 맞은 자리(내 발밑)에 떨어지고, 그 위에 서 있으니 곧바로 주워진다
-    assert b.state == 'HELD' and b in p.held, '맞힌 총알이 발밑에 떨어져 주워지지 않음'
+    # 맞힌 총알은 맞은 자리(내 발밑)에 떨어지지만, 맞은 나는 1초 동안 줍지 못한다 (비판 점검 반영)
+    assert b.state == 'FLOOR' and b not in p.held, '맞은 총알을 바로 주웠음'
+    sim.step(int(config.HIT_NO_PICK_TIME * 60) + 5)
+    assert b.state == 'HELD' and b in p.held, '1초가 지나도 발밑 총알이 주워지지 않음'
+    pm.finish()
+
+
+@test
+def enemy_cannot_pick_the_bullet_that_just_hit_it():
+    # 적도 같은 규칙: 맞은 적은 1초 동안 그 총알을 못 줍고, 다른 적은 바로 주울 수 있다
+    import config
+    from picker import Picker
+    pm = fresh()
+    a = pm.add_enemy(Picker, 900, 360)
+    other = pm.add_enemy(Picker, 900, 600)
+    b = flying_bullet(pm, a.x - 60, a.y, config.BULLET_SPEED, 0, bounces=0)
+    while b.state == 'FLYING':
+        sim.step(1)
+    assert a.hp < a.HP and b.state == 'FLOOR'
+    assert b not in a.loose_bullets() and b in other.loose_bullets()
+    pm.player.held.clear()             # 플레이어가 끼어들지 않게
+    sim.step(int(config.HIT_NO_PICK_TIME * 60) + 2)
+    assert b.state != 'FLOOR' or b in a.loose_bullets(), '1초 뒤에도 맞은 적이 못 줍는 상태'
+    pm.finish()
+
+
+@test
+def no_pick_ends_when_bullet_is_fired_again():
+    import config
+    pm = fresh()
+    p = pm.player
+    b = flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
+    while b.state == 'FLYING':
+        sim.step(1)
+    assert not b.can_be_picked_by(p)
+    b.launch(b.x, b.y, 0, 'player')
+    assert b.no_pick_time == 0
     pm.finish()
 
 

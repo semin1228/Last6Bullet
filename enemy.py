@@ -56,7 +56,7 @@ class Enemy:
     # ------------------------------------------------------------ 찾기와 움직이기
 
     def loose_bullets(self):
-        return [o for o in game_world.objects() if isinstance(o, Bullet) and o.is_loose()]
+        return [o for o in game_world.objects() if isinstance(o, Bullet) and o.can_be_picked_by(self)]
 
     def nearest_loose_bullet(self):
         bullets = self.loose_bullets()
@@ -193,7 +193,7 @@ class Enemy:
     def hit_by(self, bullet, point=None):
         angle = math.atan2(bullet.vy, bullet.vx)
         x, y = point or (bullet.x, bullet.y)
-        bullet.hit_at(x, y)        # 맞힌 총알은 그 자리에 떨어진다 (PRD 3장 규칙 2)
+        bullet.hit_at(x, y, self)  # 맞힌 총알은 그 자리에 떨어지고, 맞은 적은 1초 동안 못 줍는다 (PRD 3장 규칙 2)
         self.hp -= 1
         self.flash = config.HIT_FLASH_TIME
         effect.spawn(effect.Ring(self.x, self.y, self.COLOR, 14, 30, 0.25))
