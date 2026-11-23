@@ -65,6 +65,9 @@ def start_zone(index, keep=None):
     game_world.add_object(ledger, 2)
     game_world.add_object(Crosshair(player), 2)     # UI 중 가장 위에 그린다
     hide_cursor()
+    if data.get('duel') and SPAWN_ENEMIES:
+        import duel_mode           # duel_mode 도 play_mode 를 불러서, 서로 맨 위에서 부르지 않는다
+        game_framework.push_mode(duel_mode)          # 은행: 보스전 전에 정오의 결투 (PRD 9장)
 
 
 def fell_off_train(o):

@@ -483,6 +483,39 @@ def w3_2_boss_spread():
     pm.finish()
 
 
+@scene
+def w3_3_duel():
+    # 정오의 결투: HIGH NOON -> READY... -> DRAW! -> YOU WIN (먼저 쏜 총알 자국)
+    import random
+    import game_framework
+    import play_mode
+    from pico2d import SDL_MOUSEBUTTONDOWN
+    from zone import ZONES
+    random.seed(2)
+    pm = fresh()
+    play_mode.SPAWN_ENEMIES = True
+    pm.start_zone(len(ZONES) - 2)
+    for e in pm.enemies:
+        e.alive = False
+    pm.next_zone()
+    import duel_mode as dm
+    sim.step(30)
+    save('w3_3_duel_intro')
+    while dm.duel.state != 'READY':
+        sim.step(1)
+    sim.step(20)
+    save('w3_3_duel_ready')
+    while dm.duel.state != 'GO':
+        sim.step(1)
+    sim.step(4)
+    save('w3_3_duel_draw')
+    dm.dispatch(sim.FakeEvent(SDL_MOUSEBUTTONDOWN, button=1))
+    sim.step(6)
+    save('w3_3_duel_win')
+    game_framework.stack = [pm]
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)

@@ -113,6 +113,14 @@ BOSS_SPREAD_HALF = 50          # 흩뿌리기 부채꼴 좌우 각도 (도)
 BOSS_CHARGE_SPEED = 240        # 대체 공격 돌진 속도 (px/초)
 BOSS_CHARGE_TIME = 2.0         # 돌진 시간 (초)
 BOSS_KEEP = 260                # 주울 총알이 없을 때 플레이어와 두는 거리 (px)
+# 정오의 결투 (PRD 9장, 보통 난이도)
+DUEL_INTRO = 1.4               # 'HIGH NOON' 연출 (초, 클릭 무시)
+DUEL_READY = (1.0, 3.0)        # 'READY...' 가 떠 있는 시간 (무작위, 초)
+DUEL_BOSS_REACT = (0.3, 0.45)  # 두목 반응 시간 (무작위, 초)
+DUEL_RESULT = 1.2              # 결과를 보여 주는 시간 (초)
+DUEL_LOSE_SPLIT = 3            # 지면 두목에게 넘어가는 총알 수
+DUEL_PLAYER_POS = (440, 360)
+DUEL_BOSS_POS = (840, 360)
 BANK_PILLARS = [
     (380, 150, 440, 210),
     (380, 510, 440, 570),

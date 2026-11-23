@@ -2149,6 +2149,74 @@ def boss_takes_a_hit_per_bullet_and_beating_it_saves_the_town():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 17. 3주차: 정오의 결투
+
+def duel_setup():
+    # 3구역 기차에서 문을 지나 은행으로 들어간다 (적 자동 배치를 켜야 두목과 결투가 나온다)
+    import game_framework, duel_mode, play_mode
+    from zone import ZONES
+    pm = fresh()
+    play_mode.SPAWN_ENEMIES = True
+    pm.start_zone(len(ZONES) - 2, keep=None)
+    pm.zone_index = len(ZONES) - 2
+    for e in pm.enemies:
+        e.alive = False
+    pm.next_zone()                                  # 은행으로 (결투가 위에 올라온다)
+    assert game_framework.stack[-1] is duel_mode, '은행에 들어갔는데 결투가 없음'
+    return pm, duel_mode
+
+
+def click_left():
+    from pico2d import SDL_MOUSEBUTTONDOWN
+    import duel_mode
+    duel_mode.dispatch(sim.FakeEvent(SDL_MOUSEBUTTONDOWN, button=1))
+
+
+@test
+def duel_ignores_clicks_in_intro_and_fouls_on_ready():
+    import config, game_framework
+    pm, dm = duel_setup()
+    p, boss = pm.player, dm.duel.boss
+    assert (p.x, p.y) == config.DUEL_PLAYER_POS and (boss.x, boss.y) == config.DUEL_BOSS_POS
+    click_left()
+    assert dm.duel.state == 'INTRO', '시계탑 연출 중 클릭으로 결투가 끝남'
+    run_until(lambda: dm.duel.state == 'READY', 120)
+    click_left()
+    assert dm.duel.state == 'LOSE' and dm.duel.reason == 'FOUL'
+    run_until(lambda: game_framework.stack[-1] is pm, 120)
+    assert p.hp == config.PLAYER_HP - 1 and len(p.held) == 3 and len(boss.held) == 3, '패배: 체력 -1, 총알 3:3 이 아님'
+    assert boss.state == 'SPREAD', '패배했는데 두목이 바로 흩뿌리지 않음'
+    assert pm.ledger.check()
+    pm.finish()
+
+
+@test
+def drawing_first_wins_the_duel():
+    import config, game_framework
+    pm, dm = duel_setup()
+    p, boss = pm.player, dm.duel.boss
+    run_until(lambda: dm.duel.state == 'GO', 400)
+    sim.step(int(config.DUEL_BOSS_REACT[0] * 60) - 3)   # 두목보다 먼저
+    click_left()
+    assert dm.duel.state == 'WIN' and dm.duel.reason == 'YOU WIN'
+    run_until(lambda: game_framework.stack[-1] is pm, 120)
+    assert boss.hp == config.BOSS_HP - 1 and len(p.held) == 6 and p.hp == config.PLAYER_HP
+    pm.finish()
+
+
+@test
+def waiting_after_draw_loses_too_slow():
+    import config, game_framework
+    pm, dm = duel_setup()
+    run_until(lambda: dm.duel.state == 'GO', 400)
+    run_until(lambda: dm.duel.state == 'LOSE', int(config.DUEL_BOSS_REACT[1] * 60) + 3)
+    assert dm.duel.reason == 'TOO SLOW'
+    click_left()                                    # 늦게 눌러도 바뀌지 않는다
+    assert dm.duel.state == 'LOSE'
+    run_until(lambda: game_framework.stack[-1] is pm, 120)
+    pm.finish()
+
+
 def main():
     sim.open_game('--window' in sys.argv)
     from pico2d import close_canvas
