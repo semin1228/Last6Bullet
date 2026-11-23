@@ -1763,6 +1763,26 @@ def door_opens_only_when_every_enemy_is_down_and_leads_to_the_mine():
 
 
 @test
+def zone_starts_with_three_in_hand_and_three_on_the_floor():
+    # 비판 점검 반영: 6발을 다 쥐고 시작하면 술집이 2.8초 만에 끝나고 적이 총알을 줍지 않았다.
+    # 술집·광산·기차는 손 3 + 바닥 3 (floor 자리), 은행은 결투가 배분을 정하므로 손 6. 구역 총알은 늘 6발.
+    from zone import ZONES
+    for i, data in enumerate(ZONES):
+        pm = fresh(enemies=True)
+        pm.start_zone(i)
+        floor = [b for b in bullets_in_world() if b.state == 'FLOOR']
+        spots = data.get('floor', [])
+        assert len(pm.player.held) + len(floor) == 6 and pm.ledger.expected == 6, data['name']
+        assert len(floor) == len(spots), '%s 바닥 총알 %d발' % (data['name'], len(floor))
+        assert sorted((round(b.x), round(b.y)) for b in floor) == sorted(spots), data['name']
+        if not data.get('duel'):
+            assert len(pm.player.held) == 3, data['name']
+        import game_framework
+        game_framework.stack = [pm]
+        pm.finish()
+
+
+@test
 def every_zone_has_exactly_six_bullets():
     # 제목이 Last 6 Bullet 이다. 어느 구역이든 총알은 여섯 발 (사용자 결정으로 광산 5발을 없앰)
     from zone import ZONES
@@ -2236,7 +2256,8 @@ def a_full_run_goes_from_saloon_to_town_saved():
     pm = fresh(enemies=True)
     names = []
     for index in range(len(ZONES) - 1):
-        assert pm.zone_index == index and len(pm.player.held) == 6 and pm.ledger.expected == 6
+        in_hand = 6 - len(ZONES[index].get('floor', []))     # 손 3 + 바닥 3 으로 시작 (은행은 결투가 정함)
+        assert pm.zone_index == index and len(pm.player.held) == in_hand and pm.ledger.expected == 6
         names.append(pm.zone.name)
         pm.player.hp = config.PLAYER_HP - index % 2           # 체력이 이어지는지 보려고 바꿔 둔다
         for e in list(pm.enemies):

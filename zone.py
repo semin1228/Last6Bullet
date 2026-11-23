@@ -132,15 +132,22 @@ class Zone:
 
 
 # 구역 데이터 (PRD 7장). 적은 (종류, x, y). 플레이어는 start 에서 시작하고, 적을 모두 쓰러뜨리면 오른쪽 문이 열린다.
+# floor: 구역 시작 때 바닥에 놓여 있는 총알 자리. 나머지는 플레이어 손에 쥐고 시작한다.
+#   손의 3발로는 적 체력 합(4~5)을 다 깎지 못해서, 시작부터 바닥 총알 쟁탈이 벌어진다 (비판 점검 반영:
+#   6발을 다 쥐고 시작하면 술집이 2.8초 만에 끝나고 적이 총알을 한 발도 줍지 않았다).
+#   은행은 정오의 결투 결과가 배분을 정하므로 floor 가 없다.
 ZONES = [
     {'number': 1, 'name': 'SALOON', 'ammo': 6, 'obstacles': config.SALOON_TABLES, 'dark': False,
      'start': (config.WIDTH // 2, config.HEIGHT // 2),
+     'floor': [(880, 620), (900, 330), (860, 110)],
      'enemies': [('picker', 1120, 600), ('picker', 1120, 130), ('drunk', 1180, 360)]},
     {'number': 2, 'name': 'MINE', 'ammo': 6, 'obstacles': config.MINE_ROCKS, 'dark': True,
      'start': (110, config.HEIGHT // 2),
+     'floor': [(620, 560), (700, 300), (600, 70)],
      'enemies': [('picker', 1100, 610), ('picker', 760, 640), ('dog', 1100, 110), ('drunk', 1180, 360)]},
     {'number': 3, 'name': 'TRAIN', 'ammo': 6, 'obstacles': config.TRAIN_CRATES, 'dark': False, 'kind': 'train',
      'start': (320, config.HEIGHT // 2),
+     'floor': [(900, 600), (950, 300), (880, 120)],
      'enemies': [('picker', 1100, 610), ('picker', 1100, 110), ('drunk', 1180, 360)]},
     {'number': 4, 'name': 'BANK', 'ammo': 6, 'obstacles': config.BANK_PILLARS, 'dark': False, 'style': 'bank',
      'start': (240, config.HEIGHT // 2), 'duel': True, 'final': True,

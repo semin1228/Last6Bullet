@@ -16,7 +16,7 @@ from train_zone import TrainZone
 from zone import ZONES, Zone
 
 ENEMY_KINDS = {'picker': Picker, 'drunk': Drunk, 'dog': Dog, 'boss': Boss}
-SPAWN_ENEMIES = True               # 자동 점검에서 플레이어·총알만 볼 때 끈다
+SPAWN_ENEMIES = True               # 구역 배치(적, 바닥 총알, 결투). 자동 점검에서 플레이어·총알만 볼 때 끈다
 
 zone = None
 player = None
@@ -54,8 +54,15 @@ def start_zone(index, keep=None):
         player.mouse = keep.mouse
     game_world.add_object(player, 1)
     # 구역의 총알은 여기서만 만든다. 이후에는 상태만 바뀌므로 총알 수가 늘거나 줄지 않는다.
-    player.held = [Bullet(zone) for _ in range(zone.ammo)]
+    # 구역 데이터의 floor 자리에 놓을 만큼은 바닥에, 나머지는 플레이어 손에 쥐고 시작한다.
+    bullets = [Bullet(zone) for _ in range(zone.ammo)]
+    spots = data.get('floor', []) if SPAWN_ENEMIES else []
+    in_hand = len(bullets) - len(spots)
+    player.held = bullets[:in_hand]
     game_world.add_collision_pair('player:bullet', player, None)
+    for b, (fx, fy) in zip(bullets[in_hand:], spots):
+        b.drop(fx, fy)
+        b.add_to_world()
     enemies = []
     if SPAWN_ENEMIES:
         for kind, ex, ey in data['enemies']:
