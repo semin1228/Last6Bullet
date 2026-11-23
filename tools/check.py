@@ -179,6 +179,21 @@ def click_fires_toward_mouse_immediately():
 
 
 @test
+def first_click_without_moving_mouse_fires_where_clicked():
+    # 시작 직후 마우스를 움직이지 않고 클릭해도 클릭한 자리(왼쪽 아래)로 쏜다
+    import config, math
+    from pico2d import SDL_MOUSEBUTTONDOWN
+    pm = fresh()
+    p = pm.player
+    tx, ty = p.x - 200, p.y - 200
+    sim.send(sim.FakeEvent(SDL_MOUSEBUTTONDOWN, x=int(tx), y=config.HEIGHT - 1 - int(ty), button=1))
+    [b] = bullets_in_world()
+    angle = math.degrees(math.atan2(b.vy, b.vx)) % 360
+    assert abs(angle - 225) < 3, '첫 클릭이 %.0f도로 나감' % angle
+    pm.finish()
+
+
+@test
 def cooldown_blocks_rapid_double_click():
     import config
     pm = fresh()

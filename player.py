@@ -56,6 +56,11 @@ class Player:
         return dx / length, dy / length  # 대각선도 같은 속도가 되도록 길이를 1로 맞춘다
 
     def handle_event(self, event):
+        if event.type == SDL_MOUSEBUTTONDOWN and event.x is not None:
+            # 클릭한 자리로 조준부터 맞춘다. 시작 직후 마우스를 움직이기 전 첫 클릭이
+            # 기본 조준(오른쪽)으로 나가던 버그 (비판 점검에서 발견)
+            self.mouse = (event.x, config.HEIGHT - 1 - event.y)
+            self.update_aim()
         if event.type == SDL_KEYDOWN and event.key in MOVE_KEYS:
             self.pressed.add(event.key)
         elif event.type == SDL_KEYUP and event.key in MOVE_KEYS:

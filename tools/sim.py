@@ -19,7 +19,7 @@ def open_game(window):
 
 
 class FakeEvent:
-    def __init__(self, type, key=None, x=0, y=0, button=0):
+    def __init__(self, type, key=None, x=None, y=None, button=0):   # 좌표 없는 클릭은 조준을 바꾸지 않는다
         self.type, self.key, self.x, self.y, self.button = type, key, x, y, button
 
 
