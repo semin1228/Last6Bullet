@@ -1848,15 +1848,16 @@ def random_battle_for_50_seconds_keeps_ammo_in_both_zones():
     # 적 3~4명과 함께 무작위로 움직이고, 쏘고, 차는 3000프레임(50초)을 구역마다 돌린다.
     # 매 프레임: 장부(손 + 적 + 바닥 + 공중 = 구역 총알 수), 모두 벽 안·장애물 밖, 게임이 멈추지 않음.
     # 적이 다 쓰러지면 다시 세운다. 체력 0 처리는 따로 검사하므로 여기서는 유지한다.
-    import random, config, game_world
+    import random, config, game_world, game_framework
     from pico2d import SDLK_a, SDLK_d, SDLK_s, SDLK_w
     from bullet import Bullet
     from enemy import Enemy
     from zone import ZONES
-    for index in (0, 1, 2):
+    for index in range(len(ZONES)):
         pm = fresh(enemies=True)
         if index:
             pm.start_zone(index)
+        game_framework.stack = [pm]                 # 은행: 결투는 따로 검사하므로 건너뛰고 바로 보스전
         p = pm.player
         rng = random.Random(100 + index)
         keys = [SDLK_w, SDLK_a, SDLK_s, SDLK_d]
@@ -1904,10 +1905,13 @@ def random_battle_for_50_seconds_keeps_ammo_in_both_zones():
             p.invincible = 0.0
             pm.zone.door_open = False          # 문으로 나가지 않게 (구역 전환은 따로 검사)
 
+        hits = 0
         for i in range(3000):
             before = sum(1 for e in pm.enemies if e.alive)
+            hp_before = sum(max(e.hp, 0) for e in pm.enemies)
             sim.step(1, before=lambda _, i=i: act(i))
             kills += before - sum(1 for e in pm.enemies if e.alive)
+            hits += max(0, hp_before - sum(max(e.hp, 0) for e in pm.enemies))
             enemy_shots += sum(1 for o in game_world.objects()
                                if isinstance(o, Bullet) and o.state == 'FLYING' and o.owner != 'player' and o.age == 1 / 60)
             assert pm.ledger.problem is None, '%s %d 프레임: %s' % (pm.zone.name, i, pm.ledger.problem)
@@ -1916,11 +1920,14 @@ def random_battle_for_50_seconds_keeps_ammo_in_both_zones():
                     assert l <= o.x <= r and b <= o.y <= t, '%s 가 벽 밖 (%d 프레임)' % (type(o).__name__, i)
                     for ol, ob, o_r, ot in pm.zone.obstacles:
                         assert not (ol < o.x < o_r and ob < o.y < ot), '%s 가 장애물 안 (%d 프레임)' % (type(o).__name__, i)
+            if game_framework.stack[-1] is not pm:  # 은행 클리어 화면이 올라오면 내리고 계속 싸운다
+                game_framework.stack = [pm]
             if not any(e.alive for e in pm.enemies):
                 for kind, ex, ey in ZONES[index]['enemies']:
                     pm.add_enemy(pm.ENEMY_KINDS[kind], ex, ey)
-        assert kills > 0 and kicks > 0, '검사가 의미 없음 (쓰러뜨림 %d, 발차기 %d)' % (kills, kicks)
-        print('       (%s: 쓰러뜨림 %d, 발차기 %d, 적 발사 %d)' % (pm.zone.name, kills, kicks, enemy_shots))
+        # 두목(체력 8)은 50초 무작위 전투로는 잘 안 쓰러지므로, 적을 한 번이라도 맞혔는지로 본다
+        assert hits > 0 and kicks > 0, '검사가 의미 없음 (맞힘 %d, 발차기 %d)' % (hits, kicks)
+        print('       (%s: 맞힘 %d, 쓰러뜨림 %d, 발차기 %d, 적 발사 %d)' % (pm.zone.name, hits, kills, kicks, enemy_shots))
         pm.finish()
 
 
@@ -2214,6 +2221,51 @@ def waiting_after_draw_loses_too_slow():
     click_left()                                    # 늦게 눌러도 바뀌지 않는다
     assert dm.duel.state == 'LOSE'
     run_until(lambda: game_framework.stack[-1] is pm, 120)
+    pm.finish()
+
+
+# ---------------------------------------------------------------- 18. 3주차: 한 판 끝까지
+
+@test
+def a_full_run_goes_from_saloon_to_town_saved():
+    # 3주차 최소 완성 기준 (PRD 17장): 술집 -> 광산 -> 기차 -> 결투 -> 두목까지 한 판이 끝까지 이어진다.
+    # 각 구역의 적을 쓰러뜨리고 문으로 나가며, 체력·현상금이 이어지고 구역마다 총알 6발인지 본다.
+    import config, game_framework, gameover_mode, duel_mode
+    from pico2d import SDL_MOUSEBUTTONDOWN
+    from zone import ZONES
+    pm = fresh(enemies=True)
+    names = []
+    for index in range(len(ZONES) - 1):
+        assert pm.zone_index == index and len(pm.player.held) == 6 and pm.ledger.expected == 6
+        names.append(pm.zone.name)
+        pm.player.hp = config.PLAYER_HP - index % 2           # 체력이 이어지는지 보려고 바꿔 둔다
+        for e in list(pm.enemies):
+            if e.alive:
+                e.die()
+        sim.step(1)
+        hp, bounty = pm.player.hp, pm.player.bounty           # 쓰러뜨린 현상금까지 받은 뒤의 값
+        assert pm.zone.door_open, '%s: 적을 모두 쓰러뜨렸는데 문이 안 열림' % pm.zone.name
+        l, b, r, t = pm.zone.inner
+        pm.player.x, pm.player.y = r - pm.player.radius, config.HEIGHT // 2
+        sim.step(1)
+        assert pm.player.hp == hp and pm.player.bounty == bounty, '다음 구역으로 체력·현상금이 이어지지 않음'
+    names.append(pm.zone.name)
+    assert names == ['SALOON', 'MINE', 'TRAIN', 'BANK'], names
+    assert game_framework.stack[-1] is duel_mode, '은행에 들어섰는데 결투가 없음'
+    run_until(lambda: duel_mode.duel.state == 'GO', 400)
+    duel_mode.dispatch(sim.FakeEvent(SDL_MOUSEBUTTONDOWN, button=1))
+    run_until(lambda: game_framework.stack[-1] is pm, 120)
+    boss = duel_mode.duel.boss
+    assert boss.hp == config.BOSS_HP - 1
+    boss.hp = 1
+    p = pm.player
+    p.mouse = (boss.x, boss.y)
+    p.fire_cooldown = 0
+    p.fire()
+    run_until(lambda: game_framework.stack[-1] is not pm, 120)
+    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TOWN SAVED'
+    assert p.bounty >= 500
+    game_framework.stack = [pm]
     pm.finish()
 
 
