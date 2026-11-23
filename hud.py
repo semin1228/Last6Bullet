@@ -54,3 +54,6 @@ class Hud:
             self.font.draw(CYLINDER_X + 26, y, '$%d' % self.player.bounty, config.COLOR_BULLET_FLOOR)
             if self.zone.door_open:
                 self.font.draw(config.WIDTH - 200, y, 'EXIT  >>>', config.COLOR_BOUNTY)
+            warning = getattr(self.zone, 'warning', None)   # 기차: 덜컹 1초 전 예고
+            if warning and warning():
+                self.font.draw(config.WIDTH // 2 + 110, y, 'JOLT!  <<<', config.COLOR_JOLT_WARN)

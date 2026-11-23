@@ -428,6 +428,33 @@ def w2_9_pounce():
     pm.finish()
 
 
+# ---------------------------------------------------------------- 3주차
+
+@scene
+def w3_1_train():
+    # 기차: 바닥 총알이 짐받이 턱에 모이고, 덜컹 1초 전 'JOLT!' 예고와 위험 띠 깜빡임
+    import random
+    import config
+    random.seed(4)
+    pm = fresh(enemies=True)
+    pm.start_zone(2)
+    z = pm.zone
+    z.jolt_in = 99
+    p = pm.player
+    for tx, ty in ((900, 600), (1000, 150), (700, 400)):
+        sim.mouse_move(tx, ty)
+        sim.click()
+        sim.step(14)
+    for _ in range(150):
+        sim.step(1)
+        p.hp = 4
+    z.jolt_in = config.JOLT_WARN - 0.3
+    sim.mouse_move(800, 360)
+    sim.step(6)
+    save('w3_1_train')
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)

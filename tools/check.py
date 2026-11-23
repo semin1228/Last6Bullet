@@ -1830,8 +1830,9 @@ def mine_shows_floor_bullets_only_in_lantern_light_and_glints_outside():
 @test
 def leaving_the_last_zone_shows_to_be_continued():
     import game_framework, gameover_mode
+    from zone import ZONES
     pm = fresh()
-    pm.start_zone(1)
+    pm.start_zone(len(ZONES) - 1)                   # 지금 만든 마지막 구역
     still_picker(pm, 900, 600).die()
     sim.step(1)
     p = pm.player
@@ -1855,10 +1856,10 @@ def random_battle_for_50_seconds_keeps_ammo_in_both_zones():
     from bullet import Bullet
     from enemy import Enemy
     from zone import ZONES
-    for index in (0, 1):
+    for index in (0, 1, 2):
         pm = fresh(enemies=True)
         if index:
-            pm.start_zone(1)
+            pm.start_zone(index)
         p = pm.player
         rng = random.Random(100 + index)
         keys = [SDLK_w, SDLK_a, SDLK_s, SDLK_d]
@@ -1924,6 +1925,137 @@ def random_battle_for_50_seconds_keeps_ammo_in_both_zones():
         assert kills > 0 and kicks > 0, '검사가 의미 없음 (쓰러뜨림 %d, 발차기 %d)' % (kills, kicks)
         print('       (%s: 쓰러뜨림 %d, 발차기 %d, 적 발사 %d)' % (pm.zone.name, kills, kicks, enemy_shots))
         pm.finish()
+
+
+# ---------------------------------------------------------------- 15. 3주차: 달리는 기차
+
+def train(pm):
+    # 3구역 기차로 가서, 덜컹이 저절로 오지 않게 멀리 미뤄 둔다 (덜컹 테스트는 직접 일으킨다)
+    pm.start_zone(2)
+    pm.zone.jolt_in = 999.0
+    return pm.zone
+
+
+@test
+def train_floor_slides_bullets_to_the_lip_and_people_backward():
+    import config
+    pm = fresh()
+    z = train(pm)
+    p = pm.player
+    p.x, p.y = 900, 360
+    b = floor_bullet(pm, 700, 300)
+    strip = floor_bullet(pm, 120, 500)              # 위험 띠 위 총알은 평소에 안 밀린다
+    x0, px0 = b.x, p.x
+    sim.step(60)
+    assert abs((x0 - b.x) - config.TRAIN_BULLET_SLIDE) < 2, '바닥 총알 1초 %.0fpx (기대 70)' % (x0 - b.x)
+    assert abs((px0 - p.x) - config.TRAIN_PLAYER_SLIDE) < 2, '플레이어 1초 %.0fpx (기대 28)' % (px0 - p.x)
+    assert strip.x == 120, '위험 띠 위 총알이 밀림'
+    sim.step(60 * 10)
+    assert abs(b.x - (config.LIP_X + b.radius)) < 0.5, '바닥 총알이 짐받이 턱에서 멈추지 않음 (x=%.1f)' % b.x
+    p.x = 150                                       # 위험 띠 위 사람도 평소에는 안 밀린다
+    sim.step(30)
+    assert p.x == 150
+    pm.finish()
+
+
+@test
+def enemies_slide_slower_and_pinned_bullets_stay_put():
+    import config
+    from picker import Picker
+    pm = fresh()
+    train(pm)
+    e = still_picker(pm, 900, 600)
+    x0 = e.x
+    sim.step(60)
+    assert abs((x0 - e.x) - config.TRAIN_ENEMY_SLIDE) < 2, '적 1초 %.0fpx (기대 14)' % (x0 - e.x)
+    b = floor_bullet(pm, 700, 300)
+    b.pin()
+    sim.step(30)
+    assert b.x == 700, '적이 줍는 중인 총알이 미끄러짐 (PRD 15-6)'
+    pm.finish()
+
+
+@test
+def jolt_warns_a_second_ahead_then_throws_everyone_back():
+    import config
+    pm = fresh()
+    z = train(pm)
+    p = pm.player
+    p.x, p.y = 900, 360
+    b = floor_bullet(pm, 800, 300)
+    z.jolt_in = config.JOLT_WARN + 0.5
+    sim.step(20)
+    assert not z.warning()
+    sim.step(20)
+    assert z.warning(), '덜컹 1초 전인데 예고가 없음'
+    run_until(lambda: z.jolting(), 80)
+    px0, bx0 = p.x, b.x
+    sim.step(int(config.JOLT_TIME * 60) + 1)
+    pushed = px0 - p.x
+    assert 80 < pushed < 110, '덜컹에 플레이어가 %.0fpx 밀림 (기대 약 90 + 미끄럼)' % pushed
+    assert bx0 - b.x > 80, '덜컹에 바닥 총알이 밀리지 않음'
+    assert not z.jolting() and not z.warning(), '덜컹이 끝나지 않음'
+    pm.finish()
+
+
+@test
+def jolt_throws_player_off_the_back_hp_minus_one_back_in_the_middle():
+    import config
+    pm = fresh()
+    z = train(pm)
+    p = pm.player
+    p.x, p.y = 90, 300                              # 위험 띠 뒤쪽 끝 가까이
+    held = len(p.held)
+    z.jolt_in = 0.01
+    run_until(lambda: p.hp < config.PLAYER_HP, 40)
+    assert abs(p.x - config.WIDTH // 2) < 2 and abs(p.y - config.HEIGHT // 2) < 2, '떨어진 뒤 열차 가운데로 오지 않음'
+    assert len(p.held) == held and pm.ledger.problem is None, '떨어졌는데 총알 수가 바뀜'
+    pm.finish()
+
+
+@test
+def kicking_an_enemy_off_the_back_drops_its_bullets_at_the_lip():
+    import config
+    pm = fresh()
+    train(pm)
+    p = pm.player
+    e = still_picker(pm, 70, 300)                   # 뒤쪽 끝 바로 앞
+    e.held = [p.held.pop(), p.held.pop(), p.held.pop()]
+    p.x, p.y = 140, 300
+    aim(p, 180)
+    p.kick()                                        # 발차기로 1발은 그 자리에 떨어뜨리고 (PRD 6장)
+    run_until(lambda: not e.alive, 30)              # 밀려나 뒤 끝에서 떨어진다
+    assert p.bounty == e.BOUNTY, '차서 떨어뜨렸는데 현상금이 없음'
+    sim.step(1)
+    floor = [b for b in bullets_in_world() if b.state == 'FLOOR']
+    at_lip = [b for b in floor if config.LIP_X < b.x < config.LIP_X + 30]   # 놓인 뒤 턱 쪽으로 미끄러진다
+    assert len(floor) == 3 and len(at_lip) == 2,         '남은 2발이 턱 앞에 놓이지 않음 %s' % [(round(b.x), round(b.y)) for b in floor]
+    assert pm.ledger.problem is None
+    pm.finish()
+
+
+@test
+def bullets_never_leave_the_train():
+    # 옆·뒤 가장자리는 총알에게 난간이다. 덜컹이 와도 총알은 열차 밖으로 나가지 않는다.
+    import random
+    pm = fresh()
+    z = train(pm)
+    p = pm.player
+    l, b, r, t = z.inner
+    rng = random.Random(3)
+    for k in range(120):
+        p.x, p.y = rng.uniform(250, 1200), rng.uniform(60, 660)
+        sim.mouse_move(rng.uniform(l, r), rng.uniform(b, t))
+        p.fire_cooldown = 0
+        p.fire()
+        if k % 30 == 0:
+            z.jolt_in = 0.01
+        sim.step(4)
+        p.hp = 4
+        for bl in bullets_in_world():
+            assert l <= bl.x <= r and b <= bl.y <= t, '총알이 열차 밖으로 나감'
+        assert pm.ledger.problem is None
+    pm.finish()
 
 
 def main():

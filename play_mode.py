@@ -11,6 +11,7 @@ from dog import Dog
 from drunk import Drunk
 from picker import Picker
 from player import Player
+from train_zone import TrainZone
 from zone import ZONES, Zone
 
 ENEMY_KINDS = {'picker': Picker, 'drunk': Drunk, 'dog': Dog}
@@ -38,7 +39,11 @@ def start_zone(index, keep=None):
     zone_index = index
     data = ZONES[index]
     game_world.clear()
-    zone = Zone(data['obstacles'], data['number'], data['name'], data['ammo'], data['dark'])
+    if data.get('kind') == 'train':
+        zone = TrainZone(data['obstacles'], data['number'], data['name'], data['ammo'])
+        zone.on_fall = fell_off_train
+    else:
+        zone = Zone(data['obstacles'], data['number'], data['name'], data['ammo'], data['dark'])
     game_world.add_object(zone, 0)
     x, y = data['start']
     player = Player(zone, x, y)
@@ -59,6 +64,28 @@ def start_zone(index, keep=None):
     game_world.add_object(ledger, 2)
     game_world.add_object(Crosshair(player), 2)     # UI 중 가장 위에 그린다
     hide_cursor()
+
+
+def fell_off_train(o):
+    # 기차 뒤 끝으로 밀려 떨어짐 (PRD 7장)
+    import effect
+    if o is player:
+        player.hp -= 1             # 무적 시간과 상관없이 체력 -1, 가진 총알은 그대로
+        player.invincible = config.INVINCIBLE_TIME
+        player.push = (0.0, 0.0)
+        effect.spawn(effect.TextPop(player.x + 40, player.y, 'FELL!', config.COLOR_HP, 0.8))
+        player.x, player.y = zone.push_out(config.WIDTH // 2, config.HEIGHT // 2, player.radius)
+        effect.spawn(effect.hit_ring(player.x, player.y))
+    else:
+        # 적은 퇴장하며 가진 총알을 짐받이 턱 앞에 흘린다. 차서 떨어뜨린 것도 쓰러뜨린 것으로 친다
+        o.cancel_pick()
+        for i, b in enumerate(list(o.held)):
+            o.held.remove(b)
+            x, y = zone.lip_drop_point(o.y + (i - len(o.held) / 2) * 14)
+            b.drop(x, y)
+            b.add_to_world()
+        effect.spawn(effect.TextPop(o.x + 40, o.y, 'FELL!', config.COLOR_BOUNTY, 0.8))
+        o.die()
 
 
 def add_enemy(cls, x, y):

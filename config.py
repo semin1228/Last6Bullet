@@ -94,6 +94,22 @@ MINE_ROCKS = [
     (960, 200, 1040, 300),
 ]
 
+# 기차 (PRD 7장). 기차는 오른쪽으로 달리고, 뒤(왼쪽)로 밀린다
+LIP_X = 200                    # 짐받이 턱 x. 그 뒤(왼쪽)가 위험 띠
+TRAIN_BULLET_SLIDE = 70        # 열차 바닥 위 바닥 총알이 뒤로 밀리는 속도 (px/초)
+TRAIN_PLAYER_SLIDE = 28        # 플레이어
+TRAIN_ENEMY_SLIDE = 14         # 적
+JOLT_INTERVAL = (5.0, 7.0)     # 덜컹 간격 (초)
+JOLT_WARN = 1.0                # 덜컹 예고 시간 (초)
+JOLT_TIME = 0.25               # 덜컹이 미는 시간 (초)
+JOLT_SPEED = 360               # 덜컹 동안 뒤로 미는 속도 (px/초). 0.25초면 약 90px
+TRAIN_SCROLL = 600             # 바깥 침목이 흘러가는 속도 (그림만, px/초)
+TRAIN_CRATES = [
+    (480, 140, 560, 220),
+    (760, 470, 840, 560),
+    (980, 170, 1060, 250),
+]
+
 # 글꼴 (Windows 기본 글꼴 맑은 고딕, 저장소에는 넣지 않는다). 없으면 글자 없이 실행된다.
 UI_FONT = 'C:/Windows/Fonts/malgun.ttf'
 DEBUG_FONT = UI_FONT
@@ -124,6 +140,13 @@ COLOR_ROCK_EDGE = (60, 57, 52)
 COLOR_GLINT = (255, 244, 210)
 COLOR_DOOR = (110, 64, 10)
 COLOR_DOOR_OPEN = (150, 130, 100)
+COLOR_TRAIN_OUTSIDE = (120, 96, 66)
+COLOR_TRAIN_SLEEPER = (74, 54, 34)
+COLOR_TRAIN_FLOOR = (168, 124, 80)
+COLOR_TRAIN_PLANK = (140, 100, 62)
+COLOR_STRIPE_YELLOW = (230, 180, 40)
+COLOR_STRIPE_BLACK = (40, 34, 28)
+COLOR_JOLT_WARN = (226, 75, 74)
 COLOR_CYLINDER = (44, 44, 42)          # 위쪽 HUD 리볼버 실린더
 COLOR_CHAMBER_EMPTY = (95, 94, 90)
 COLOR_HUD_TEXT = (244, 233, 212)

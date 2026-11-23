@@ -127,4 +127,7 @@ ZONES = [
     {'number': 2, 'name': 'MINE', 'ammo': 6, 'obstacles': config.MINE_ROCKS, 'dark': True,
      'start': (110, config.HEIGHT // 2),
      'enemies': [('picker', 1100, 610), ('picker', 760, 640), ('dog', 1100, 110), ('drunk', 1180, 360)]},
+    {'number': 3, 'name': 'TRAIN', 'ammo': 6, 'obstacles': config.TRAIN_CRATES, 'dark': False, 'kind': 'train',
+     'start': (320, config.HEIGHT // 2),
+     'enemies': [('picker', 1100, 610), ('picker', 1100, 110), ('drunk', 1180, 360)]},
 ]
