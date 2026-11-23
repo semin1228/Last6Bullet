@@ -120,6 +120,7 @@ DUEL_READY = (1.0, 3.0)        # 'READY...' 가 떠 있는 시간 (무작위, �
 DUEL_BOSS_REACT = (0.3, 0.45)  # 두목 반응 시간 (무작위, 초)
 DUEL_RESULT = 1.2              # 결과를 보여 주는 시간 (초)
 DUEL_LOSE_SPLIT = 3            # 지면 두목에게 넘어가는 총알 수
+DUEL_WIN_FLOOR = [(640, 580), (640, 140)]   # 이기면 이 자리에 총알을 놓고 나머지(4발)만 손에 (두 사람 사이 가운데)
 DUEL_PLAYER_POS = (440, 360)
 DUEL_BOSS_POS = (840, 360)
 BANK_PILLARS = [

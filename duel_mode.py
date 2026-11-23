@@ -2,7 +2,7 @@
 #   INTRO(1.4초, 'HIGH NOON 12:00', 클릭 무시) -> READY(무작위 1~3초, 클릭하면 반칙 패배)
 #   -> GO('DRAW!', 두목 반응 0.3~0.45초 안에 클릭하면 승리, 늦으면 패배) -> WIN / LOSE(1.2초 결과) -> 보스전
 # 결과는 총알 배분으로 이어진다:
-#   승리: 두목 체력 -1(7부터), 총알 6발 모두 플레이어 손에
+#   승리: 두목 체력 -1(7부터), 총알 4발은 플레이어 손에, 2발은 두 사람 사이 바닥에
 #   패배: 플레이어 체력 -1, 총알을 3발씩 나눠 쥐고 시작하며 두목이 바로 흩뿌린다
 import random
 
@@ -67,8 +67,13 @@ class Duel:
         # 결투 결과를 보스전 시작 조건으로 (PRD 9장 표)
         p, b = self.player, self.boss
         if self.state == 'WIN':
+            # 비판 점검 반영: 6발을 다 쥐면 두목이 주울 총알이 없어 3.2초 만에 끝났다. 2발은 가운데 바닥에 둔다
             b.hp -= 1
             b.flash = config.HIT_FLASH_TIME
+            for x, y in config.DUEL_WIN_FLOOR[:len(p.held)]:
+                bullet = p.held.pop()
+                bullet.drop(x, y)
+                bullet.add_to_world()
         else:
             p.hp -= 1
             p.invincible = config.INVINCIBLE_TIME
@@ -145,7 +150,7 @@ def render():
         }[duel.state]
         big.draw(config.WIDTH // 2 - len(text) * 20, cy + 8, text, color)
         sub = {'INTRO': '12:00', 'READY': 'WAIT FOR IT', 'GO': 'CLICK!',
-               'WIN': 'BOSS HP -1 · ALL 6 BULLETS YOURS', 'LOSE': 'HP -1 · 3 BULLETS EACH'}[duel.state]
+               'WIN': 'BOSS HP -1 · 4 BULLETS YOURS', 'LOSE': 'HP -1 · 3 BULLETS EACH'}[duel.state]
         small.draw(config.WIDTH // 2 - len(sub) * 6, cy - 44, sub, config.COLOR_HUD_TEXT)
     update_canvas()
 

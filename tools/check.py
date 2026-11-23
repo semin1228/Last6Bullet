@@ -2262,7 +2262,10 @@ def drawing_first_wins_the_duel():
     click_left()
     assert dm.duel.state == 'WIN' and dm.duel.reason == 'YOU WIN'
     run_until(lambda: game_framework.stack[-1] is pm, 120)
-    assert boss.hp == config.BOSS_HP - 1 and len(p.held) == 6 and p.hp == config.PLAYER_HP
+    assert boss.hp == config.BOSS_HP - 1 and len(p.held) == 4 and p.hp == config.PLAYER_HP
+    floor = sorted((round(b.x), round(b.y)) for b in bullets_in_world() if b.state == 'FLOOR')
+    assert floor == sorted(config.DUEL_WIN_FLOOR), '승리: 바닥 2발이 가운데에 없음 %s' % floor
+    assert pm.ledger.check()
     pm.finish()
 
 
@@ -2315,6 +2318,7 @@ def a_full_run_goes_from_saloon_to_town_saved():
     assert boss.hp == config.BOSS_HP - 1
     boss.hp = 1
     p = pm.player
+    p.x, p.y = boss.x - 120, boss.y              # 결투 뒤 두목이 바닥 총알을 주우러 움직이므로 가까이서 쏜다
     p.mouse = (boss.x, boss.y)
     p.fire_cooldown = 0
     p.fire()
