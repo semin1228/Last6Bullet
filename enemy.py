@@ -206,12 +206,14 @@ class Enemy:
         # 맞고 버틴 적 (술꾼, 3주차 두목). 종류마다 반응을 정한다.
         pass
 
-    def die(self):
+    def die(self, reward=True):
+        # reward=False: 현상금 없이 쓰러짐 (두목이 쓰러질 때 함께 쓰러지는 부하)
         self.alive = False
         self.cancel_pick()
         self.drop_bullets(len(self.held))   # 쓰러지면 가진 총알을 모두 떨어뜨린다
-        self.player.bounty += self.BOUNTY
-        effect.spawn(effect.TextPop(self.x, self.y + self.radius + 4, '$%d' % self.BOUNTY, config.COLOR_BOUNTY, 0.8))
+        if reward:
+            self.player.bounty += self.BOUNTY
+            effect.spawn(effect.TextPop(self.x, self.y + self.radius + 4, '$%d' % self.BOUNTY, config.COLOR_BOUNTY, 0.8))
         game_world.remove_object(self)
 
     def can_be_hit_by(self, bullet):

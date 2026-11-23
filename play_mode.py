@@ -99,8 +99,15 @@ def fell_off_train(o):
         o.die()
 
 
+def summon_minions(boss):
+    # 두목 2페이즈: 부하 줍줍이를 정해진 자리에 불러낸다. 장부에도 들어가서 총알 수 검사가 이어진다
+    return [add_enemy(Picker, x, y) for x, y in config.BOSS_MINION_SPOTS]
+
+
 def add_enemy(cls, x, y):
     e = cls(zone, player, x, y)
+    if isinstance(e, Boss):
+        e.on_summon = summon_minions
     enemies.append(e)
     if ledger is not None:
         ledger.holders.append(e)

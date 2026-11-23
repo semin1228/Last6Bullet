@@ -2144,7 +2144,7 @@ def boss_gathers_three_then_telegraphs_and_fires_a_fan():
     flying = [b for b in bullets if b.state == 'FLYING' and b.owner is boss]
     assert len(flying) == 3, '모은 총알을 모두 쏘지 않음'
     angles = sorted(math.degrees(math.atan2(b.vy, b.vx)) % 360 for b in flying)
-    assert abs((angles[-1] - angles[0]) - 2 * config.BOSS_SPREAD_HALF) < 2, '부채꼴 폭 %.0f도' % (angles[-1] - angles[0])
+    assert abs((angles[-1] - angles[0]) - 2 * config.BOSS_SPREAD_STEP) < 2, '부채꼴 폭 %.0f도' % (angles[-1] - angles[0])
     assert abs(angles[1] - 180) < 15, '플레이어(왼쪽) 쪽으로 쏘지 않음 (가운데 %.0f도)' % angles[1]
     assert boss.state == 'GATHER'
     pm.finish()
@@ -2183,6 +2183,69 @@ def kicking_the_boss_stuns_it_and_knocks_one_bullet_loose():
     p.kick()
     assert boss.state == 'STUN' and len(boss.held) == 1
     assert pm.ledger.check()
+    pm.finish()
+
+
+@test
+def boss_phase_two_summons_two_minions_once_and_spreads_at_two():
+    # 체력 절반(4) 이하: 부하 줍줍이 2명이 한 번만 나타나고, 2발만 모여도 흩뿌린다 (PRD 9장 2페이즈)
+    import config, math
+    from picker import Picker
+    pm = fresh()
+    boss = bank_with_boss(pm)
+    p = pm.player
+    p.x, p.y = 260, 360
+    sim.step(2)
+    assert boss.phase == 1 and len(pm.enemies) == 1
+    boss.hp = config.BOSS_PHASE2_HP
+    sim.step(2)
+    minions = [e for e in pm.enemies if isinstance(e, Picker)]
+    assert boss.phase == 2 and len(minions) == 2, '2페이즈 부하 수 %d' % len(minions)
+    assert all(m.x > 1000 for m in minions), '부하가 오른쪽 구석에서 나오지 않음'
+    boss.hp -= 1
+    sim.step(2)
+    assert len([e for e in pm.enemies if isinstance(e, Picker)]) == 2, '부하를 또 불렀음'
+    for m in minions:                                  # 두목만 보려고 부하는 쓰러뜨린다
+        m.die(reward=False)
+    floor_bullet(pm, boss.x + 40, boss.y + 30)
+    floor_bullet(pm, boss.x + 40, boss.y - 30)
+    p.held.clear()                                     # 플레이어가 끼어들지 않게 (장부 검사는 하지 않는다)
+    run_until(lambda: boss.state == 'SPREAD', 600)
+    assert len(boss.held) == config.BOSS_SPREAD_COUNT_2, '2페이즈인데 %d발에 흩뿌림' % len(boss.held)
+    pm.finish()
+
+
+@test
+def spread_always_sends_one_bullet_straight_at_the_player():
+    # 사용자 피드백: 좌우 50° 는 피하기 쉬웠다. 18° 간격이고, 2발이어도 한 발은 정조준 (가만히 서 있으면 맞는다)
+    import config, math
+    from boss import Boss
+    pm = fresh()
+    boss = bank_with_boss(pm)
+    for n in (1, 2, 3, 4):
+        angles = boss.spread_angles(0.0, n)
+        assert len(angles) == n and any(abs(a) < 1e-9 for a in angles), (n, angles)
+        gaps = [math.degrees(b - a) for a, b in zip(angles, angles[1:])]
+        assert all(abs(g - config.BOSS_SPREAD_STEP) < 1e-6 for g in gaps), (n, gaps)
+    pm.finish()
+
+
+@test
+def minions_fall_with_the_boss_without_bounty():
+    import config, game_framework, gameover_mode
+    pm = fresh()
+    boss = bank_with_boss(pm)
+    boss.hp = config.BOSS_PHASE2_HP
+    sim.step(2)
+    assert len(boss.minions) == 2
+    bounty = pm.player.bounty
+    boss.die()
+    assert not any(m.alive for m in boss.minions), '두목이 쓰러졌는데 부하가 남음'
+    assert pm.player.bounty == bounty + boss.BOUNTY, '부하 현상금까지 붙음'
+    sim.step(1)
+    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TOWN SAVED'
+    assert pm.ledger.check()
+    game_framework.stack = [pm]
     pm.finish()
 
 

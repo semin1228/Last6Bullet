@@ -110,7 +110,11 @@ BOSS_HP = 8
 BOSS_SPEED = 130
 BOSS_GATHER_LIMIT = 4.0        # 이 시간 안에 다 못 모으면 대체 공격 (초)
 BOSS_SPREAD_COUNT = 3          # 이만큼 모으면 흩뿌린다 (1페이즈)
-BOSS_SPREAD_HALF = 50          # 흩뿌리기 부채꼴 좌우 각도 (도)
+BOSS_SPREAD_COUNT_2 = 2        # 2페이즈: 부하가 총알을 나눠 가지므로 2발만 모여도 흩뿌린다
+BOSS_SPREAD_STEP = 18          # 흩뿌리기 총알 사이 각도 (도). 한 발은 늘 플레이어를 바로 노린다
+                               #   (사용자 피드백: 좌우 50° 부채꼴은 총알 사이가 넓어 피하기 쉬웠다)
+BOSS_PHASE2_HP = 4             # 체력이 이 이하가 되면 2페이즈 (BOSS_HP 의 절반)
+BOSS_MINION_SPOTS = [(1180, 620), (1180, 100)]   # 2페이즈에 부하 줍줍이가 나타나는 자리 (오른쪽 두 구석)
 BOSS_CHARGE_SPEED = 240        # 대체 공격 돌진 속도 (px/초)
 BOSS_CHARGE_TIME = 2.0         # 돌진 시간 (초)
 BOSS_KEEP = 260                # 주울 총알이 없을 때 플레이어와 두는 거리 (px)

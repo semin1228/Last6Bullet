@@ -1,4 +1,6 @@
-# 두목 THE BOSS ($500, 체력 8). 은행 보스 (PRD 9장, 15-4). 3주차는 1페이즈 + 대체 공격.
+# 두목 THE BOSS ($500, 체력 8). 은행 보스 (PRD 9장, 15-4).
+#   1페이즈: 3발 모으면 흩뿌림. 2페이즈(체력 4 이하, 한 번만): 부하 줍줍이 2명이 나타나고 2발만 모여도 흩뿌림.
+#   두목이 쓰러지면 남은 부하도 함께 쓰러진다 (현상금 없음).
 #   GATHER -> PICK(바닥 총알에 닿음, 0.25초) -> GATHER(모은 총알 부족) / SPREAD(3발 모음)
 #   SPREAD: 0.3초 조준 예고(멈춤, 총구 반짝임, 방향 고정) 뒤 모은 총알을 모두 플레이어 쪽 좌우 50° 부채꼴로 쏜다
 #   대체 공격: GATHER 로 4초 동안 다 못 모으면, 가진 총알이 있으면 그것만이라도 SPREAD, 없으면 CHARGE
@@ -41,6 +43,9 @@ class Boss(Enemy):
         self.spread_time = 0.0     # 조준 예고가 시작된 뒤 지난 시간
         self.locked_aim = None     # 흩뿌릴 가운데 방향 (예고 시작 때 고정)
         self.charge_time = 0.0
+        self.phase = 1
+        self.on_summon = None      # 2페이즈에 부하를 불러내는 함수 (play_mode 가 넣어 준다). 부하 목록을 돌려준다
+        self.minions = []
 
     # ------------------------------------------------------------ 상태 전환 도우미
 
@@ -59,11 +64,29 @@ class Boss(Enemy):
     def aiming(self):
         return self.state == 'SPREAD'
 
+    def spread_count(self):
+        return config.BOSS_SPREAD_COUNT if self.phase == 1 else config.BOSS_SPREAD_COUNT_2
+
+    def check_phase(self):
+        # 체력이 절반 이하로 떨어지면 한 번만 2페이즈로 넘어가며 부하를 부른다
+        if self.phase == 1 and self.hp <= config.BOSS_PHASE2_HP:
+            self.phase = 2
+            effect.spawn(effect.Ring(self.x, self.y, config.COLOR_BULLET_ENEMY, 20, 70, 0.4))
+            if self.on_summon:
+                self.minions = self.on_summon(self)
+
+    def die(self, reward=True):
+        super().die(reward)
+        for m in self.minions:
+            if m.alive:
+                m.die(reward=False)
+
     # ------------------------------------------------------------ 행동
 
     def think(self):
         p = self.player
         dt = game_framework.frame_time
+        self.check_phase()
         if self.state == 'GATHER':
             self.gather_time += dt
             if self.gather_time >= config.BOSS_GATHER_LIMIT:
@@ -86,7 +109,7 @@ class Boss(Enemy):
         elif self.state == 'PICK':
             done = self.pick_done()
             if done:
-                if len(self.held) >= config.BOSS_SPREAD_COUNT:
+                if len(self.held) >= self.spread_count():
                     self.start_spread()
                 else:
                     self.picked_more()
@@ -109,11 +132,10 @@ class Boss(Enemy):
                 self.charge_end()
 
     def spread_angles(self, center, n):
-        # 가운데 방향을 기준으로 좌우 BOSS_SPREAD_HALF 도 부채꼴에 같은 간격
-        if n <= 1:
-            return [center]
-        half = math.radians(config.BOSS_SPREAD_HALF)
-        return [center - half + 2 * half * i / (n - 1) for i in range(n)]
+        # BOSS_SPREAD_STEP 도 간격 부채꼴. 한 발은 늘 가운데(플레이어 쪽)로 가서 가만히 서 있으면 맞는다.
+        # 3발: -18, 0, +18도. 2발: -18, 0도 (짝수면 한쪽으로 한 칸 치우친다)
+        step = math.radians(config.BOSS_SPREAD_STEP)
+        return [center + step * (i - n // 2) for i in range(n)]
 
     def fire_spread(self, center):
         angles = self.spread_angles(center, len(self.held))
