@@ -7,6 +7,7 @@ from ammo_ledger import AmmoLedger
 from bullet import Bullet
 from crosshair import Crosshair
 from hud import Hud
+from boss import Boss
 from dog import Dog
 from drunk import Drunk
 from picker import Picker
@@ -14,7 +15,7 @@ from player import Player
 from train_zone import TrainZone
 from zone import ZONES, Zone
 
-ENEMY_KINDS = {'picker': Picker, 'drunk': Drunk, 'dog': Dog}
+ENEMY_KINDS = {'picker': Picker, 'drunk': Drunk, 'dog': Dog, 'boss': Boss}
 SPAWN_ENEMIES = True               # 자동 점검에서 플레이어·총알만 볼 때 끈다
 
 zone = None
@@ -43,7 +44,7 @@ def start_zone(index, keep=None):
         zone = TrainZone(data['obstacles'], data['number'], data['name'], data['ammo'])
         zone.on_fall = fell_off_train
     else:
-        zone = Zone(data['obstacles'], data['number'], data['name'], data['ammo'], data['dark'])
+        zone = Zone(data['obstacles'], data['number'], data['name'], data['ammo'], data['dark'], data.get('style'))
     game_world.add_object(zone, 0)
     x, y = data['start']
     player = Player(zone, x, y)
@@ -123,6 +124,9 @@ def update():
     game_world.handle_collisions()
     ledger.check()                 # 충돌 처리(줍기 등)까지 끝난 뒤 총알 수를 검사한다
     if enemies and not zone.door_open and all(not e.alive for e in enemies):
+        if ZONES[zone_index].get('final'):
+            show_result('TOWN SAVED')   # 은행의 두목을 쓰러뜨리면 클리어 (PRD 10장, 엔딩 연출은 4주차)
+            return
         zone.door_open = True      # 구역의 적을 모두 쓰러뜨리면 오른쪽 문이 열린다 (PRD 4장)
     if zone.at_door(player.x, player.y, player.radius):
         next_zone()
@@ -134,7 +138,7 @@ def next_zone():
     if zone_index + 1 < len(ZONES):
         start_zone(zone_index + 1, keep=player)   # 체력과 현상금은 이어진다 (PRD 10장: 구역 사이 회복 없음)
     else:
-        show_result('TO BE CONTINUED')            # 기차와 은행은 3주차
+        show_result('TO BE CONTINUED')            # 마지막 구역(은행)은 문 대신 두목을 쓰러뜨리면 클리어
 
 
 def show_result(title):

@@ -104,6 +104,22 @@ JOLT_WARN = 1.0                # 덜컹 예고 시간 (초)
 JOLT_TIME = 0.25               # 덜컹이 미는 시간 (초)
 JOLT_SPEED = 360               # 덜컹 동안 뒤로 미는 속도 (px/초). 0.25초면 약 90px
 TRAIN_SCROLL = 600             # 바깥 침목이 흘러가는 속도 (그림만, px/초)
+# 두목 (PRD 9장, 보통 난이도)
+BOSS_HP = 8
+BOSS_SPEED = 130
+BOSS_GATHER_LIMIT = 4.0        # 이 시간 안에 다 못 모으면 대체 공격 (초)
+BOSS_SPREAD_COUNT = 3          # 이만큼 모으면 흩뿌린다 (1페이즈)
+BOSS_SPREAD_HALF = 50          # 흩뿌리기 부채꼴 좌우 각도 (도)
+BOSS_CHARGE_SPEED = 240        # 대체 공격 돌진 속도 (px/초)
+BOSS_CHARGE_TIME = 2.0         # 돌진 시간 (초)
+BOSS_KEEP = 260                # 주울 총알이 없을 때 플레이어와 두는 거리 (px)
+BANK_PILLARS = [
+    (380, 150, 440, 210),
+    (380, 510, 440, 570),
+    (840, 150, 900, 210),
+    (840, 510, 900, 570),
+]
+
 TRAIN_CRATES = [
     (480, 140, 560, 220),
     (760, 470, 840, 560),
@@ -147,6 +163,12 @@ COLOR_TRAIN_PLANK = (140, 100, 62)
 COLOR_STRIPE_YELLOW = (230, 180, 40)
 COLOR_STRIPE_BLACK = (40, 34, 28)
 COLOR_JOLT_WARN = (226, 75, 74)
+COLOR_BOSS = (46, 40, 36)
+COLOR_BOSS_HAT = (20, 18, 16)
+COLOR_BANK_FLOOR = (206, 200, 188)
+COLOR_BANK_TILE = (186, 180, 168)
+COLOR_PILLAR = (150, 146, 138)
+COLOR_PILLAR_EDGE = (112, 108, 100)
 COLOR_CYLINDER = (44, 44, 42)          # 위쪽 HUD 리볼버 실린더
 COLOR_CHAMBER_EMPTY = (95, 94, 90)
 COLOR_HUD_TEXT = (244, 233, 212)

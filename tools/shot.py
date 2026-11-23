@@ -455,6 +455,34 @@ def w3_1_train():
     pm.finish()
 
 
+@scene
+def w3_2_boss_spread():
+    # 은행의 두목: 3발을 모아 조준 예고(총구 반짝임) -> 부채꼴로 흩뿌린 직후
+    from boss import Boss
+    from zone import ZONES
+    pm = fresh()
+    pm.start_zone(len(ZONES) - 1)
+    boss = pm.add_enemy(Boss, 950, 360)
+    p = pm.player
+    p.x, p.y = 300, 300
+    for x, y in ((1000, 300), (1040, 430), (1120, 360)):
+        b = p.held.pop()
+        b.drop(x, y)
+        b.add_to_world()
+    sim.mouse_move(900, 360)
+    for _ in range(600):
+        sim.step(1)
+        p.hp = 4
+        if boss.state == 'SPREAD' and boss.spread_time > 0.2:
+            break
+    save('w3_2_boss_telegraph')
+    for _ in range(14):
+        sim.step(1)
+        p.hp = 4
+    save('w3_2_boss_spread')
+    pm.finish()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     sim.open_game(window=True)

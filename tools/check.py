@@ -1828,23 +1828,20 @@ def mine_shows_floor_bullets_only_in_lantern_light_and_glints_outside():
 
 
 @test
-def leaving_the_last_zone_shows_to_be_continued():
+def beating_every_enemy_in_the_bank_shows_town_saved():
+    # 마지막 구역(은행)은 문이 열리는 대신, 두목(과 남은 적)을 모두 쓰러뜨리면 클리어 화면 (PRD 10장)
     import game_framework, gameover_mode
     from zone import ZONES
     pm = fresh()
-    pm.start_zone(len(ZONES) - 1)                   # 지금 만든 마지막 구역
+    pm.start_zone(len(ZONES) - 1)
+    assert ZONES[pm.zone_index].get('final') and pm.zone.name == 'BANK'
     still_picker(pm, 900, 600).die()
     sim.step(1)
-    p = pm.player
-    l, b, r, t = pm.zone.inner
-    p.x, p.y = r - p.radius, 360
-    sim.step(1)
-    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TO BE CONTINUED'
+    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TOWN SAVED'
+    assert not pm.zone.door_open
     game_framework.stack = [pm]
     pm.finish()
 
-
-# ---------------------------------------------------------------- 13. 2주차: 적과 함께 무작위 플레이
 
 @test
 def random_battle_for_50_seconds_keeps_ammo_in_both_zones():
@@ -2055,6 +2052,100 @@ def bullets_never_leave_the_train():
         for bl in bullets_in_world():
             assert l <= bl.x <= r and b <= bl.y <= t, '총알이 열차 밖으로 나감'
         assert pm.ledger.problem is None
+    pm.finish()
+
+
+# ---------------------------------------------------------------- 16. 3주차: 두목
+
+def bank_with_boss(pm, x=900, y=360):
+    from boss import Boss
+    from zone import ZONES
+    pm.start_zone(len(ZONES) - 1)                   # 적 자동 배치를 끈 상태라 결투도 올라오지 않는다
+    return pm.add_enemy(Boss, x, y)
+
+
+@test
+def boss_gathers_three_then_telegraphs_and_fires_a_fan():
+    import config, math
+    pm = fresh()
+    boss = bank_with_boss(pm)                       # 구역을 바꾸면 플레이어도 새로 만들어지므로 그 뒤에 잡는다
+    p = pm.player
+    p.x, p.y = 260, 360
+    bullets = [floor_bullet(pm, 980, 300), floor_bullet(pm, 1000, 420), floor_bullet(pm, 1100, 360)]
+    run_until(lambda: boss.state == 'SPREAD', 600)
+    assert len(boss.held) == config.BOSS_SPREAD_COUNT, '3발을 모으기 전에 흩뿌림 (%d발)' % len(boss.held)
+    x0 = boss.x
+    for _ in range(int(config.ENEMY_AIM_TIME * 60) - 1):
+        sim.step(1)
+        assert len(boss.held) == 3 and boss.x == x0, '조준 예고 중에 쏘거나 움직임'
+    run_until(lambda: not boss.held, 5)
+    flying = [b for b in bullets if b.state == 'FLYING' and b.owner is boss]
+    assert len(flying) == 3, '모은 총알을 모두 쏘지 않음'
+    angles = sorted(math.degrees(math.atan2(b.vy, b.vx)) % 360 for b in flying)
+    assert abs((angles[-1] - angles[0]) - 2 * config.BOSS_SPREAD_HALF) < 2, '부채꼴 폭 %.0f도' % (angles[-1] - angles[0])
+    assert abs(angles[1] - 180) < 15, '플레이어(왼쪽) 쪽으로 쏘지 않음 (가운데 %.0f도)' % angles[1]
+    assert boss.state == 'GATHER'
+    pm.finish()
+
+
+@test
+def boss_fallback_fires_what_it_has_or_charges():
+    # 4초 동안 다 못 모으면: 가진 총알이 있으면 그것만이라도 흩뿌리고, 없으면 돌진 (교착 방지)
+    import config
+    pm = fresh()
+    boss = bank_with_boss(pm)
+    p = pm.player
+    p.x, p.y = 300, 360
+    boss.held = [p.held.pop()]                      # 1발만 있고 바닥 총알은 없다 (나머지는 플레이어 손)
+    run_until(lambda: boss.state == 'SPREAD', int(config.BOSS_GATHER_LIMIT * 60) + 5)
+    run_until(lambda: not boss.held, 30)
+    pm.finish()
+    pm = fresh()
+    boss = bank_with_boss(pm, 900, 360)             # 총알 0발, 바닥 총알도 없음
+    p = pm.player
+    p.x, p.y = 600, 360
+    run_until(lambda: boss.state == 'CHARGE', int(config.BOSS_GATHER_LIMIT * 60) + 5)
+    run_until(lambda: p.hp < config.PLAYER_HP, 120)
+    assert boss.state == 'STUN', '부딪힌 뒤 튕겨 나가지 않음'
+    pm.finish()
+
+
+@test
+def kicking_the_boss_stuns_it_and_knocks_one_bullet_loose():
+    import config
+    pm = fresh()
+    boss = bank_with_boss(pm, 240 + 55, 360)        # 은행 시작 위치 (240, 360) 바로 오른쪽
+    p = pm.player
+    boss.held = [p.held.pop(), p.held.pop()]
+    aim(p, 0)
+    p.kick()
+    assert boss.state == 'STUN' and len(boss.held) == 1
+    assert pm.ledger.check()
+    pm.finish()
+
+
+@test
+def boss_takes_a_hit_per_bullet_and_beating_it_saves_the_town():
+    import config, game_framework, gameover_mode
+    pm = fresh()
+    boss = bank_with_boss(pm, 700, 360)
+    p = pm.player
+    p.x, p.y = 300, 360
+    boss.SPEED = 0
+    aim(p, 0)
+    p.fire()
+    run_until(lambda: boss.hp < config.BOSS_HP, 60)
+    assert boss.hp == config.BOSS_HP - 1 and boss.alive
+    boss.hp = 1
+    sim.step(12)
+    p.fire_cooldown = 0
+    aim(p, 0)
+    p.fire()
+    run_until(lambda: not boss.alive, 60)
+    assert p.bounty == 500
+    sim.step(1)
+    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TOWN SAVED'
+    game_framework.stack = [pm]
     pm.finish()
 
 

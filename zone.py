@@ -10,13 +10,14 @@ import game_framework
 
 
 class Zone:
-    def __init__(self, obstacles=(), number=1, name='SALOON', ammo=config.AMMO, dark=False):
+    def __init__(self, obstacles=(), number=1, name='SALOON', ammo=config.AMMO, dark=False, style=None):
         w, h, t = config.WIDTH, config.HEIGHT, config.WALL
         self.number, self.name, self.ammo = number, name, ammo
         self.title = 'ZONE %d · %s' % (number, name)  # 위쪽 HUD 에 표시 (PRD 15-2 play_mode). 화면 글자는 영어 (PRD 14장)
         self.inner = (t, t, w - t, h - t)      # 벽 안쪽 바닥 영역 (left, bottom, right, top)
         self.obstacles = list(obstacles)       # 장애물 사각형 목록 (left, bottom, right, top)
         self.dark = dark
+        self.style = style                     # 'bank': 대리석 바닥과 돌기둥
         self.light = None                      # 랜턴을 든 쪽 (play_mode 가 플레이어로 정한다)
         self.door_open = False
         self.clock = 0.0                       # 반짝임 주기용 시간
@@ -44,11 +45,22 @@ class Zone:
                 lx, ly = self.light.x, self.light.y
                 draw_circle(lx, ly, config.LIGHT_RADIUS, *config.COLOR_MINE_LIGHT, filled=True)
                 draw_circle(lx, ly, int(config.LIGHT_RADIUS * 0.6), *config.COLOR_MINE_LIGHT_CORE, filled=True)
+        elif self.style == 'bank':
+            draw_rectangle(l, b, r, t, *config.COLOR_BANK_FLOOR, filled=True)
+            for y in range(b + 64, t, 64):  # 대리석 타일 줄
+                draw_line(l, y, r, y, *config.COLOR_BANK_TILE)
+            for x in range(l + 64, r, 64):
+                draw_line(x, b, x, t, *config.COLOR_BANK_TILE)
         else:
             draw_rectangle(l, b, r, t, *config.COLOR_FLOOR, filled=True)
             for y in range(b + 40, t, 40):  # 나무 바닥 결
                 draw_line(l, y, r, y, *config.COLOR_FLOOR_LINE)
-        top, edge = (config.COLOR_ROCK, config.COLOR_ROCK_EDGE) if self.dark else (config.COLOR_TABLE, config.COLOR_TABLE_EDGE)
+        if self.dark:
+            top, edge = config.COLOR_ROCK, config.COLOR_ROCK_EDGE
+        elif self.style == 'bank':
+            top, edge = config.COLOR_PILLAR, config.COLOR_PILLAR_EDGE
+        else:
+            top, edge = config.COLOR_TABLE, config.COLOR_TABLE_EDGE
         for ol, ob, o_r, ot in self.obstacles:
             draw_rectangle(ol, ob, o_r, ot, *top, filled=True)
             draw_rectangle(ol, ob, o_r, ob + 8, *edge, filled=True)  # 앞면 (3/4 느낌)
@@ -130,4 +142,7 @@ ZONES = [
     {'number': 3, 'name': 'TRAIN', 'ammo': 6, 'obstacles': config.TRAIN_CRATES, 'dark': False, 'kind': 'train',
      'start': (320, config.HEIGHT // 2),
      'enemies': [('picker', 1100, 610), ('picker', 1100, 110), ('drunk', 1180, 360)]},
+    {'number': 4, 'name': 'BANK', 'ammo': 6, 'obstacles': config.BANK_PILLARS, 'dark': False, 'style': 'bank',
+     'start': (240, config.HEIGHT // 2), 'duel': True, 'final': True,
+     'enemies': [('boss', 1040, config.HEIGHT // 2)]},
 ]
