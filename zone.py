@@ -147,7 +147,7 @@ ZONES = [
      'enemies': [('picker', 1100, 610), ('picker', 760, 640), ('dog', 1100, 110), ('drunk', 1180, 360)]},
     {'number': 3, 'name': 'TRAIN', 'ammo': 6, 'obstacles': config.TRAIN_CRATES, 'dark': False, 'kind': 'train',
      'start': (320, config.HEIGHT // 2),
-     'floor': [(900, 600), (950, 300), (880, 120)],
+     'floor': [(1040, 600), (1060, 330), (1040, 110)],
      'enemies': [('picker', 1100, 610), ('picker', 1100, 110), ('drunk', 1180, 360)]},
     {'number': 4, 'name': 'BANK', 'ammo': 6, 'obstacles': config.BANK_PILLARS, 'dark': False, 'style': 'bank',
      'start': (240, config.HEIGHT // 2), 'duel': True, 'final': True,
