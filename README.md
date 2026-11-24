@@ -34,6 +34,7 @@ C:\Python313\python.exe main.py              # 게임 실행 (pico2d 1.5.1, tran
 C:\Python313\python.exe tools\check.py       # 자동 점검 (창 없이 기능별 테스트)
 C:\Python313\python.exe tools\shot.py        # 장면 스크린샷을 docs/shots/ 에 저장 (Pillow 필요)
 C:\Python313\python.exe tools\record.py      # 발표 데모 장면을 자동 조작으로 녹화해 demo_video/ 에 mp4 저장 (ffmpeg 필요)
+C:\Python313\python.exe tools\bot_measure.py  # 봇으로 구역마다 여러 판 돌려 난이도 수치 측정 (인자: 판 수, 구역 번호)
 ```
 
 개발 과정(명세 → 검토 → 실행 → 테스트 → 설명)은 [docs/DEVLOG.md](docs/DEVLOG.md)에 기록한다.
