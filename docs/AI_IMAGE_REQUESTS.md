@@ -127,11 +127,11 @@ Same art style, line thickness and color saturation as the attached sheriff shee
 ```
 
 
-## 2. 동작 시트 (걷기 2장 + 쏘기 1장, 보안관은 발차기 1장 더) - 캐릭터 5종 x 방향 3개 = 15개
+## 2. 동작 시트 (걷기 2장 + 쏘기 1장, 보안관은 발차기 1장 더, 들개는 쏘기 없음) - 캐릭터 5종 x 방향 3개 = 15개, 들개는 걷기만
 
 방향 시트(1번)가 **확정된 뒤**에 만든다. 요청마다 그 캐릭터의 방향 시트를 같이 첨부한다. 서 있는 그림(1번)과 같은 시점·크기·옷이어야 한다. 이 그림이 없는 동작은 서 있는 그림으로 대신 나오므로 **필수가 아니다.** 우선순위: 보안관 걷기 > 보안관 발차기·쏘기 > 적 걷기 > 적 쏘기.
 
-칸을 자를 때는 `--order walk1,walk2,shoot` (보안관은 `walk1,walk2,shoot,kick`)로 하고 이름을 `캐릭터_방향` 으로 쓰면 `sheriff_down_walk1.png` 처럼 저장된다.
+칸을 자를 때는 `--order walk1,walk2,shoot` (들개는 `walk1,walk2`, 보안관은 `walk1,walk2,shoot,kick`)로 하고 이름을 `캐릭터_방향` 으로 쓰면 `sheriff_down_walk1.png` 처럼 저장된다.
 
 ```powershell
 C:\Python313\python.exe tools\split_sheet.py C:\dev\2dgp\raw_art\sheriff_down_action.png sheriff_down C:\dev\2dgp\raw_art --order walk1,walk2,shoot,kick
@@ -308,7 +308,7 @@ A character sprite sheet with exactly 3 full-body frames of the same character i
 The character: a drunk cowboy in a stained green vest holding a whiskey bottle, leaning to one side.
 ```
 
-### 들개 down: `hound_down_action.png` -> `hound_down_walk1/walk2/shoot.png`
+### 들개 down: `hound_down_action.png` -> `hound_down_walk1/walk2.png`
 (들개 방향 시트를 같이 첨부)
 
 ```
@@ -323,11 +323,11 @@ Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern o
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
 The hat brim must not hide the face: both eyes and a small neat mustache are clearly visible below the brim, with a calm, slightly stern expression, and the hat is only slightly wider than the shoulders.
-A character sprite sheet with exactly 3 full-body frames of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width part of the image, none overlapping or cropped. All frames facing toward the viewer (down the screen), in the same steep high-angle camera, same size and position, each with a soft round shadow under the feet. Frames from left to right: walk1: walking, right leg forward; walk2: walking, left leg forward; shoot: firing pose, arm with the gun extended and a slight recoil. Identical outfit, colors, proportions, line thickness and art style as the attached reference sheet. Image ratio 3:1.
+A character sprite sheet with exactly 2 full-body frames of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width part of the image, none overlapping or cropped. All frames facing toward the viewer (down the screen), in the same steep high-angle camera, same size and position, each with a soft round shadow under the feet. Frames from left to right: walk1: walking, right leg forward; walk2: walking, left leg forward. Identical outfit, colors, proportions, line thickness and art style as the attached reference sheet. Image ratio 2:1.
 The character: a lean stray hound dog, ears back, tail visible, alert pose.
 ```
 
-### 들개 up: `hound_up_action.png` -> `hound_up_walk1/walk2/shoot.png`
+### 들개 up: `hound_up_action.png` -> `hound_up_walk1/walk2.png`
 (들개 방향 시트를 같이 첨부)
 
 ```
@@ -342,11 +342,11 @@ Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern o
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
 The hat brim must not hide the face: both eyes and a small neat mustache are clearly visible below the brim, with a calm, slightly stern expression, and the hat is only slightly wider than the shoulders.
-A character sprite sheet with exactly 3 full-body frames of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width part of the image, none overlapping or cropped. All frames seen from behind, facing away (up the screen), in the same steep high-angle camera, same size and position, each with a soft round shadow under the feet. Frames from left to right: walk1: walking, right leg forward; walk2: walking, left leg forward; shoot: firing pose, arm with the gun extended and a slight recoil. Identical outfit, colors, proportions, line thickness and art style as the attached reference sheet. Image ratio 3:1.
+A character sprite sheet with exactly 2 full-body frames of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width part of the image, none overlapping or cropped. All frames seen from behind, facing away (up the screen), in the same steep high-angle camera, same size and position, each with a soft round shadow under the feet. Frames from left to right: walk1: walking, right leg forward; walk2: walking, left leg forward. Identical outfit, colors, proportions, line thickness and art style as the attached reference sheet. Image ratio 2:1.
 The character: a lean stray hound dog, ears back, tail visible, alert pose.
 ```
 
-### 들개 right: `hound_right_action.png` -> `hound_right_walk1/walk2/shoot.png`
+### 들개 right: `hound_right_action.png` -> `hound_right_walk1/walk2.png`
 (들개 방향 시트를 같이 첨부)
 
 ```
@@ -361,7 +361,7 @@ Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern o
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
 The hat brim must not hide the face: both eyes and a small neat mustache are clearly visible below the brim, with a calm, slightly stern expression, and the hat is only slightly wider than the shoulders.
-A character sprite sheet with exactly 3 full-body frames of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width part of the image, none overlapping or cropped. All frames facing right in side view, in the same steep high-angle camera, same size and position, each with a soft round shadow under the feet. Frames from left to right: walk1: walking, right leg forward; walk2: walking, left leg forward; shoot: firing pose, arm with the gun extended and a slight recoil. Identical outfit, colors, proportions, line thickness and art style as the attached reference sheet. Image ratio 3:1.
+A character sprite sheet with exactly 2 full-body frames of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width part of the image, none overlapping or cropped. All frames facing right in side view, in the same steep high-angle camera, same size and position, each with a soft round shadow under the feet. Frames from left to right: walk1: walking, right leg forward; walk2: walking, left leg forward. Identical outfit, colors, proportions, line thickness and art style as the attached reference sheet. Image ratio 2:1.
 The character: a lean stray hound dog, ears back, tail visible, alert pose.
 ```
 
