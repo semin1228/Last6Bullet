@@ -15,6 +15,8 @@ import config
 import game_framework
 import game_world
 from bullet import Bullet
+from enemy import Enemy
+from player import Player
 from zone import Zone
 
 
@@ -53,8 +55,6 @@ class TrainZone(Zone):
         dt = game_framework.frame_time
         self.tick_jolt(dt)
         jolt = config.JOLT_SPEED if self.jolting() else 0.0
-        from enemy import Enemy
-        from player import Player
         for o in list(game_world.objects()):
             if isinstance(o, Bullet):
                 if o.state == 'FLOOR':

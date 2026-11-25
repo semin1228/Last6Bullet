@@ -14,6 +14,7 @@ import config
 import game_framework
 import game_world
 import play_mode
+from boss import Boss
 
 
 class Duel:
@@ -87,7 +88,6 @@ big = small = None
 
 
 def find_boss():
-    from boss import Boss
     return next(e for e in play_mode.enemies if isinstance(e, Boss) and e.alive)
 
 

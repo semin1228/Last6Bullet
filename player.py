@@ -9,6 +9,8 @@ import config
 import effect
 import game_framework
 import game_world
+from bullet import Bullet
+from enemy import Enemy
 
 MOVE_KEYS = {SDLK_w: (0, 1), SDLK_s: (0, -1), SDLK_a: (-1, 0), SDLK_d: (1, 0)}
 
@@ -114,8 +116,6 @@ class Player:
         self.kick_cooldown = config.KICK_COOLDOWN
         self.kick_time = config.KICK_TIME
         self.start_kick()
-        from bullet import Bullet
-        from enemy import Enemy
         # 찰 수 있는 것은 적과 총알뿐이다 (연출 Ring 처럼 x, radius 를 가진 다른 오브젝트는 제외)
         targets = [o for o in game_world.objects() if isinstance(o, (Enemy, Bullet)) and self.in_kick_fan(o)]
         floor = [o for o in targets if isinstance(o, Bullet) and o.state == 'FLOOR']
