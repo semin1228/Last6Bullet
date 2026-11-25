@@ -1,21 +1,31 @@
-# AI 이미지 요청서 (복사해서 붙여 넣기)
+# AI 이미지 요청서 (Gemini 통일판, 복사해서 붙여 넣기)
 
-Gemini, ChatGPT 같은 이미지 생성 AI 대화창에 아래 요청을 **위에서부터 순서대로** 하나씩 붙여 넣는다. 각 칸의 코드 블록 전체가 한 번의 요청이다 (스타일 문단이 이미 들어 있다).
-같은 대화창에서 이어서 만들면 스타일이 더 잘 맞는다. 새 대화로 시작하면 스타일 문단이 이미 요청마다 들어 있으니 그대로 붙이면 된다.
+Gemini 이미지 생성 대화창에 아래 요청을 **순서대로** 하나씩 붙여 넣는다. 코드 블록 하나가 한 번의 요청이고, 공통 스타일 문단이 이미 들어 있다.
+정해진 것 (2026-11-25): **한 세트는 Gemini 하나로**, 시점은 **위에서 약 65도 하이앵글**, 얼굴이 모자 아래에 보이는 차분하고 약간 근엄한 표정, 총은 손에 쥐고 있다. 기준 그림은 보안관 정면(Gemini 6번, 콧수염이 작은 것).
 
-## 규칙
-- 받은 그림은 **칸 제목의 파일 이름**으로 저장한다 (예: `sheriff_down.png`). 파일 이름과 경로에 한글·공백을 쓰지 않는다.
-- 배경이 마젠타(#FF00FF) 단색인 그림은 `tools\prep_sprites.py` 가 투명으로 바꾼다. 배경 그림(`bg_*`)은 그대로 쓴다. 자세한 것은 `docs/SPRITES.md`.
-- 캐릭터는 `_down` 을 **먼저** 마음에 들 때까지 만든다. 그다음 `_up`, `_right` 를 요청할 때 **`_down` 그림을 같이 첨부**한다 (첨부할 수 없는 대화창이면 요청만 붙이고, 여러 번 뽑아 가장 비슷한 것을 고른다).
-- 마지막에 세 방향이 같은 캐릭터로 보이는지(모자, 옷 색, 몸 비율) 나란히 놓고 본다. 오른쪽 그림이 정확히 오른쪽을 보는지, 배경에 장애물·사람이 없는지, 글자·워터마크가 없는지도 본다.
-- 크기가 달라도(AI가 512x512 를 못 지키는 경우가 많다) 비율만 맞으면 된다. 크기는 `prep_sprites.py --size` 로 줄인다.
-- 순서 추천: 보안관 3장 → 술집 배경 → 테이블 → 줍줍이 → 나머지. 일부만 있어도 게임이 돈다 (없는 그림은 도형으로 나온다).
+## 진행 규칙
+1. **캐릭터는 방향 3장을 한 그림(시트)에 뽑는다.** 요청이 3분의 1로 줄고 한 번에 그려서 같은 캐릭터가 되기 쉽다. 받은 시트는 `tools\split_sheet.py` 로 자른다 (아래 '저장과 투명 처리').
+2. 시트가 칸이 어긋나거나 잘리면 같은 요청을 다시 뽑는다. 한 장만 보고 정하지 말고 2~3번 뽑아 가장 나은 것을 고른다.
+3. 두 번째 캐릭터부터는 **보안관 시트를 같이 첨부**하고 "같은 그림체, 같은 선 굵기와 채도"를 덧붙인다 (첨부가 안 되면 요청만 붙인다).
+4. 같은 대화창에서 이어서 뽑으면 스타일이 더 잘 맞는다. 새 대화로 시작하면 스타일 문단이 요청마다 들어 있으니 그대로 붙이면 된다. 단, **새 요청에서 시점이 안 바뀌면 이전 그림이 보이는 대화창이 원인**일 수 있으니 새 대화에서 첨부 없이 뽑는다.
+5. 맨 마지막에 확인한다: 세 방향이 같은 캐릭터인가(모자, 옷 색, 비율), 오른쪽 그림이 정확히 오른쪽을 보나, 같은 시점(약 65도)인가, 글자·워터마크 없나. 오른쪽 아래의 Gemini 반짝이 마크는 마젠타와 같이 지워진다.
+
+## 저장과 투명 처리
+```powershell
+# 1) 시트를 방향별로 자른다 (받은 시트 -> 이름_down/up/right.png)
+C:\Python313\python.exe tools\split_sheet.py C:\dev\2dgp\raw_art\sheriff_sheet.png sheriff C:\dev\2dgp\raw_art
+# 2) 마젠타를 투명으로 바꾸고 줄여 res/ 에 넣는다 (기본 --tol 90, 올리면 살색이 깎인다)
+C:\Python313\python.exe tools\prep_sprites.py C:\dev\2dgp\raw_art res --size 256
+```
+받은그림 폴더는 저장소 밖(`C:\dev\2dgp\raw_art`)에 둔다. 경로와 파일 이름에 한글·공백을 쓰지 않는다. 자세한 규칙은 `docs/SPRITES.md`.
+
+## 순서 추천
+보안관 방향 시트 → 보안관 동작 시트 → 술집 배경 → 테이블 → 줍줍이 → 광산(배경+바위) → 나머지 캐릭터 → 기차 → 은행. 일부만 있어도 게임이 돈다 (없는 그림은 도형으로 나온다).
 
 
+## 1. 캐릭터 방향 시트 (3칸: 아래 · 위 · 오른쪽)
 
-## 캐릭터 (방향별)
-
-### `sheriff_down.png`
+### 보안관: `sheriff_sheet.png` -> `sheriff_down/up/right.png`
 ```
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
@@ -27,66 +37,13 @@ Characters are chibi-proportioned (big head and hat, small body), with a soft ro
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Full-body game character sprite of a Wild West sheriff with a tan wide-brim hat, blue shirt, brown vest with a star badge, holding a revolver, facing toward the viewer (down the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
+The hat brim must not hide the face: both eyes and a small neat mustache are clearly visible below the brim, with a calm, slightly stern expression, and the hat is only slightly wider than the shoulders.
+A character sprite sheet with exactly 3 full-body views of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width third of the image, none overlapping or cropped. Left = facing toward the viewer (down the screen), middle = seen from behind, facing away (up the screen), right = facing right in side view. Identical outfit, colors, proportions and size in all three, each with a soft round shadow under the feet. Image ratio 3:1.
+The character: a Wild West sheriff with a tan wide-brim hat, blue shirt, dark green vest with a gold star badge, red bandana, holding a revolver.
 ```
 
-### `sheriff_up.png`
-(`sheriff_down.png` 를 같이 첨부)
-
-```
-Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
-around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
-brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
-The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
-Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
-No text, no logos, no watermark.
-Full-body game character sprite of a Wild West sheriff with a tan wide-brim hat, blue shirt, brown vest with a star badge, holding a revolver, seen from behind, facing away (up the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
-```
-
-### `sheriff_right.png`
-(`sheriff_down.png` 를 같이 첨부)
-
-```
-Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
-around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
-brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
-The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
-Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
-No text, no logos, no watermark.
-Full-body game character sprite of a Wild West sheriff with a tan wide-brim hat, blue shirt, brown vest with a star badge, holding a revolver, facing to the right in side view, standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
-```
-
-### `picker_down.png`
-```
-Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
-around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
-brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
-The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
-Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
-No text, no logos, no watermark.
-Full-body game character sprite of a small scrappy bandit with a flat cap and a sack over the shoulder, crouched posture, facing toward the viewer (down the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-```
-
-### `picker_up.png`
-(`picker_down.png` 를 같이 첨부)
+### 줍줍이: `picker_sheet.png` -> `picker_down/up/right.png`
+(보안관 시트를 같이 첨부)
 
 ```
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
@@ -99,48 +56,15 @@ Characters are chibi-proportioned (big head and hat, small body), with a soft ro
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Full-body game character sprite of a small scrappy bandit with a flat cap and a sack over the shoulder, crouched posture, seen from behind, facing away (up the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
+The hat brim must not hide the face: both eyes and a small neat mustache are clearly visible below the brim, with a calm, slightly stern expression, and the hat is only slightly wider than the shoulders.
+A character sprite sheet with exactly 3 full-body views of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width third of the image, none overlapping or cropped. Left = facing toward the viewer (down the screen), middle = seen from behind, facing away (up the screen), right = facing right in side view. Identical outfit, colors, proportions and size in all three, each with a soft round shadow under the feet. Image ratio 3:1.
+The character: a small scrappy bandit with a flat cap and a sack over the shoulder, crouched posture.
+
+Same art style, line thickness and color saturation as the attached sheriff sheet.
 ```
 
-### `picker_right.png`
-(`picker_down.png` 를 같이 첨부)
-
-```
-Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
-around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
-brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
-The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
-Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
-No text, no logos, no watermark.
-Full-body game character sprite of a small scrappy bandit with a flat cap and a sack over the shoulder, crouched posture, facing to the right in side view, standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
-```
-
-### `drunk_down.png`
-```
-Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
-around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
-brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
-The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
-Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
-No text, no logos, no watermark.
-Full-body game character sprite of a drunk cowboy in a stained green vest holding a whiskey bottle, leaning to one side, facing toward the viewer (down the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-```
-
-### `drunk_up.png`
-(`drunk_down.png` 를 같이 첨부)
+### 술꾼: `drunk_sheet.png` -> `drunk_down/up/right.png`
+(보안관 시트를 같이 첨부)
 
 ```
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
@@ -153,48 +77,15 @@ Characters are chibi-proportioned (big head and hat, small body), with a soft ro
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Full-body game character sprite of a drunk cowboy in a stained green vest holding a whiskey bottle, leaning to one side, seen from behind, facing away (up the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
+The hat brim must not hide the face: both eyes and a small neat mustache are clearly visible below the brim, with a calm, slightly stern expression, and the hat is only slightly wider than the shoulders.
+A character sprite sheet with exactly 3 full-body views of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width third of the image, none overlapping or cropped. Left = facing toward the viewer (down the screen), middle = seen from behind, facing away (up the screen), right = facing right in side view. Identical outfit, colors, proportions and size in all three, each with a soft round shadow under the feet. Image ratio 3:1.
+The character: a drunk cowboy in a stained green vest holding a whiskey bottle, leaning to one side.
+
+Same art style, line thickness and color saturation as the attached sheriff sheet.
 ```
 
-### `drunk_right.png`
-(`drunk_down.png` 를 같이 첨부)
-
-```
-Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
-around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
-brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
-The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
-Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
-No text, no logos, no watermark.
-Full-body game character sprite of a drunk cowboy in a stained green vest holding a whiskey bottle, leaning to one side, facing to the right in side view, standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
-```
-
-### `hound_down.png`
-```
-Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
-around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
-brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
-The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
-Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
-No text, no logos, no watermark.
-Full-body game character sprite of a lean stray hound dog, ears back, tail visible, alert pose, facing toward the viewer (down the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-```
-
-### `hound_up.png`
-(`hound_down.png` 를 같이 첨부)
+### 들개: `hound_sheet.png` -> `hound_down/up/right.png`
+(보안관 시트를 같이 첨부)
 
 ```
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
@@ -207,48 +98,15 @@ Characters are chibi-proportioned (big head and hat, small body), with a soft ro
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Full-body game character sprite of a lean stray hound dog, ears back, tail visible, alert pose, seen from behind, facing away (up the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
+The hat brim must not hide the face: both eyes and a small neat mustache are clearly visible below the brim, with a calm, slightly stern expression, and the hat is only slightly wider than the shoulders.
+A character sprite sheet with exactly 3 full-body views of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width third of the image, none overlapping or cropped. Left = facing toward the viewer (down the screen), middle = seen from behind, facing away (up the screen), right = facing right in side view. Identical outfit, colors, proportions and size in all three, each with a soft round shadow under the feet. Image ratio 3:1.
+The character: a lean stray hound dog, ears back, tail visible, alert pose.
+
+Same art style, line thickness and color saturation as the attached sheriff sheet.
 ```
 
-### `hound_right.png`
-(`hound_down.png` 를 같이 첨부)
-
-```
-Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
-around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
-brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
-The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
-Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
-No text, no logos, no watermark.
-Full-body game character sprite of a lean stray hound dog, ears back, tail visible, alert pose, facing to the right in side view, standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
-```
-
-### `boss_down.png`
-```
-Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
-around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
-brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
-The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
-Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
-No text, no logos, no watermark.
-Full-body game character sprite of a large outlaw boss in a long dark red coat and black wide-brim hat, two revolvers at the belt, broad shoulders, facing toward the viewer (down the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-```
-
-### `boss_up.png`
-(`boss_down.png` 를 같이 첨부)
+### 두목: `boss_sheet.png` -> `boss_down/up/right.png`
+(보안관 시트를 같이 첨부)
 
 ```
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
@@ -261,13 +119,24 @@ Characters are chibi-proportioned (big head and hat, small body), with a soft ro
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Full-body game character sprite of a large outlaw boss in a long dark red coat and black wide-brim hat, two revolvers at the belt, broad shoulders, seen from behind, facing away (up the screen), standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
+The hat brim must not hide the face: both eyes and a small neat mustache are clearly visible below the brim, with a calm, slightly stern expression, and the hat is only slightly wider than the shoulders.
+A character sprite sheet with exactly 3 full-body views of the same character in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width third of the image, none overlapping or cropped. Left = facing toward the viewer (down the screen), middle = seen from behind, facing away (up the screen), right = facing right in side view. Identical outfit, colors, proportions and size in all three, each with a soft round shadow under the feet. Image ratio 3:1.
+The character: a large outlaw boss in a long dark red coat and black wide-brim hat, two revolvers at the belt, broad shoulders.
+
+Same art style, line thickness and color saturation as the attached sheriff sheet.
 ```
 
-### `boss_right.png`
-(`boss_down.png` 를 같이 첨부)
+
+## 2. 보안관 동작 시트 (달리기 2 + 발차기 1, 선택)
+
+**보안관 방향 시트를 먼저 확정한 뒤**, 그 시트(또는 정면 그림)를 같이 첨부하고 요청한다. 칸을 자를 때는 `--order run1,run2,kick` 을 쓰고 이름을 `sheriff_right` 로 하면 `sheriff_right_run1.png` 처럼 저장된다.
+
+```powershell
+C:\Python313\python.exe tools\split_sheet.py C:\dev\2dgp\raw_art\sheriff_action.png sheriff_right C:\dev\2dgp\raw_art --order run1,run2,kick
+```
+
+### 보안관 동작: `sheriff_action.png`
+(보안관 방향 시트를 같이 첨부)
 
 ```
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
@@ -280,13 +149,15 @@ Characters are chibi-proportioned (big head and hat, small body), with a soft ro
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Full-body game character sprite of a large outlaw boss in a long dark red coat and black wide-brim hat, two revolvers at the belt, broad shoulders, facing to the right in side view, standing, with a soft round shadow under the feet,
-centered, solid pure magenta (#FF00FF) background, 512x512.
-Use the attached image as the exact character design reference: same outfit, colors, proportions and art style.
+The hat brim must not hide the face: both eyes and a small neat mustache are clearly visible below the brim, with a calm, slightly stern expression, and the hat is only slightly wider than the shoulders.
+A character sprite sheet with exactly 3 full-body views of the same sheriff, all facing right in side view, in one row on a solid pure magenta (#FF00FF) background, evenly spaced, each in its own equal-width third of the image, none overlapping or cropped. Left = running pose with the right leg forward, middle = running pose with the left leg forward, right = kicking forward with the right leg raised. Identical outfit, colors, proportions and size as the reference sheriff, each with a soft round shadow under the feet. Image ratio 3:1.
+The character: a Wild West sheriff with a tan wide-brim hat, blue shirt, dark green vest with a gold star badge, red bandana, holding a revolver.
 ```
 
 
-## 구역 배경 (1280x720, 16:9)
+## 3. 구역 배경 (1280x720, 16:9, 인물과 장애물 없는 빈 방)
+
+가운데 넓은 놀이 공간(약 1180x620)을 비우고 벽과 소품은 가장자리에만 둔다. 캐릭터와 같은 시점이다. 배경은 마젠타가 아니라 방 전체를 그리므로 투명 처리하지 않는다.
 
 ### `bg_saloon.png`
 ```
@@ -296,13 +167,8 @@ brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon the
 Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
 The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
 Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Empty Wild West saloon interior, same steep high-angle camera (about 65 degrees down), 16:9, 1280x720,
-large open empty floor in the middle with no furniture and no characters, walls and props only along the edges,
-dark wood plank floor, barrels and lanterns along the edges, swinging doors in the middle of the top wall.
+Empty Wild West saloon interior, same steep high-angle camera as the character sprites, about 65 degrees down, 16:9, 1280x720, large open empty floor in the middle with no furniture and no characters, walls and props only along the edges, dark wood plank floor, barrels and lanterns along the edges, swinging doors in the middle of the top wall.
 ```
 
 ### `bg_mine.png`
@@ -313,13 +179,8 @@ brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon the
 Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
 The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
 Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Empty dark mine tunnel interior, same steep high-angle camera (about 65 degrees down), 16:9, 1280x720,
-large open empty floor in the middle with no furniture and no characters, walls and props only along the edges,
-dark rocky floor, wooden support beams and rails along the edges.
+Empty dark mine tunnel interior, same steep high-angle camera as the character sprites, about 65 degrees down, 16:9, 1280x720, large open empty floor in the middle with no furniture and no characters, walls and props only along the edges, dark rocky floor, wooden support beams and rails along the edges.
 ```
 
 ### `bg_train.png`
@@ -330,13 +191,8 @@ brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon the
 Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
 The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
 Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Empty wooden freight train car interior, same steep high-angle camera (about 65 degrees down), 16:9, 1280x720,
-large open empty floor in the middle with no furniture and no characters, walls and props only along the edges,
-wooden plank floor, car walls on both long sides, a long horizontal rectangular room.
+Empty wooden freight train car interior, same steep high-angle camera as the character sprites, about 65 degrees down, 16:9, 1280x720, large open empty floor in the middle with no furniture and no characters, walls and props only along the edges, wooden plank floor, car walls on both long sides, a long horizontal rectangular room.
 ```
 
 ### `bg_bank.png`
@@ -347,17 +203,14 @@ brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon the
 Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
 The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
 Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Empty bank interior, same steep high-angle camera (about 65 degrees down), 16:9, 1280x720,
-large open empty floor in the middle with no furniture and no characters, walls and props only along the edges,
-marble floor, teller cage bars and a vault door along the edges.
+Empty bank interior, same steep high-angle camera as the character sprites, about 65 degrees down, 16:9, 1280x720, large open empty floor in the middle with no furniture and no characters, walls and props only along the edges, marble floor, teller cage bars and a vault door along the edges.
 ```
 
 
-## 장애물
+## 4. 장애물 (그림 한 장씩, 마젠타 배경)
+
+판정은 사각형이라 그림이 정사각형에 가깝게 채워지게 한다. 크기는 게임이 줄이니 비율만 맞으면 된다.
 
 ### `obs_table.png`
 ```
@@ -367,12 +220,8 @@ brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon the
 Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
 The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
 Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-a round wooden saloon table with chairs, same steep high-angle camera (about 65 degrees down), same art style, filling a roughly square area,
-solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
+a round wooden saloon table with chairs, same steep high-angle camera as the character sprites (about 65 degrees down), same art style, filling a roughly square area, solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 ```
 
 ### `obs_rock.png`
@@ -383,12 +232,8 @@ brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon the
 Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
 The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
 Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-a lump of cave rock, same steep high-angle camera (about 65 degrees down), same art style, filling a roughly square area,
-solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
+a lump of cave rock, same steep high-angle camera as the character sprites (about 65 degrees down), same art style, filling a roughly square area, solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 ```
 
 ### `obs_crate.png`
@@ -399,12 +244,8 @@ brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon the
 Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
 The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
 Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-a wooden freight crate, same steep high-angle camera (about 65 degrees down), same art style, filling a roughly square area,
-solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
+a wooden freight crate, same steep high-angle camera as the character sprites (about 65 degrees down), same art style, filling a roughly square area, solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 ```
 
 ### `obs_pillar.png`
@@ -415,10 +256,6 @@ brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon the
 Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
 The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
 Same camera angle for every image.
-Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
-Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
-dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-a square marble pillar seen from above, same steep high-angle camera (about 65 degrees down), same art style, filling a roughly square area,
-solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
+a square marble pillar seen from above, same steep high-angle camera as the character sprites (about 65 degrees down), same art style, filling a roughly square area, solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 ```
