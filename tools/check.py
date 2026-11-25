@@ -1,11 +1,33 @@
 # 자동 점검: 기능마다 명세를 테스트로 옮겨 두고, 게임 루프를 고정 프레임으로 돌려 확인한다.
 #   C:\Python313\python.exe tools\check.py            창 없이 실행
 #   C:\Python313\python.exe tools\check.py --window   창을 띄워 실행
+import math
 import random
+import random as rnd
+import re
 import sys
 import traceback
 
-import sim
+import sim                       # 먼저 불러야 게임 폴더가 import 경로에 들어간다 (창 설정은 sim.open_game 이 open_canvas 전에 한다)
+
+import config
+import duel_mode
+import game_framework
+import game_world
+import gameover_mode
+import play_mode
+from boss import Boss
+from bullet import Bullet
+from crosshair import Crosshair
+from dog import Dog
+from drunk import Drunk
+from effect import MuzzleFlash, Ring, Spark, TextPop
+from enemy import Enemy
+from hud import Hud
+from picker import Picker
+from pico2d import (SDL_KEYDOWN, SDL_MOUSEBUTTONDOWN, SDLK_ESCAPE, SDLK_F1, SDLK_F2, SDLK_SPACE, SDLK_a, SDLK_d,
+                    SDLK_r, SDLK_s, SDLK_w, close_canvas)
+from zone import ZONES
 
 TESTS = []
 
@@ -17,8 +39,6 @@ def test(fn):
 
 def fresh(enemies=False):
     # 기본은 적 없이 시작한다 (1주차 테스트는 플레이어와 총알만 본다). 적 테스트는 enemies=True 나 add_enemy 로.
-    import game_framework
-    import play_mode
     game_framework.running = True
     game_framework.stack = [play_mode]
     play_mode.SPAWN_ENEMIES = enemies
@@ -31,8 +51,6 @@ def fresh(enemies=False):
 
 @test
 def skeleton_runs_and_esc_quits():
-    import game_framework
-    from pico2d import SDLK_ESCAPE
     pm = fresh()
     sim.step(120)
     assert pm.zone is not None
@@ -49,8 +67,6 @@ def near(a, b, tol=1.0):
 
 @test
 def move_right_for_one_second():
-    import config
-    from pico2d import SDLK_d
     pm = fresh()
     p = pm.player
     x0, y0 = p.x, p.y
@@ -69,8 +85,6 @@ def move_right_for_one_second():
 
 @test
 def diagonal_has_same_speed():
-    import config, math
-    from pico2d import SDLK_d, SDLK_w
     pm = fresh()
     p = pm.player
     x0, y0 = p.x, p.y
@@ -84,7 +98,6 @@ def diagonal_has_same_speed():
 
 @test
 def opposite_keys_cancel():
-    from pico2d import SDLK_a, SDLK_d
     pm = fresh()
     p = pm.player
     x0 = p.x
@@ -98,7 +111,6 @@ def opposite_keys_cancel():
 
 @test
 def cannot_leave_the_floor():
-    from pico2d import SDLK_a, SDLK_s
     pm = fresh()
     p = pm.player
     l, b, r, t = pm.zone.inner
@@ -111,8 +123,6 @@ def cannot_leave_the_floor():
 
 @test
 def aim_follows_mouse_even_while_moving():
-    import math
-    from pico2d import SDLK_d
     pm = fresh()
     p = pm.player
     sim.mouse_move(p.x + 100, p.y)
@@ -130,8 +140,6 @@ def aim_follows_mouse_even_while_moving():
 
 @test
 def crosshair_sits_on_mouse_and_greys_out_when_empty():
-    import config, game_world
-    from crosshair import Crosshair
     pm = fresh()
     p = pm.player
     [ch] = [o for o in game_world.objects() if isinstance(o, Crosshair)]
@@ -146,14 +154,11 @@ def crosshair_sits_on_mouse_and_greys_out_when_empty():
 # ---------------------------------------------------------------- 3. 발사와 총알 상태
 
 def bullets_in_world():
-    import game_world
-    from bullet import Bullet
     return [o for o in game_world.objects() if isinstance(o, Bullet)]
 
 
 @test
 def start_with_six_bullets_in_hand():
-    import config
     pm = fresh()
     assert len(pm.player.held) == config.AMMO
     assert all(b.state == 'HELD' for b in pm.player.held)
@@ -163,7 +168,6 @@ def start_with_six_bullets_in_hand():
 
 @test
 def click_fires_toward_mouse_immediately():
-    import config, math
     pm = fresh()
     p = pm.player
     sim.mouse_move(p.x, p.y + 200)  # 마우스를 위로 옮기고 같은 프레임에 바로 쏜다
@@ -181,8 +185,6 @@ def click_fires_toward_mouse_immediately():
 @test
 def first_click_without_moving_mouse_fires_where_clicked():
     # 시작 직후 마우스를 움직이지 않고 클릭해도 클릭한 자리(왼쪽 아래)로 쏜다
-    import config, math
-    from pico2d import SDL_MOUSEBUTTONDOWN
     pm = fresh()
     p = pm.player
     tx, ty = p.x - 200, p.y - 200
@@ -195,7 +197,6 @@ def first_click_without_moving_mouse_fires_where_clicked():
 
 @test
 def cooldown_blocks_rapid_double_click():
-    import config
     pm = fresh()
     p = pm.player
     sim.click()
@@ -209,7 +210,6 @@ def cooldown_blocks_rapid_double_click():
 
 @test
 def empty_gun_does_nothing():
-    import config
     pm = fresh()
     p = pm.player
     for _ in range(config.AMMO + 2):
@@ -222,9 +222,6 @@ def empty_gun_does_nothing():
 
 @test
 def empty_click_says_click_and_flashes_cylinder():
-    import config, game_world
-    from effect import TextPop
-    from hud import Hud
     pm = fresh()
     p = pm.player
     [hud] = [o for o in game_world.objects() if isinstance(o, Hud)]
@@ -248,7 +245,6 @@ def empty_click_says_click_and_flashes_cylinder():
 
 @test
 def flying_bullet_stops_on_floor():
-    import config
     pm = fresh()
     sim.mouse_move(pm.player.x + 300, pm.player.y)
     sim.step(1)
@@ -263,8 +259,6 @@ def flying_bullet_stops_on_floor():
 
 @test
 def hud_cylinder_matches_bullets_in_hand():
-    import config, game_world
-    from hud import Hud
     pm = fresh()
     p = pm.player
     [hud] = [o for o in game_world.objects() if isinstance(o, Hud)]
@@ -290,7 +284,6 @@ def place(p, x, y):
 
 
 def aim(p, angle_deg):
-    import math
     a = math.radians(angle_deg)
     sim.mouse_move(p.x + math.cos(a) * 200, p.y + math.sin(a) * 200)
 
@@ -302,7 +295,6 @@ def bullet_bounces_off_right_wall():
     aim(p, 0)
     sim.click()
     [b] = bullets_in_world()
-    import config, math
     l, bt, r, t = pm.zone.inner
     distance = (r - b.radius) - b.x  # 총구에서 오른쪽 벽 면까지
     sim.step(math.ceil(distance / config.BULLET_SPEED * 60) + 3)   # 속도를 바꿔도 벽에 닿은 직후를 본다
@@ -312,7 +304,6 @@ def bullet_bounces_off_right_wall():
 
 @test
 def third_hit_lands_the_bullet():
-    import config
     pm = fresh()
     life = config.BULLET_LIFE
     config.BULLET_LIFE = 99        # 수명 대신 튕긴 횟수로 떨어지는지만 본다
@@ -332,7 +323,6 @@ def third_hit_lands_the_bullet():
 
 @test
 def bullet_bounces_off_table():
-    import config
     pm = fresh()
     p = pm.player
     l, b, r, t = config.SALOON_TABLES[0]
@@ -349,8 +339,6 @@ def bullet_bounces_off_table():
 
 @test
 def player_cannot_walk_through_table():
-    import config
-    from pico2d import SDLK_w
     pm = fresh()
     p = pm.player
     l, b, r, t = config.SALOON_TABLES[0]
@@ -370,8 +358,6 @@ def no_tunneling_in_500_random_shots():
 def thin_wall_is_not_tunneled_at_slowest_frame_rate():
     # 두께 6px 벽(3주차 기차 짐받이 턱 정도)을 세우고, 가장 느린 프레임(한 프레임 26px 이동)에서
     # 왼쪽에서 오른쪽으로 쏜 총알이 한 발도 벽 너머로 넘어가지 않는지 본다.
-    import random, game_world, game_framework
-    from bullet import Bullet
     pm = fresh()
     wall = (700, 40, 706, 680)
     pm.zone.obstacles = [wall]
@@ -394,8 +380,6 @@ def thin_wall_is_not_tunneled_at_slowest_frame_rate():
 def hugging_a_thin_wall_does_not_shoot_through_it():
     # 6px 벽에 몸을 붙이고 벽 쪽으로 쏘면 총구(몸 중심에서 24px)가 벽 너머에 있다.
     # 총알이 총구에서 바로 생기면 벽 반대편에서 나오므로, 몸에서 총구까지도 벽 검사를 해야 한다.
-    import game_world
-    from bullet import Bullet
     pm = fresh()
     p = pm.player
     wall = (700, 40, 706, 680)
@@ -417,7 +401,6 @@ def hugging_a_thin_wall_does_not_shoot_through_it():
 @test
 def hugging_a_table_bounces_off_its_near_face():
     # 테이블 아랫면에 붙어 위로 쏘면 총알은 테이블 안이나 윗쪽이 아니라 아랫면에서 튕겨 내려와야 한다
-    import config
     pm = fresh()
     p = pm.player
     l, b, r, t = config.SALOON_TABLES[0]
@@ -429,8 +412,6 @@ def hugging_a_table_bounces_off_its_near_face():
 
 
 def shoot_randomly(dt):
-    import random, game_world, config
-    from bullet import Bullet
     pm = fresh()
     rng = random.Random(1234)
     l, b, r, t = pm.zone.inner
@@ -457,10 +438,8 @@ def shoot_randomly(dt):
 
 def flying_bullet(pm, x, y, vx, vy, bounces, age=None):
     # age 를 주지 않으면 '발사 직후 맞지 않는 시간'이 막 지난 총알로 만든다 (수명은 거의 그대로 남는다)
-    import config, game_world
     if age is None:
         age = config.HIT_GRACE + 0.01
-    from bullet import Bullet
     b = pm.player.held.pop()
     b.fire(x, y, 0.0, 'player')
     b.vx, b.vy, b.bounces, b.age = vx, vy, bounces, age
@@ -470,8 +449,6 @@ def flying_bullet(pm, x, y, vx, vy, bounces, age=None):
 
 @test
 def walking_over_floor_bullet_picks_it_up():
-    import config
-    from pico2d import SDLK_d
     pm = fresh()
     p = pm.player
     aim(p, 0)
@@ -489,7 +466,6 @@ def walking_over_floor_bullet_picks_it_up():
 
 @test
 def own_unbounced_bullet_passes_through():
-    import config
     pm = fresh()
     p = pm.player
     b = flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=0)
@@ -501,7 +477,6 @@ def own_unbounced_bullet_passes_through():
 
 @test
 def bounced_bullet_hurts_and_drops():
-    import config
     pm = fresh()
     p = pm.player
     b = flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
@@ -517,8 +492,6 @@ def bounced_bullet_hurts_and_drops():
 @test
 def enemy_cannot_pick_the_bullet_that_just_hit_it():
     # 적도 같은 규칙: 맞은 적은 1초 동안 그 총알을 못 줍고, 다른 적은 바로 주울 수 있다
-    import config
-    from picker import Picker
     pm = fresh()
     a = pm.add_enemy(Picker, 900, 360)
     other = pm.add_enemy(Picker, 900, 600)
@@ -535,7 +508,6 @@ def enemy_cannot_pick_the_bullet_that_just_hit_it():
 
 @test
 def no_pick_ends_when_bullet_is_fired_again():
-    import config
     pm = fresh()
     p = pm.player
     b = flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
@@ -549,7 +521,6 @@ def no_pick_ends_when_bullet_is_fired_again():
 
 @test
 def bullet_that_hit_you_drops_at_your_feet():
-    import config
     pm = fresh()
     p = pm.player
     b = flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
@@ -562,7 +533,6 @@ def bullet_that_hit_you_drops_at_your_feet():
 
 @test
 def invincibility_blocks_second_hit():
-    import config
     pm = fresh()
     p = pm.player
     flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
@@ -579,7 +549,6 @@ def invincibility_blocks_second_hit():
 @test
 def shooting_a_wall_up_close_hurts_yourself():
     # 실제 상황 재현: 오른쪽 벽 바로 앞에서 벽을 쏘면 튕겨 나온 총알에 내가 맞는다
-    import config
     pm = fresh()
     p = pm.player
     l, b, r, t = pm.zone.inner
@@ -594,13 +563,11 @@ def shooting_a_wall_up_close_hurts_yourself():
 # ---------------------------------------------------------------- 5-2. 연출
 
 def effects(kind):
-    import game_world
     return [o for o in game_world.objects() if isinstance(o, kind)]
 
 
 @test
 def firing_shows_a_short_muzzle_flash_at_the_bullet():
-    from effect import MuzzleFlash
     pm = fresh()
     p = pm.player
     aim(p, 45)
@@ -614,8 +581,6 @@ def firing_shows_a_short_muzzle_flash_at_the_bullet():
 
 @test
 def bounce_throws_sparks_away_from_the_wall():
-    import math
-    from effect import Spark
     pm = fresh()
     p = pm.player
     l, b, r, t = pm.zone.inner
@@ -634,8 +599,6 @@ def bounce_throws_sparks_away_from_the_wall():
 
 @test
 def picking_up_shows_a_small_brass_ring():
-    import config
-    from effect import Ring
     pm = fresh()
     p = pm.player
     aim(p, 0)
@@ -654,8 +617,6 @@ def picking_up_shows_a_small_brass_ring():
 
 @test
 def getting_hit_shows_a_red_ring_once():
-    import config
-    from effect import Ring
     pm = fresh()
     p = pm.player
     flying_bullet(pm, p.x - 60, p.y, config.BULLET_SPEED, 0, bounces=1)
@@ -690,7 +651,6 @@ def ledger_counts_hand_floor_and_air():
 @test
 def ledger_catches_a_lost_bullet():
     # 버그 흉내: 바닥 총알을 줍지도 않고 월드에서 지워 버리면 장부가 잡아내야 한다
-    import game_world
     pm = fresh()
     aim(pm.player, 90)
     sim.click()
@@ -713,7 +673,6 @@ def ledger_catches_a_wrong_state():
 
 @test
 def f1_shows_fps_near_frame_rate():
-    from pico2d import SDLK_F1
     pm = fresh()
     sim.key_down(SDLK_F1)
     assert pm.ledger.visible
@@ -729,9 +688,6 @@ def f1_shows_fps_near_frame_rate():
 @test
 def screen_text_is_english():
     # 게임 화면 글자는 영어로 쓴다 (PRD 14장). 한글이 다시 섞이면 잡아낸다.
-    import re, game_world
-    from effect import TextPop
-    from pico2d import SDLK_F1
     hangul = re.compile('[가-힣ㄱ-ㆎ]')
     pm = fresh()
     p = pm.player
@@ -757,8 +713,6 @@ def screen_text_is_english():
 @test
 def random_play_for_50_seconds_keeps_six_bullets():
     # 무작위로 이동·조준·발사를 3000프레임 하면서 매 프레임 총알 수와 위치를 검사한다
-    import random, config
-    from pico2d import SDLK_a, SDLK_d, SDLK_s, SDLK_w
     pm = fresh()
     p = pm.player
     rng = random.Random(2026)
@@ -821,7 +775,6 @@ def random_play_for_50_seconds_keeps_six_bullets():
 
 def floor_bullet(pm, x, y):
     # 손의 총알 하나를 (x, y) 바닥에 내려놓는다
-    import game_world
     b = pm.player.held.pop()
     b.drop(x, y)
     b.add_to_world()
@@ -830,7 +783,6 @@ def floor_bullet(pm, x, y):
 
 @test
 def kicked_bullet_rolls_slows_and_stops():
-    import config
     pm = fresh()
     b = floor_bullet(pm, 300, 200)
     pm.player.x, pm.player.y = 900, 500     # 굴러가는 길에서 비켜 둔다
@@ -852,7 +804,6 @@ def kicked_bullet_rolls_slows_and_stops():
 
 @test
 def rolling_bullet_halves_at_first_wall_and_stops_at_second():
-    import config
     pm = fresh()
     l, bt, r, t = pm.zone.inner
     b = floor_bullet(pm, r - 30, 600)       # 오른쪽 벽 바로 앞 (벽에 붙은 총알 꺼내기)
@@ -877,13 +828,11 @@ def rolling_bullet_halves_at_first_wall_and_stops_at_second():
 
 
 def math_atan(y, x):
-    import math
     return math.atan2(y, x)
 
 
 @test
 def rolling_and_pinned_bullets_hurt_nobody_and_player_cannot_take_pinned():
-    import config
     pm = fresh()
     p = pm.player
     b = floor_bullet(pm, p.x - 80, p.y)
@@ -927,8 +876,6 @@ def run_until(cond, limit=600):
 
 @test
 def picker_walks_to_floor_bullet_picks_it_slowly_and_shoots_at_player():
-    import config, math
-    from picker import Picker
     pm = fresh()
     p = pm.player
     p.x, p.y = 300, 360
@@ -953,15 +900,11 @@ def picker_walks_to_floor_bullet_picks_it_slowly_and_shoots_at_player():
 def enemies_get_around_every_table_to_a_bullet_behind_it():
     # 실제로 찾은 문제: 테이블 바로 뒤의 총알로 곧장 가다 테이블에 막히면, 매번 무작위 방향으로 0.4초만
     # 비켜 걸어 좌우를 오가며 갇혔다 (들개 테스트가 5번 중 1번 실패).
-    import config
-    from picker import Picker
-    from dog import Dog
     for seed in range(4):
         for l, b, r, t in config.SALOON_TABLES:
             for cls in (Picker, Dog):
                 for below in (True, False):
                     pm = fresh()
-                    import random as rnd
                     rnd.seed(seed)
                     pm.player.x, pm.player.y = 60, 60
                     cx = (l + r) / 2
@@ -980,8 +923,6 @@ def enemies_get_around_every_table_to_a_bullet_behind_it():
 @test
 def empty_picker_shoves_player_and_takes_one_bullet():
     # 리뷰 반영: 총알을 쥐고 쫓아가 가까이에서 쏘기만 하면 위험이 없었다. 빈손 줍줍이는 밀쳐서 1발을 빼앗는다.
-    import config
-    from picker import Picker
     pm = fresh()
     p = pm.player
     pk = pm.add_enemy(Picker, p.x + 30, p.y)
@@ -1001,8 +942,6 @@ def empty_picker_shoves_player_and_takes_one_bullet():
 def shoving_picker_runs_off_with_the_bullet_before_firing():
     # 사용자 플레이 테스트: '바로 옆에 있는데 안 뺏는다'. 실제로는 밀쳐서 빼앗았지만, 0.35초 뒤 코앞에서
     # 쏴서 맞힌 총알이 내 발밑에 떨어져 0.7초 만에 되돌아왔다. 이제 빼앗은 총알을 들고 물러난 뒤 쏜다.
-    import config, math
-    from picker import Picker
     pm = fresh()
     p = pm.player
     pk = pm.add_enemy(Picker, p.x + 32, p.y)
@@ -1026,7 +965,6 @@ def shoving_picker_runs_off_with_the_bullet_before_firing():
 
 def lunge_setup(pm, gap=60):
     # 빈손 줍줍이 오른쪽 gap px 옆에 총알 6발을 든 플레이어 (장애물 없는 곳)
-    from picker import Picker
     p = pm.player
     p.x, p.y = 640, 360
     pk = pm.add_enemy(Picker, p.x + p.radius + 13 + gap, p.y)
@@ -1037,7 +975,6 @@ def lunge_setup(pm, gap=60):
 @test
 def empty_picker_winds_up_then_pounces_and_steals():
     # 사용자 플레이 테스트: 바로 옆(몸 사이 약 55px)에 있어도 빼앗지 않았다. 닿아야만 빼앗고 스스로 오지 않아서.
-    import config
     pm = fresh()
     p = pm.player
     pk = lunge_setup(pm, 60)
@@ -1053,7 +990,6 @@ def empty_picker_winds_up_then_pounces_and_steals():
 
 @test
 def stepping_aside_during_windup_dodges_the_pounce():
-    import config
     pm = fresh()
     p = pm.player
     pk = lunge_setup(pm, 60)
@@ -1069,7 +1005,6 @@ def stepping_aside_during_windup_dodges_the_pounce():
 
 @test
 def kicking_during_windup_stops_the_pounce():
-    import config
     pm = fresh()
     p = pm.player
     pk = lunge_setup(pm, 40)
@@ -1104,8 +1039,6 @@ def empty_picker_does_not_pounce_on_empty_handed_player():
 def shoved_player_cannot_fire_for_a_moment_but_can_move_and_kick():
     # 사용자 제안: 밀쳐진 직후 바로 쏘면 줍줍이가 줍는 0.25초 사이에 코앞에서 쏴서 빼앗기가 의미 없어진다.
     # 0.4초 동안 사격만 막는다. 이동과 발차기는 된다 (발차기로 줍기를 끊는 대응은 남긴다).
-    import config
-    from pico2d import SDLK_a
     pm = fresh()
     p = pm.player
     pk = pm.add_enemy(Picker_cls(), p.x + 32, p.y)
@@ -1129,7 +1062,6 @@ def shoved_player_cannot_fire_for_a_moment_but_can_move_and_kick():
 
 
 def Picker_cls():
-    from picker import Picker
     return Picker
 
 
@@ -1137,8 +1069,6 @@ def Picker_cls():
 def kicked_picker_does_not_fire_the_moment_it_wakes_up():
     # 데모 녹화에서 찾은 버그: 총알을 가진 줍줍이를 차면, 깨어나는 순간 timer(기절 시간을 세던 값)가 0 이라
     # 조준 예고 없이 바로 쐈고, '가까우면 물러난다' 도 SHOOT 에 있던 시간이 쌓여 있어 건너뛰었다.
-    import config
-    from picker import Picker
     pm = fresh()
     p = pm.player
     pk = pm.add_enemy(Picker, p.x + 60, p.y)
@@ -1157,8 +1087,6 @@ def kicked_picker_does_not_fire_the_moment_it_wakes_up():
 
 @test
 def shove_needs_empty_picker_loaded_player_and_cooldown():
-    import config
-    from picker import Picker
     pm = fresh()
     p = pm.player
     pk = pm.add_enemy(Picker, p.x + 30, p.y)
@@ -1182,7 +1110,6 @@ def shove_needs_empty_picker_loaded_player_and_cooldown():
 def picker_telegraphs_and_locks_aim_before_firing():
     # 총알 속도를 하나로 통일한 대신, 줍줍이는 쏘기 0.3초 전에 멈춰 서서 총구가 반짝이고 조준을 고정한다.
     # 예고를 보고 옆으로 움직이면 피할 수 있어야 한다.
-    import config, math
     pm = fresh()
     p = pm.player
     p.x, p.y = 300, 360
@@ -1217,8 +1144,6 @@ def blocked_by_obstacle(zone, a, b):
 def picker_does_not_shoot_through_obstacle_and_sidesteps_until_clear():
     # 적 시야: 줍줍이는 플레이어와의 직선 사이에 장애물이 있으면 쏘지 않고, 멈춰 있지 않고 옆으로 비켜 걷다가
     # 시야가 트이면 쏜다 (PRD 위험표: 모서리에 걸려 영영 못 쏘면 안 됨).
-    import config
-    from picker import Picker
     pm = fresh()
     p = pm.player
     l, b, r, t = config.SALOON_TABLES[0]
@@ -1245,8 +1170,6 @@ def picker_does_not_shoot_through_obstacle_and_sidesteps_until_clear():
 @test
 def picker_cancels_locked_aim_when_player_hides_behind_cover():
     # 조준 예고 중에 플레이어가 장애물 뒤로 숨으면 쏘지 않고 예고를 취소한다 (그 뒤엔 다시 비켜 걷는다).
-    import config
-    from picker import Picker
     pm = fresh()
     p = pm.player
     l, b, r, t = config.SALOON_TABLES[0]
@@ -1270,8 +1193,6 @@ def picker_cancels_locked_aim_when_player_hides_behind_cover():
 def empty_picker_hides_behind_cover_instead_of_rubbing_the_wall():
     # 사용자 플레이 테스트: 빈손 줍줍이가 플레이어 반대쪽으로만 가서 맵 끝 벽에 붙어 비볐다
     # (측정: 서 있는 플레이어 기준 시간의 51% 를 벽 근처에서 보냄). 이제 장애물 뒤에 숨는다.
-    import math
-    from picker import Picker
     pm = fresh()
     p = pm.player
     p.x, p.y = 200, 360
@@ -1293,7 +1214,6 @@ def empty_picker_hides_behind_cover_instead_of_rubbing_the_wall():
 
 @test
 def hiding_picker_moves_around_cover_as_player_moves():
-    from picker import Picker
     pm = fresh()
     p = pm.player
     p.x, p.y = 200, 360
@@ -1314,8 +1234,6 @@ def hiding_picker_keeps_distance_from_cover_while_circling():
     # 사용자 플레이 테스트: 숨을 때 장애물에 몸을 붙이고, 돌아갈 때 가장자리에 비볐다
     # (측정: 플레이어가 테이블을 한 바퀴 도는 동안 17% 프레임을 장애물에 닿아 있음).
     # 숨을 자리는 36px 떨어지고, 돌아갈 때는 모서리를 거친다.
-    import config, math
-    from picker import Picker
     pm = fresh()
     p = pm.player
     pk = pm.add_enemy(Picker, 700, 620)
@@ -1345,8 +1263,6 @@ def hiding_picker_does_not_shake_and_peeks_when_player_is_still():
     # 사용자 플레이 테스트: 숨을 자리를 매 프레임 플레이어 위치로 다시 계산해서, 플레이어가 움직이면
     # 섰다 걸었다를 초당 21~42번 반복하며 떨었고('지진'), 플레이어가 서 있으면 완전히 굳어 있었다.
     # 이제 0.8~1.4초마다만 다시 고르고(보이면 0.25초 뒤 바로), 다시 고를 때 옆으로 살짝 옮겨 엿본다.
-    import config, math
-    from picker import Picker
     l, b, r, t = config.SALOON_TABLES[0]
     cx, cy = (l + r) / 2, (b + t) / 2
     for case in ('still', 'sway', 'circle'):
@@ -1383,7 +1299,6 @@ def hiding_picker_does_not_shake_and_peeks_when_player_is_still():
 @test
 def two_empty_pickers_hide_behind_different_cover():
     # 사용자 플레이 테스트: 빈손 줍줍이 둘이 같은 테이블 뒤로 몰렸다 (술집에서 시간의 75%)
-    from picker import Picker
     for px, py in ((200, 360), (640, 120), (1100, 360), (640, 620)):
         pm = fresh()
         p = pm.player
@@ -1402,7 +1317,6 @@ def two_empty_pickers_hide_behind_different_cover():
 
 @test
 def picker_without_any_cover_just_runs_away():
-    from picker import Picker
     pm = fresh()
     pm.zone.obstacles = []
     p = pm.player
@@ -1417,7 +1331,6 @@ def picker_without_any_cover_just_runs_away():
 
 @test
 def picker_flees_when_there_is_nothing_to_pick():
-    from picker import Picker
     pm = fresh()
     p = pm.player
     pk = pm.add_enemy(Picker, p.x + 150, p.y + 40)
@@ -1432,8 +1345,6 @@ def picker_flees_when_there_is_nothing_to_pick():
 
 @test
 def shooting_a_picker_kills_it_drops_its_bullets_and_pays_bounty():
-    import config
-    from picker import Picker
     pm = fresh()
     p = pm.player
     pk = pm.add_enemy(Picker, p.x + 250, p.y)
@@ -1453,8 +1364,6 @@ def shooting_a_picker_kills_it_drops_its_bullets_and_pays_bounty():
 
 @test
 def enemy_bullet_hurts_player_but_passes_other_enemies_until_it_bounces():
-    import config, math
-    from picker import Picker
     pm = fresh()
     p = pm.player
     shooter = pm.add_enemy(Picker, p.x + 300, p.y)
@@ -1482,8 +1391,6 @@ def enemy_bullet_hurts_player_but_passes_other_enemies_until_it_bounces():
 
 @test
 def drunk_charges_body_hits_once_and_bounces_off():
-    import config
-    from drunk import Drunk
     pm = fresh()
     p = pm.player
     d = pm.add_enemy(Drunk, p.x + 250, p.y)
@@ -1498,7 +1405,6 @@ def drunk_charges_body_hits_once_and_bounces_off():
 
 @test
 def drunk_takes_two_bullets():
-    from drunk import Drunk
     pm = fresh()
     p = pm.player
     d = pm.add_enemy(Drunk, p.x + 300, p.y)
@@ -1516,7 +1422,6 @@ def drunk_takes_two_bullets():
 
 def pass_setup(pm, picker_at=(1050, 200), bullet_at=(760, 200), drunk_at=(700, 200)):
     # 술꾼 옆에 바닥 총알, 멀리 빈손 줍줍이(움직이지 않음), 플레이어는 구석
-    from drunk import Drunk
     p = pm.player
     p.x, p.y = 100, 650
     mate = still_picker(pm, *picker_at)
@@ -1529,7 +1434,6 @@ def pass_setup(pm, picker_at=(1050, 200), bullet_at=(760, 200), drunk_at=(700, 2
 @test
 def drunk_kicks_a_nearby_bullet_to_an_empty_picker():
     # 사용자 제안: 총알을 쓰지 않는 술꾼도 쟁탈전에 끼도록, 바닥 총알을 빈손 줍줍이에게 차서 넘긴다
-    import config, math
     pm = fresh()
     d, ball, mate = pass_setup(pm)
     sim.step(1)
@@ -1550,7 +1454,6 @@ def drunk_kicks_a_nearby_bullet_to_an_empty_picker():
 
 @test
 def drunk_does_not_pass_without_empty_picker_and_waits_cooldown():
-    import config
     pm = fresh()
     d, ball, mate = pass_setup(pm)
     mate.held = [pm.player.held.pop()]       # 줍줍이가 총알을 가졌으면 패스하지 않는다
@@ -1582,7 +1485,6 @@ def drunk_gives_up_the_pass_when_the_bullet_is_taken():
 def fast_bullet_does_not_pass_through_people_at_slowest_frame_rate():
     # 사용자 플레이 테스트에서 찾은 문제: 맞히기 판정을 프레임 끝 위치로만 해서, 느린 프레임(0.05초,
     # 한 프레임 40px)에는 정면으로 쏜 총알 60발 중 15발이 반지름 13px 적을 건너뛰었다.
-    import config, game_framework
     for start in range(0, 40, 2):
         for off in (0, 6, 12):
             pm = fresh()
@@ -1616,8 +1518,6 @@ def fast_bullet_does_not_pass_through_people_at_slowest_frame_rate():
 def shot_drunk_staggers_and_does_not_pass_the_bullet_that_hit_it():
     # 사용자 플레이 테스트: '술꾼을 쐈는데 안 맞고 바로 찬다'. 실제로는 맞았는데(체력 2 -> 1),
     # 발밑에 떨어진 그 총알을 다음 프레임에 줍줍이에게 차 넘겨서 안 맞은 것처럼 보였다.
-    import config
-    from drunk import Drunk
     pm = fresh()
     p = pm.player
     still_picker(pm, 1100, 600)                    # 패스 받을 빈손 줍줍이
@@ -1637,7 +1537,6 @@ def shot_drunk_staggers_and_does_not_pass_the_bullet_that_hit_it():
 
 @test
 def hound_swallows_bullets_and_kick_makes_it_spit_all():
-    from dog import Dog
     pm = fresh()
     p = pm.player
     p.x, p.y = 150, 600
@@ -1650,7 +1549,6 @@ def hound_swallows_bullets_and_kick_makes_it_spit_all():
     dog.SPEED = 0
     dog.state = 'ROAM'
     p.x, p.y = dog.x - 40, dog.y
-    import config
     config_speed = config.DOG_ROAM_SPEED
     config.DOG_ROAM_SPEED = 0
     try:
@@ -1666,8 +1564,6 @@ def hound_swallows_bullets_and_kick_makes_it_spit_all():
 @test
 def hound_swallows_at_most_two_and_then_roams_slowly():
     # 리뷰 반영: 무작위 전투에서 들개가 광산 총알 5발을 모두 삼켜 판이 막혔다. 2발이면 배가 찬다.
-    import config
-    from dog import Dog
     pm = fresh()
     p = pm.player
     p.x, p.y = 150, 600
@@ -1684,8 +1580,6 @@ def hound_swallows_at_most_two_and_then_roams_slowly():
 def hound_bumping_player_while_picking_does_not_crash():
     # 실제로 찾은 버그(무작위 전투 검사): 들개가 줍는 중(PICK)에 플레이어와 부딪히면
     # PICK -> STUN 전이가 없어 MachineError 로 게임이 멈췄다.
-    import config
-    from dog import Dog
     pm = fresh()
     p = pm.player
     b = floor_bullet(pm, p.x + 30, p.y)
@@ -1701,7 +1595,6 @@ def hound_bumping_player_while_picking_does_not_crash():
 # ---------------------------------------------------------------- 10. 2주차: 발차기
 
 def still_picker(pm, x, y):
-    from picker import Picker
     e = pm.add_enemy(Picker, x, y)
     e.state, e.SPEED = 'FLEE', 0           # 스스로 움직이지 않게 (발차기 효과만 본다)
     return e
@@ -1709,8 +1602,6 @@ def still_picker(pm, x, y):
 
 @test
 def kick_pushes_and_stuns_enemy_in_front_without_damage():
-    import config
-    from pico2d import SDLK_SPACE
     pm = fresh()
     p = pm.player
     e = still_picker(pm, p.x + 45, p.y)
@@ -1729,8 +1620,6 @@ def kick_pushes_and_stuns_enemy_in_front_without_damage():
 
 @test
 def kick_misses_enemy_behind_and_has_cooldown():
-    import config
-    from pico2d import SDLK_SPACE
     pm = fresh()
     p = pm.player
     behind = still_picker(pm, p.x - 45, p.y)
@@ -1747,7 +1636,6 @@ def kick_misses_enemy_behind_and_has_cooldown():
 
 @test
 def kick_knocks_one_bullet_loose_and_breaks_a_pickup():
-    import config
     pm = fresh()
     p = pm.player
     e = still_picker(pm, p.x + 45, p.y)
@@ -1774,7 +1662,6 @@ def kick_knocks_one_bullet_loose_and_breaks_a_pickup():
 
 @test
 def kick_rolls_floor_bullet_in_aim_direction():
-    import math
     pm = fresh()
     p = pm.player
     b = floor_bullet(pm, p.x + 30, p.y + 30)   # 45도 방향, 줍는 거리 밖
@@ -1793,7 +1680,6 @@ def kicking_right_after_a_pickup_ring_does_not_crash():
     p = pm.player
     b = floor_bullet(pm, p.x + 10, p.y)
     sim.step(1)                    # 주우면서 고리 연출이 생긴다
-    from effect import Ring
     assert effects(Ring), '고리 연출이 없음 (검사 전제)'
     aim(p, 0)
     assert p.kick() is True
@@ -1802,8 +1688,6 @@ def kicking_right_after_a_pickup_ring_does_not_crash():
 
 @test
 def can_move_while_kicking_and_returns_to_run():
-    import config
-    from pico2d import SDLK_d
     pm = fresh()
     p = pm.player
     sim.key_down(SDLK_d)
@@ -1820,8 +1704,6 @@ def can_move_while_kicking_and_returns_to_run():
 
 @test
 def hp_zero_shows_game_over_and_r_restarts():
-    import config, game_framework, gameover_mode
-    from pico2d import SDL_KEYDOWN, SDLK_r
     pm = fresh()
     p = pm.player
     p.hp = 1
@@ -1841,9 +1723,6 @@ def hp_zero_shows_game_over_and_r_restarts():
 
 @test
 def door_opens_only_when_every_enemy_is_down_and_leads_to_the_mine():
-    import config
-    from pico2d import SDLK_d
-    from picker import Picker
     pm = fresh()
     p = pm.player
     a, b = still_picker(pm, 900, 600), still_picker(pm, 900, 150)
@@ -1869,7 +1748,6 @@ def door_opens_only_when_every_enemy_is_down_and_leads_to_the_mine():
 def zone_starts_with_three_in_hand_and_three_on_the_floor():
     # 비판 점검 반영: 6발을 다 쥐고 시작하면 술집이 2.8초 만에 끝나고 적이 총알을 줍지 않았다.
     # 술집·광산·기차는 손 3 + 바닥 3 (floor 자리), 은행은 결투가 배분을 정하므로 손 6. 구역 총알은 늘 6발.
-    from zone import ZONES
     for i, data in enumerate(ZONES):
         pm = fresh(enemies=True)
         pm.start_zone(i)
@@ -1880,7 +1758,6 @@ def zone_starts_with_three_in_hand_and_three_on_the_floor():
         assert sorted((round(b.x), round(b.y)) for b in floor) == sorted(spots), data['name']
         if not data.get('duel'):
             assert len(pm.player.held) == 3, data['name']
-        import game_framework
         game_framework.stack = [pm]
         pm.finish()
 
@@ -1888,7 +1765,6 @@ def zone_starts_with_three_in_hand_and_three_on_the_floor():
 @test
 def every_zone_has_exactly_six_bullets():
     # 제목이 Last 6 Bullet 이다. 어느 구역이든 총알은 여섯 발 (사용자 결정으로 광산 5발을 없앰)
-    from zone import ZONES
     for i, data in enumerate(ZONES):
         assert data['ammo'] == 6, '%s 구역 총알이 %d발' % (data['name'], data['ammo'])
         pm = fresh()
@@ -1899,7 +1775,6 @@ def every_zone_has_exactly_six_bullets():
 
 @test
 def f2_skips_to_the_next_zone_keeping_hp_and_bounty():
-    from pico2d import SDLK_F2
     pm = fresh()
     pm.player.hp, pm.player.bounty = 2, 80
     sim.key_down(SDLK_F2)
@@ -1909,8 +1784,6 @@ def f2_skips_to_the_next_zone_keeping_hp_and_bounty():
 
 @test
 def closed_door_is_just_a_wall():
-    from pico2d import SDLK_d
-    import config
     pm = fresh()
     p = pm.player
     still_picker(pm, 300, 600)
@@ -1923,7 +1796,6 @@ def closed_door_is_just_a_wall():
 
 @test
 def mine_shows_floor_bullets_only_in_lantern_light_and_glints_outside():
-    import config, game_world
     pm = fresh()
     pm.start_zone(1)
     p = pm.player
@@ -1953,8 +1825,6 @@ def mine_shows_floor_bullets_only_in_lantern_light_and_glints_outside():
 @test
 def beating_every_enemy_in_the_bank_shows_town_saved():
     # 마지막 구역(은행)은 문이 열리는 대신, 두목(과 남은 적)을 모두 쓰러뜨리면 클리어 화면 (PRD 10장)
-    import game_framework, gameover_mode
-    from zone import ZONES
     pm = fresh()
     pm.start_zone(len(ZONES) - 1)
     assert ZONES[pm.zone_index].get('final') and pm.zone.name == 'BANK'
@@ -1971,11 +1841,6 @@ def random_battle_for_50_seconds_keeps_ammo_in_both_zones():
     # 적 3~4명과 함께 무작위로 움직이고, 쏘고, 차는 3000프레임(50초)을 구역마다 돌린다.
     # 매 프레임: 장부(손 + 적 + 바닥 + 공중 = 구역 총알 수), 모두 벽 안·장애물 밖, 게임이 멈추지 않음.
     # 적이 다 쓰러지면 다시 세운다. 체력 0 처리는 따로 검사하므로 여기서는 유지한다.
-    import random, config, game_world, game_framework
-    from pico2d import SDLK_a, SDLK_d, SDLK_s, SDLK_w
-    from bullet import Bullet
-    from enemy import Enemy
-    from zone import ZONES
     for index in range(len(ZONES)):
         pm = fresh(enemies=True)
         if index:
@@ -2065,7 +1930,6 @@ def train(pm):
 
 @test
 def train_floor_slides_bullets_to_the_lip_and_people_backward():
-    import config
     pm = fresh()
     z = train(pm)
     p = pm.player
@@ -2087,8 +1951,6 @@ def train_floor_slides_bullets_to_the_lip_and_people_backward():
 
 @test
 def enemies_slide_slower_and_pinned_bullets_stay_put():
-    import config
-    from picker import Picker
     pm = fresh()
     train(pm)
     e = still_picker(pm, 900, 600)
@@ -2104,7 +1966,6 @@ def enemies_slide_slower_and_pinned_bullets_stay_put():
 
 @test
 def jolt_warns_a_second_ahead_then_throws_everyone_back():
-    import config
     pm = fresh()
     z = train(pm)
     p = pm.player
@@ -2127,7 +1988,6 @@ def jolt_warns_a_second_ahead_then_throws_everyone_back():
 
 @test
 def jolt_throws_player_off_the_back_hp_minus_one_back_in_the_middle():
-    import config
     pm = fresh()
     z = train(pm)
     p = pm.player
@@ -2142,7 +2002,6 @@ def jolt_throws_player_off_the_back_hp_minus_one_back_in_the_middle():
 
 @test
 def kicking_an_enemy_off_the_back_drops_its_bullets_at_the_lip():
-    import config
     pm = fresh()
     train(pm)
     p = pm.player
@@ -2164,7 +2023,6 @@ def kicking_an_enemy_off_the_back_drops_its_bullets_at_the_lip():
 @test
 def bullets_never_leave_the_train():
     # 옆·뒤 가장자리는 총알에게 난간이다. 덜컹이 와도 총알은 열차 밖으로 나가지 않는다.
-    import random
     pm = fresh()
     z = train(pm)
     p = pm.player
@@ -2188,15 +2046,12 @@ def bullets_never_leave_the_train():
 # ---------------------------------------------------------------- 16. 3주차: 두목
 
 def bank_with_boss(pm, x=900, y=360):
-    from boss import Boss
-    from zone import ZONES
     pm.start_zone(len(ZONES) - 1)                   # 적 자동 배치를 끈 상태라 결투도 올라오지 않는다
     return pm.add_enemy(Boss, x, y)
 
 
 @test
 def boss_gathers_three_then_telegraphs_and_fires_a_fan():
-    import config, math
     pm = fresh()
     boss = bank_with_boss(pm)                       # 구역을 바꾸면 플레이어도 새로 만들어지므로 그 뒤에 잡는다
     p = pm.player
@@ -2221,7 +2076,6 @@ def boss_gathers_three_then_telegraphs_and_fires_a_fan():
 @test
 def boss_fallback_fires_what_it_has_or_charges():
     # 4초 동안 다 못 모으면: 가진 총알이 있으면 그것만이라도 흩뿌리고, 없으면 돌진 (교착 방지)
-    import config
     pm = fresh()
     boss = bank_with_boss(pm)
     p = pm.player
@@ -2242,7 +2096,6 @@ def boss_fallback_fires_what_it_has_or_charges():
 
 @test
 def kicking_the_boss_stuns_it_and_knocks_one_bullet_loose():
-    import config
     pm = fresh()
     boss = bank_with_boss(pm, 240 + 55, 360)        # 은행 시작 위치 (240, 360) 바로 오른쪽
     p = pm.player
@@ -2257,8 +2110,6 @@ def kicking_the_boss_stuns_it_and_knocks_one_bullet_loose():
 @test
 def boss_phase_two_summons_two_minions_once_and_spreads_at_two():
     # 체력 절반(4) 이하: 부하 줍줍이 2명이 한 번만 나타나고, 2발만 모여도 흩뿌린다 (PRD 9장 2페이즈)
-    import config, math
-    from picker import Picker
     pm = fresh()
     boss = bank_with_boss(pm)
     p = pm.player
@@ -2286,8 +2137,6 @@ def boss_phase_two_summons_two_minions_once_and_spreads_at_two():
 @test
 def spread_always_sends_one_bullet_straight_at_the_player():
     # 사용자 피드백: 좌우 50° 는 피하기 쉬웠다. 18° 간격이고, 2발이어도 한 발은 정조준 (가만히 서 있으면 맞는다)
-    import config, math
-    from boss import Boss
     pm = fresh()
     boss = bank_with_boss(pm)
     for n in (1, 2, 3, 4):
@@ -2300,7 +2149,6 @@ def spread_always_sends_one_bullet_straight_at_the_player():
 
 @test
 def minions_fall_with_the_boss_without_bounty():
-    import config, game_framework, gameover_mode
     pm = fresh()
     boss = bank_with_boss(pm)
     boss.hp = config.BOSS_PHASE2_HP
@@ -2319,7 +2167,6 @@ def minions_fall_with_the_boss_without_bounty():
 
 @test
 def boss_takes_a_hit_per_bullet_and_beating_it_saves_the_town():
-    import config, game_framework, gameover_mode
     pm = fresh()
     boss = bank_with_boss(pm, 700, 360)
     p = pm.player
@@ -2346,8 +2193,6 @@ def boss_takes_a_hit_per_bullet_and_beating_it_saves_the_town():
 
 def duel_setup():
     # 3구역 기차에서 문을 지나 은행으로 들어간다 (적 자동 배치를 켜야 두목과 결투가 나온다)
-    import game_framework, duel_mode, play_mode
-    from zone import ZONES
     pm = fresh()
     play_mode.SPAWN_ENEMIES = True
     pm.start_zone(len(ZONES) - 2, keep=None)
@@ -2360,14 +2205,11 @@ def duel_setup():
 
 
 def click_left():
-    from pico2d import SDL_MOUSEBUTTONDOWN
-    import duel_mode
     duel_mode.dispatch(sim.FakeEvent(SDL_MOUSEBUTTONDOWN, button=1))
 
 
 @test
 def duel_ignores_clicks_in_intro_and_fouls_on_ready():
-    import config, game_framework
     pm, dm = duel_setup()
     p, boss = pm.player, dm.duel.boss
     assert (p.x, p.y) == config.DUEL_PLAYER_POS and (boss.x, boss.y) == config.DUEL_BOSS_POS
@@ -2385,7 +2227,6 @@ def duel_ignores_clicks_in_intro_and_fouls_on_ready():
 
 @test
 def drawing_first_wins_the_duel():
-    import config, game_framework
     pm, dm = duel_setup()
     p, boss = pm.player, dm.duel.boss
     run_until(lambda: dm.duel.state == 'GO', 400)
@@ -2402,7 +2243,6 @@ def drawing_first_wins_the_duel():
 
 @test
 def waiting_after_draw_loses_too_slow():
-    import config, game_framework
     pm, dm = duel_setup()
     run_until(lambda: dm.duel.state == 'GO', 400)
     run_until(lambda: dm.duel.state == 'LOSE', int(config.DUEL_BOSS_REACT[1] * 60) + 3)
@@ -2419,9 +2259,6 @@ def waiting_after_draw_loses_too_slow():
 def a_full_run_goes_from_saloon_to_town_saved():
     # 3주차 최소 완성 기준 (PRD 17장): 술집 -> 광산 -> 기차 -> 결투 -> 두목까지 한 판이 끝까지 이어진다.
     # 각 구역의 적을 쓰러뜨리고 문으로 나가며, 체력·현상금이 이어지고 구역마다 총알 6발인지 본다.
-    import config, game_framework, gameover_mode, duel_mode
-    from pico2d import SDL_MOUSEBUTTONDOWN
-    from zone import ZONES
     pm = fresh(enemies=True)
     names = []
     for index in range(len(ZONES) - 1):
@@ -2462,7 +2299,6 @@ def a_full_run_goes_from_saloon_to_town_saved():
 
 def main():
     sim.open_game('--window' in sys.argv)
-    from pico2d import close_canvas
     failed = 0
     for fn in TESTS:
         try:
@@ -2472,7 +2308,6 @@ def main():
             failed += 1
             print('  FAIL', fn.__name__)
             traceback.print_exc()
-            import play_mode
             play_mode.finish()
     close_canvas()
     print('%d/%d passed' % (len(TESTS) - failed, len(TESTS)))
