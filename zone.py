@@ -7,6 +7,7 @@ from pico2d import draw_circle, draw_line, draw_rectangle
 
 import config
 import game_framework
+import sprites
 
 
 class Zone:
@@ -35,10 +36,36 @@ class Zone:
     def update(self):
         self.clock += game_framework.frame_time
 
+    def draw_background_image(self):
+        # 구역 배경 그림 (res/bg_*.png). 그렸으면 True, 없으면 False (도형 바닥으로 넘어간다)
+        if self.dark:
+            return sprites.draw_dark_background('bg_mine', self.light)    # 어둡게 깔고 빛 반경만 밝게
+        return sprites.draw_background('bg_bank' if self.style == 'bank' else 'bg_saloon')
+
+    def obstacle_kind(self):
+        return 'rock' if self.dark else 'pillar' if self.style == 'bank' else 'table'
+
+    def draw_obstacles_image(self):
+        # 장애물 그림. 하나라도 그림이 없으면 False 를 돌려 도형으로 그리게 한다 (판정은 사각형 그대로)
+        kind = self.obstacle_kind()
+        if sprites.get(sprites.OBSTACLE_FILES[kind]) is None:
+            return False
+        for i, rect in enumerate(self.obstacles):
+            sprites.draw_obstacle(kind, i, rect)
+        return True
+
     def draw(self):
+        l, b, r, t = self.inner
+        has_bg = self.draw_background_image()
+        if not has_bg:
+            self.draw_floor_shapes(l, b, r, t)
+        self.draw_obstacles()
+        self.draw_door(r)
+
+    def draw_floor_shapes(self, l, b, r, t):
+        # 그림이 없을 때의 도형 벽과 바닥
         wall = config.COLOR_MINE_WALL if self.dark else config.COLOR_WALL
         draw_rectangle(0, 0, config.WIDTH, config.HEIGHT, *wall, filled=True)
-        l, b, r, t = self.inner
         if self.dark:
             draw_rectangle(l, b, r, t, *config.COLOR_MINE_FLOOR, filled=True)
             if self.light is not None:     # 랜턴 빛: 바깥 고리와 안쪽 밝은 원
@@ -55,6 +82,10 @@ class Zone:
             draw_rectangle(l, b, r, t, *config.COLOR_FLOOR, filled=True)
             for y in range(b + 40, t, 40):  # 나무 바닥 결
                 draw_line(l, y, r, y, *config.COLOR_FLOOR_LINE)
+
+    def draw_obstacles(self):
+        if self.draw_obstacles_image():
+            return
         if self.dark:
             top, edge = config.COLOR_ROCK, config.COLOR_ROCK_EDGE
         elif self.style == 'bank':
@@ -64,12 +95,14 @@ class Zone:
         for ol, ob, o_r, ot in self.obstacles:
             draw_rectangle(ol, ob, o_r, ot, *top, filled=True)
             draw_rectangle(ol, ob, o_r, ob + 8, *edge, filled=True)  # 앞면 (3/4 느낌)
+
+    def draw_door(self, r, planks=True):
         lo, hi = self.door_span()          # 오른쪽 벽의 문: 닫히면 판자, 열리면 바닥이 이어진다
         if self.door_open:
             draw_rectangle(r, lo, config.WIDTH, hi, *config.COLOR_DOOR_OPEN, filled=True)
         else:
             draw_rectangle(r, lo, config.WIDTH - 6, hi, *config.COLOR_DOOR, filled=True)
-            for y in range(lo + 10, hi, 14):
+            for y in range(lo + 10, hi, 14) if planks else ():     # 판자 줄 (기차는 없다)
                 draw_line(r, y, config.WIDTH - 6, y, *config.COLOR_TABLE_EDGE)
 
     def shows_floor_bullet(self, bullet):

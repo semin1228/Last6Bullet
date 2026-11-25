@@ -11,6 +11,7 @@ import config
 import effect
 import game_framework
 import game_world
+import sprites
 from enemy import Enemy
 from picker import Picker
 
@@ -101,10 +102,11 @@ class Drunk(Enemy):
     def draw_body(self, cx, cy):
         # 술꾼: 보라색 큰 몸, 손에 든 술병
         bx, by = self.x + cx * (self.radius + 6) - cy * 6, self.y + cy * (self.radius + 6) + cx * 6
-        draw_line(self.x - cy * 6, self.y + cx * 6, bx, by, *config.COLOR_BOTTLE)
-        draw_circle(bx, by, 3, *config.COLOR_BOTTLE, filled=True)
-        draw_circle(self.x, self.y, self.radius, *self.COLOR, filled=True)
-        draw_circle(self.x, self.y, self.radius - 6, *config.COLOR_HAT, filled=True)
+        if not sprites.draw_character('drunk', self.x, self.y, self.facing):    # 그림이 없으면 도형
+            draw_line(self.x - cy * 6, self.y + cx * 6, bx, by, *config.COLOR_BOTTLE)
+            draw_circle(bx, by, 3, *config.COLOR_BOTTLE, filled=True)
+            draw_circle(self.x, self.y, self.radius, *self.COLOR, filled=True)
+            draw_circle(self.x, self.y, self.radius - 6, *config.COLOR_HAT, filled=True)
         for i in range(self.HP):   # 체력 2칸 (맞으면 하나 빈다)
             color = config.COLOR_HP if i < self.hp else config.COLOR_HP_EMPTY
             draw_circle(self.x - 4 + i * 8, self.y - self.radius - 6, 2, *color, filled=True)
