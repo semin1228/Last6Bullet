@@ -20,6 +20,7 @@ from pico2d import draw_circle, draw_line
 import config
 import effect
 import game_framework
+import game_world
 from enemy import Enemy
 
 
@@ -315,7 +316,6 @@ class Picker(Enemy):
         return False
 
     def zone_pickers(self):
-        import game_world
         return [o for o in game_world.objects() if isinstance(o, Picker) and o.alive]
 
     def cover_spot(self):

@@ -10,7 +10,7 @@
 
 ## 실행과 확인
 - 게임: `C:\Python313\python.exe main.py` (F1 장부 표시, F2 다음 구역, R 다시 하기)
-- 자동 점검: `C:\Python313\python.exe tools\check.py` (로그는 끝 몇 줄만 본다. 현재 110개)
+- 자동 점검: `C:\Python313\python.exe tools\check.py` (로그는 끝 몇 줄만 본다. 현재 110개. 실행기만 `check.py`, 테스트는 `tools/checks/c1~c4`, 도우미는 `checks/common.py`. 새 테스트는 해당 장 파일에 `@test` 로 추가)
 - 봇 난이도 측정: `C:\Python313\python.exe tools\bot_measure.py [판 수] [구역 0~3]`
 - 스크린샷 `tools\shot.py`, 데모 녹화 `tools\record.py`
 - 수치는 모두 `config.py`, 구역 배치는 `zone.py`의 `ZONES`에 있다.
@@ -34,7 +34,7 @@
 
 **남은 일 (순서대로):**
 1. ~~적 시야 검사~~ 줍줍이만 넣었다(두목 제외, 조준 예고 중 막히면 취소). 광산 잃은 체력 0.88 → 2.25(바위 뒤에서 나온 직후 사격이 원인)지만 사용자가 그대로 두기로 했다. 직접 플레이로 너무 어려우면 '시야 트인 직후 예고 유예'를 본다 (DEVLOG 4주차 남은 일 3번).
-2. 코드 구조 정리 판단 (`check.py` 2400줄 넘음, 함수 안 import, `play_mode` 전역 변수). 설계 결정이라 Opus.
+2. ~~코드 구조 정리~~ 완료 (`docs/CODE_STRUCTURE.md`): 게임 코드 함수 안 import 8줄을 맨 위로(순환 2줄은 유지), `check.py` import 187개를 맨 위로, `check.py`를 4파일로 분리. `play_mode` 전역은 수업 모드 패턴이라 그대로 둠(하지 않기로 결정). 110개·`bot_measure.py 2` 출력 동일.
 3. 4주차 본 일정: 그래픽과 마무리 (PRD 17장).
 
 **확인하지 않은 것:** 4주차 변경은 모두 봇과 자동 점검으로만 확인했고 직접 플레이는 아직이다.

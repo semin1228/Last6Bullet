@@ -1,6 +1,7 @@
 from pico2d import *
 
 import config
+import effect
 import game_framework
 import game_world
 from ammo_ledger import AmmoLedger
@@ -18,6 +19,7 @@ from zone import ZONES, Zone
 ENEMY_KINDS = {'picker': Picker, 'drunk': Drunk, 'dog': Dog, 'boss': Boss}
 SPAWN_ENEMIES = True               # 구역 배치(적, 바닥 총알, 결투). 자동 점검에서 플레이어·총알만 볼 때 끈다
 
+# 모드 상태는 수업 모드 패턴대로 모듈 전역으로 둔다 (설계 판단: docs/CODE_STRUCTURE.md)
 zone = None
 player = None
 ledger = None
@@ -79,7 +81,6 @@ def start_zone(index, keep=None):
 
 def fell_off_train(o):
     # 기차 뒤 끝으로 밀려 떨어짐 (PRD 7장)
-    import effect
     if o is player:
         player.hp -= 1             # 무적 시간과 상관없이 체력 -1, 가진 총알은 그대로
         player.invincible = config.INVINCIBLE_TIME

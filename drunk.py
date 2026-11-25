@@ -12,6 +12,7 @@ import effect
 import game_framework
 import game_world
 from enemy import Enemy
+from picker import Picker
 
 
 class Drunk(Enemy):
@@ -37,7 +38,6 @@ class Drunk(Enemy):
         self.ball = None           # 차려는 바닥 총알
 
     def empty_pickers(self):
-        from picker import Picker  # picker 도 enemy 를 불러서, 함수 안에서 불러 순환을 피한다
         return [o for o in game_world.objects()
                 if isinstance(o, Picker) and o.alive and not o.held and o.target is None]
 
