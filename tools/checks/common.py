@@ -29,6 +29,8 @@ def fresh(enemies=False):
     game_framework.running = True
     game_framework.stack = [play_mode]
     play_mode.SPAWN_ENEMIES = enemies
+    play_mode.SHOW_POSTERS = False
+    play_mode.SHOW_POSTERS = False  # 포스터는 전환 테스트(c5)에서만 켠다
     random.seed(7)                 # 적이 비켜 걷는 방향 등 무작위 값을 매번 같게 (결과가 실행마다 달라지지 않게)
     play_mode.init()
     return play_mode
@@ -167,6 +169,7 @@ def duel_setup():
     # 3구역 기차에서 문을 지나 은행으로 들어간다 (적 자동 배치를 켜야 두목과 결투가 나온다)
     pm = fresh()
     play_mode.SPAWN_ENEMIES = True
+    play_mode.SHOW_POSTERS = False
     pm.start_zone(len(ZONES) - 2, keep=None)
     pm.zone_index = len(ZONES) - 2
     for e in pm.enemies:

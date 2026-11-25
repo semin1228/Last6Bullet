@@ -7,6 +7,7 @@ import sim                       # 먼저 불러야 게임 폴더가 import 경�
 import config
 import game_framework
 import game_world
+import ending_mode
 import gameover_mode
 from bullet import Bullet
 from effect import Ring
@@ -248,7 +249,7 @@ def beating_every_enemy_in_the_bank_shows_town_saved():
     assert ZONES[pm.zone_index].get('final') and pm.zone.name == 'BANK'
     still_picker(pm, 900, 600).die()
     sim.step(1)
-    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TOWN SAVED'
+    assert game_framework.stack[-1] is ending_mode
     assert not pm.zone.door_open
     game_framework.stack = [pm]
     pm.finish()

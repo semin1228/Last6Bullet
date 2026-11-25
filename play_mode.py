@@ -4,6 +4,7 @@ import config
 import effect
 import game_framework
 import game_world
+import poster_mode
 from ammo_ledger import AmmoLedger
 from bullet import Bullet
 from crosshair import Crosshair
@@ -17,6 +18,7 @@ from train_zone import TrainZone
 from zone import ZONES, Zone
 
 ENEMY_KINDS = {'picker': Picker, 'drunk': Drunk, 'dog': Dog, 'boss': Boss}
+SHOW_POSTERS = True                # 구역 시작 때 수배 포스터를 띄운다. 자동 점검은 전투만 보므로 끈다
 SPAWN_ENEMIES = True               # 구역 배치(적, 바닥 총알, 결투). 자동 점검에서 플레이어·총알만 볼 때 끈다
 
 # 모드 상태는 수업 모드 패턴대로 모듈 전역으로 둔다 (설계 판단: docs/CODE_STRUCTURE.md)
@@ -77,6 +79,8 @@ def start_zone(index, keep=None):
     if data.get('duel') and SPAWN_ENEMIES:
         import duel_mode           # duel_mode 도 play_mode 를 불러서, 서로 맨 위에서 부르지 않는다
         game_framework.push_mode(duel_mode)          # 은행: 보스전 전에 정오의 결투 (PRD 9장)
+    if SHOW_POSTERS and poster_mode.prepare(index):
+        game_framework.push_mode(poster_mode)        # 처음 나오는 적의 수배 포스터. 결투 위에 올려 먼저 보이게 한다
 
 
 def fell_off_train(o):
@@ -143,7 +147,7 @@ def update():
     ledger.check()                 # 충돌 처리(줍기 등)까지 끝난 뒤 총알 수를 검사한다
     if enemies and not zone.door_open and all(not e.alive for e in enemies):
         if ZONES[zone_index].get('final'):
-            show_result('TOWN SAVED')   # 은행의 두목을 쓰러뜨리면 클리어 (PRD 10장, 엔딩 연출은 4주차)
+            show_ending()               # 은행의 두목을 쓰러뜨리면 클리어 (PRD 10장)
             return
         zone.door_open = True      # 구역의 적을 모두 쓰러뜨리면 오른쪽 문이 열린다 (PRD 4장)
     if zone.at_door(player.x, player.y, player.radius):
@@ -163,6 +167,12 @@ def show_result(title):
     import gameover_mode           # gameover_mode 도 play_mode 를 불러서, 서로 맨 위에서 부르지 않는다
     gameover_mode.title = title
     game_framework.push_mode(gameover_mode)
+
+
+def show_ending():
+    import ending_mode             # ending_mode 는 title_mode 를 거쳐 play_mode 를 불러서, 맨 위에서 부르지 않는다
+    ending_mode.bounty = player.bounty
+    game_framework.push_mode(ending_mode)
 
 
 def render():

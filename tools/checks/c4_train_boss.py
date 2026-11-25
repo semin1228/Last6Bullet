@@ -7,7 +7,7 @@ import sim                       # 먼저 불러야 게임 폴더가 import 경�
 import config
 import duel_mode
 import game_framework
-import gameover_mode
+import ending_mode
 from picker import Picker
 from pico2d import SDL_MOUSEBUTTONDOWN
 from zone import ZONES
@@ -243,7 +243,7 @@ def minions_fall_with_the_boss_without_bounty():
     assert not any(m.alive for m in boss.minions), '두목이 쓰러졌는데 부하가 남음'
     assert pm.player.bounty == bounty + boss.BOUNTY, '부하 현상금까지 붙음'
     sim.step(1)
-    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TOWN SAVED'
+    assert game_framework.stack[-1] is ending_mode
     assert pm.ledger.check()
     game_framework.stack = [pm]
     pm.finish()
@@ -268,7 +268,7 @@ def boss_takes_a_hit_per_bullet_and_beating_it_saves_the_town():
     run_until(lambda: not boss.alive, 60)
     assert p.bounty == 500
     sim.step(1)
-    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TOWN SAVED'
+    assert game_framework.stack[-1] is ending_mode
     game_framework.stack = [pm]
     pm.finish()
 # ---------------------------------------------------------------- 17. 3주차: 정오의 결투
@@ -356,7 +356,7 @@ def a_full_run_goes_from_saloon_to_town_saved():
     p.fire_cooldown = 0
     p.fire()
     run_until(lambda: game_framework.stack[-1] is not pm, 120)
-    assert game_framework.stack[-1] is gameover_mode and gameover_mode.title == 'TOWN SAVED'
+    assert game_framework.stack[-1] is ending_mode
     assert p.bounty >= 500
     game_framework.stack = [pm]
     pm.finish()

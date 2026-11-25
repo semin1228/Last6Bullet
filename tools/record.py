@@ -114,6 +114,7 @@ def setup(zone=0):
     game_framework.running = True
     game_framework.stack = [play_mode]
     play_mode.SPAWN_ENEMIES = False
+    play_mode.SHOW_POSTERS = False
     random.seed(11)
     play_mode.init()
     if zone:
