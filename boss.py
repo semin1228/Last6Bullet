@@ -148,7 +148,7 @@ class Boss(Enemy):
     def draw_body(self, cx, cy):
         # 두목: 큰 검은 몸, 넓은 모자 챙, 금색 배지, 머리 위 체력 막대
         gx, gy = self.x + cx * (self.radius + 10), self.y + cy * (self.radius + 10)
-        if not sprites.draw_character('boss', self.x, self.y, self.facing):    # 그림이 없으면 도형
+        if not sprites.draw_character('boss', self.x, self.y, self.facing, self.pose):    # 그림이 없으면 도형
             for o in (-1, 0, 1):
                 draw_line(self.x - cy * o, self.y + cx * o, gx - cy * o, gy + cx * o, *config.COLOR_GUN)
             draw_circle(self.x, self.y, self.radius + 4, *config.COLOR_BOSS_HAT, filled=True)

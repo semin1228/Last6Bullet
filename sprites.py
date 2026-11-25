@@ -57,15 +57,26 @@ def has_directions(name):
     return all(get('%s_%s' % (name, d)) is not None for d in ('down', 'up', 'right'))
 
 
+def pose_variant(kick, shoot, moving, clock):
+    # 지금 모습에 맞는 동작 이름. 우선순위: 발차기 > 쏘기 > 걷기(두 장 번갈아) > 서 있기(None)
+    if kick:
+        return 'kick'
+    if shoot:
+        return 'shoot'
+    if moving:
+        return 'walk1' if int(clock / config.SPRITE_WALK_FRAME) % 2 == 0 else 'walk2'
+    return None
+
+
 def draw_character(name, x, y, angle, variant=None):
     # 캐릭터 그림을 (x, y) 가운데로 그린다. 그렸으면 True, 그림이 없어 못 그렸으면 False.
-    # variant: 'run1' 처럼 오른쪽 동작 그림 (sheriff_right_run1.png). 위·아래를 볼 때는 쓰지 않는다.
+    # variant: 'walk1' 'walk2' 'shoot' 'kick' 처럼 동작 그림 (sheriff_down_walk1.png). 그 동작 그림이 없으면 서 있는 그림을 쓴다.
     size = config.SPRITE_SIZE.get(name, 64)
     if has_directions(name):
         direction, flip = pick_direction(angle)
         image = None
-        if variant and direction == 'right':
-            image = get('%s_right_%s' % (name, variant))
+        if variant:
+            image = get('%s_%s_%s' % (name, direction, variant))
         if image is None:
             image = get('%s_%s' % (name, direction))
         image.composite_draw(0, 'h' if flip else '', x, y, size, size)

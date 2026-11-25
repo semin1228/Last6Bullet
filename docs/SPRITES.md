@@ -8,7 +8,7 @@
 |---|---|---|
 | 캐릭터 5종 (`sheriff` `picker` `drunk` `hound` `boss`) | `NAME_down.png` `NAME_up.png` `NAME_right.png` | 세 장이 **모두** 있어야 쓴다. 조준(바라보는) 방향에 가까운 그림을 고르고, 왼쪽은 오른쪽을 좌우 반전한다. |
 | 같은 캐릭터 | `NAME.png` (한 장) | 세 장이 없으면 이것을 오른쪽을 보는 그림으로 보고 각도만큼 회전해서 그린다. |
-| 보안관 동작 (선택) | `sheriff_right_run1.png` `sheriff_right_run2.png` `sheriff_right_kick.png` | 오른쪽·왼쪽을 볼 때만 쓴다. 달리기는 두 장을 0.15초마다 번갈아, 발차기 중에는 kick. 발차기 그림이 없으면 기존 차는 발 선이 나온다. |
+| 동작 (선택, 모든 캐릭터) | `NAME_DIR_walk1.png` `NAME_DIR_walk2.png` `NAME_DIR_shoot.png` (`DIR` = down/up/right), 보안관만 `sheriff_DIR_kick.png` | 움직이는 중에는 walk1·walk2 를 0.15초(`SPRITE_WALK_FRAME`)마다 번갈아, 쏜 뒤 0.12초(`SHOOT_POSE_TIME`)는 shoot, 보안관 발차기 중에는 kick. 없는 동작은 서 있는 그림(`NAME_DIR`)으로 나오고, 발차기 그림이 없으면 차는 발 선이 나온다. 왼쪽은 오른쪽 동작 그림을 반전한다. |
 | 장애물 | `obs_table.png` (술집) `obs_rock.png` (광산) `obs_crate.png` (기차) `obs_pillar.png` (은행) | 장애물 사각형(판정)과 같은 크기로 늘여서 그린다. 모양이 여러 개면 `obs_rock2.png`, `obs_rock3.png` 처럼 번호를 붙이면 번갈아 쓴다. |
 | 배경 | `bg_saloon.png` `bg_mine.png` `bg_train.png` `bg_bank.png` | 1280x720 으로 그린다. 광산은 그림을 어둡게 깔고 랜턴 빛 반경 안만 밝게 보인다. 기차는 덜컹 예고 때 왼쪽 위험 띠가 깜빡이고 짐받이 턱 선이 그림 위에 늘 그려진다. |
 

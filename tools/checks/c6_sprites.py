@@ -9,7 +9,7 @@ import sim                       # 먼저 불러야 게임 폴더가 import 경�
 
 import config
 import sprites
-from checks.common import fresh, test
+from checks.common import aim, fresh, place, test
 
 REAL_DIR = sprites.RES_DIR
 DRAWS = {'n': 0}
@@ -155,21 +155,52 @@ def left_aim_flips_the_right_sprite():
 
 
 @test
-def sheriff_run_and_kick_sprites_are_used_when_present():
-    with dummy_res(all_direction_names() + ['sheriff_right_run1', 'sheriff_right_run2', 'sheriff_right_kick']):
+def action_sprites_are_used_in_every_direction_and_fall_back_to_standing():
+    names = all_direction_names() + ['sheriff_up_walk1', 'sheriff_down_kick', 'sheriff_right_shoot']
+    with dummy_res(names):
         used = []
         orig = sprites.get
         sprites.get = lambda name: (used.append(name), orig(name))[1]
         try:
-            sprites.draw_character('sheriff', 100, 100, 0.0, 'kick')
-            sprites.draw_character('sheriff', 100, 100, 0.0, 'run2')
-            used.append('--')
-            sprites.draw_character('sheriff', 100, 100, math.pi / 2, 'run1')    # 위를 볼 때는 위 그림
+            sprites.draw_character('sheriff', 100, 100, math.pi / 2, 'walk1')     # 위를 볼 때 위 걷기
+            sprites.draw_character('sheriff', 100, 100, -math.pi / 2, 'kick')     # 아래를 볼 때 아래 발차기
+            sprites.draw_character('sheriff', 100, 100, math.pi, 'shoot')         # 왼쪽: 오른쪽 쏘기를 반전
+            sprites.draw_character('sheriff', 100, 100, 0.0, 'walk2')             # 없는 동작: 서 있는 그림
         finally:
             sprites.get = orig
-        assert 'sheriff_right_kick' in used and 'sheriff_right_run2' in used, used
-        after = used[used.index('--'):]
-        assert 'sheriff_right_run1' not in after and after[-1] == 'sheriff_up', used
+        assert 'sheriff_up_walk1' in used and 'sheriff_down_kick' in used and 'sheriff_right_shoot' in used, used
+        assert used[-1] == 'sheriff_right', used
+
+
+@test
+def pose_variant_priority_and_walk_alternation():
+    pv = sprites.pose_variant
+    assert pv(True, True, True, 0) == 'kick' and pv(False, True, True, 0) == 'shoot'
+    assert pv(False, False, False, 0) is None
+    f = config.SPRITE_WALK_FRAME
+    assert pv(False, False, True, 0.0) == 'walk1' and pv(False, False, True, f * 1.5) == 'walk2'
+    assert pv(False, False, True, f * 2.5) == 'walk1'
+
+
+@test
+def player_and_enemy_choose_walk_and_shoot_poses_in_game():
+    with dummy_res(all_direction_names()):
+        pm = fresh()
+        p = pm.player
+        assert p.shoot_pose == 0
+        place(p, 400, 300)
+        sim.step(2)
+        aim(p, 0)
+        p.fire()
+        assert p.shoot_pose > 0, '쏜 뒤 쏘는 자세 시간이 안 켜짐'
+        sim.step(20)
+        assert p.shoot_pose == 0
+        pm.finish()
+    pm = fresh(enemies=True)
+    e = pm.enemies[0]
+    sim.step(30)
+    assert e.pose in (None, 'walk1', 'walk2', 'shoot'), e.pose
+    pm.finish()
 
 
 @test

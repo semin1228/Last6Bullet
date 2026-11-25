@@ -102,7 +102,7 @@ class Drunk(Enemy):
     def draw_body(self, cx, cy):
         # 술꾼: 보라색 큰 몸, 손에 든 술병
         bx, by = self.x + cx * (self.radius + 6) - cy * 6, self.y + cy * (self.radius + 6) + cx * 6
-        if not sprites.draw_character('drunk', self.x, self.y, self.facing):    # 그림이 없으면 도형
+        if not sprites.draw_character('drunk', self.x, self.y, self.facing, self.pose):    # 그림이 없으면 도형
             draw_line(self.x - cy * 6, self.y + cx * 6, bx, by, *config.COLOR_BOTTLE)
             draw_circle(bx, by, 3, *config.COLOR_BOTTLE, filled=True)
             draw_circle(self.x, self.y, self.radius, *self.COLOR, filled=True)

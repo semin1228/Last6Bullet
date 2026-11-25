@@ -12,6 +12,7 @@ import config
 import effect
 import game_framework
 import game_world
+import sprites
 from bullet import Bullet
 
 
@@ -39,6 +40,9 @@ class Enemy:
         self.push = (0.0, 0.0)     # 발차기로 밀려나는 속도
         self.alive = True
         self.flash = 0.0           # 맞은 직후 몸이 하얗게 번쩍이는 남은 시간 (초)
+        self.shoot_pose = 0.0      # 쏜 직후 쏘는 자세 그림을 보여 줄 남은 시간 (초)
+        self.draw_prev = None      # 직전에 그린 위치 (움직이는 중인지 알아 걷는 그림을 고르는 데만 쓴다)
+        self.pose = None           # 지금 보여 줄 동작 그림 이름 (draw 가 정한다)
         self.detour = 0.0          # 장애물에 막혔을 때 옆으로 비켜 걷는 남은 시간
         self.detour_dir = (0.0, 0.0)
         self.detour_side = random.choice((-1, 1))   # 비켜 걷는 쪽 (막힐 때마다 바꾸지 않고 유지)
@@ -162,6 +166,7 @@ class Enemy:
         b.travel(self.radius + 8)
         b.add_to_world()
         effect.spawn(effect.MuzzleFlash(b.x, b.y, angle))
+        self.shoot_pose = config.SHOOT_POSE_TIME
         return b
 
     # ------------------------------------------------------------ 맞기, 발차기, 쓰러지기
@@ -252,6 +257,7 @@ class Enemy:
             return
         dt = game_framework.frame_time
         self.flash = max(0.0, self.flash - dt)
+        self.shoot_pose = max(0.0, self.shoot_pose - dt)
         if self.state == 'STUN':
             px, py = self.push
             self.x, self.y = self.zone.push_out(self.x + px * dt, self.y + py * dt, self.radius)
@@ -272,6 +278,9 @@ class Enemy:
 
     def draw(self):
         cx, cy = math.cos(self.facing), math.sin(self.facing)
+        moved = self.draw_prev is not None and math.hypot(self.x - self.draw_prev[0], self.y - self.draw_prev[1]) > 0.3
+        self.draw_prev = (self.x, self.y)
+        self.pose = sprites.pose_variant(False, self.shoot_pose > 0, moved and self.state != 'STUN', self.zone.clock)
         self.draw_body(cx, cy)
         if self.flash > 0:                  # 맞은 순간: 몸 전체가 하얗게 번쩍인다
             draw_circle(self.x, self.y, self.radius, *config.COLOR_HIT_FLASH, filled=True)
