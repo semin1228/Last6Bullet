@@ -55,6 +55,13 @@ class Picker(Enemy):
         self.since_plan = 0.0      # 마지막으로 고른 뒤 지난 시간 (초)
         self.lunge_time = 0.0      # 덤벼들기 시작 뒤 지난 시간 (초)
         self.lunge_dir = None      # 달려드는 방향 (준비 동작이 끝나는 순간 고정)
+        self.sight_blocked = 0.0   # 장애물에 시야가 막힌 채 지난 시간 (초)
+        self.sight_flips = 0       # 그동안 비켜 걷는 쪽을 바꾼 횟수
+        self.sight_side = random.choice((-1, 1))   # 비켜 걷는 쪽
+
+    def blocked_from(self, o):
+        # 나와 o 사이 직선이 장애물을 지나면 True (시야 가림)
+        return any(self.segment_hits_rect((self.x, self.y), (o.x, o.y), rect) for rect in self.zone.obstacles)
 
     def aiming(self):
         return self.state == 'SHOOT' and self.held and self.timer <= config.ENEMY_AIM_TIME
@@ -158,6 +165,24 @@ class Picker(Enemy):
             if (d < config.PICKER_KEEP_NEAR and self.timer < config.ENEMY_AIM_TIME + 0.05
                     and self.locked_aim is None and self.shoot_wait < config.PICKER_CORNERED):
                 self.timer = config.ENEMY_AIM_TIME + 0.05
+            # 시야 검사: 플레이어와의 직선 사이에 장애물이 있으면 쏘지 않는다 (두목 흩뿌리기는 일부러 검사하지 않음).
+            # 조준 예고 중에 막히면 예고를 취소하고(고정한 방향으로 쏘지 않음) 쏠 준비 시간으로 되돌린다.
+            # 막힌 채 서 있으면 쟁탈전이 죽으므로 플레이어와의 직선에 수직으로 비켜 걷고,
+            # SIGHT_SIDE_FLIP 초가 지나도 안 트이면 반대쪽으로 바꾼다 (모서리에 걸려 영영 못 쏘는 것 방지).
+            blind = self.blocked_from(p)
+            if blind:
+                self.sight_blocked += dt
+                self.locked_aim = None
+                self.timer = max(self.timer, config.ENEMY_AIM_TIME + 0.05)
+                if self.sight_blocked >= config.SIGHT_SIDE_FLIP * (self.sight_flips + 1):
+                    self.sight_flips += 1
+                    self.sight_side = -self.sight_side
+                ux, uy = p.x - self.x, p.y - self.y
+                self.move(-uy * self.sight_side, ux * self.sight_side, self.SPEED)
+                self.facing = math.atan2(uy, ux)
+                return
+            self.sight_blocked = 0.0
+            self.sight_flips = 0
             if self.timer > config.ENEMY_AIM_TIME:
                 self.locked_aim = None
                 d = self.distance_to(p)

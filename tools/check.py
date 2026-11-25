@@ -1214,6 +1214,59 @@ def blocked_by_obstacle(zone, a, b):
 
 
 @test
+def picker_does_not_shoot_through_obstacle_and_sidesteps_until_clear():
+    # 적 시야: 줍줍이는 플레이어와의 직선 사이에 장애물이 있으면 쏘지 않고, 멈춰 있지 않고 옆으로 비켜 걷다가
+    # 시야가 트이면 쏜다 (PRD 위험표: 모서리에 걸려 영영 못 쏘면 안 됨).
+    import config
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = config.SALOON_TABLES[0]
+    cy = (b + t) / 2
+    p.x, p.y = l - 160, cy
+    pk = pm.add_enemy(Picker, r + 160, cy)
+    pk.held = [p.held.pop()]
+    pk.state, pk.timer = 'SHOOT', 0.2                # 곧 쏠 차례인데 테이블이 가로막음
+    assert blocked_by_obstacle(pm.zone, p, pk)
+    x0, y0 = pk.x, pk.y
+    fired_blocked = []
+    for i in range(300):
+        sim.step(1)
+        if not pk.held:
+            fired_blocked.append(blocked_by_obstacle(pm.zone, p, pk))
+            break
+        if i == 20:
+            assert (pk.x, pk.y) != (x0, y0), '막힌 채 멈춰 서 있음'
+    assert not pk.held, '5초가 지나도 못 쏨 (모서리에 걸림)'
+    assert fired_blocked == [False], '장애물 너머로 쏨'
+    pm.finish()
+
+
+@test
+def picker_cancels_locked_aim_when_player_hides_behind_cover():
+    # 조준 예고 중에 플레이어가 장애물 뒤로 숨으면 쏘지 않고 예고를 취소한다 (그 뒤엔 다시 비켜 걷는다).
+    import config
+    from picker import Picker
+    pm = fresh()
+    p = pm.player
+    l, b, r, t = config.SALOON_TABLES[0]
+    cy = (b + t) / 2
+    p.x, p.y = l - 160, cy + 200
+    pk = pm.add_enemy(Picker, r + 160, cy + 200)
+    pk.SPEED = 0
+    pk.held = [p.held.pop()]
+    pk.state, pk.timer = 'SHOOT', 0.6
+    run_until(lambda: pk.aiming() and pk.locked_aim is not None, 60)
+    p.x, p.y = l - 160, cy
+    pk.y = cy
+    sim.step(1)
+    assert pk.locked_aim is None, '시야가 막혔는데 조준 예고가 유지됨'
+    sim.step(60)
+    assert pk.held, '시야가 막혔는데 쏨'
+    pm.finish()
+
+
+@test
 def empty_picker_hides_behind_cover_instead_of_rubbing_the_wall():
     # 사용자 플레이 테스트: 빈손 줍줍이가 플레이어 반대쪽으로만 가서 맵 끝 벽에 붙어 비볐다
     # (측정: 서 있는 플레이어 기준 시간의 51% 를 벽 근처에서 보냄). 이제 장애물 뒤에 숨는다.

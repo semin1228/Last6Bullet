@@ -35,6 +35,7 @@ PICKER_KEEP_NEAR = 180         # 줍줍이가 쏠 때 유지하는 거리 (이�
 PICKER_KEEP_FAR = 340          # (이보다 멀면 다가간다)
 PICKER_FIRST_SHOT = 0.35       # 줍고 나서 첫 발까지 (초)
 PICKER_SHOOT_INTERVAL = 0.9    # 쏘는 간격 (초)
+SIGHT_SIDE_FLIP = 1.2           # 시야가 막힌 줍줍이가 이만큼 비켜 걸어도 안 트이면 반대쪽으로 바꾼다 (초)
 PICKER_CORNERED = 1.5          # 플레이어가 가까워 물러나느라 못 쏜 지 이만큼 지나면 그 거리에서라도 쏜다 (구석에 몰렸을 때, 초)
 COVER_GAP = 36                 # 빈손 줍줍이가 숨을 때와 장애물을 돌아갈 때 장애물에서 떨어지는 거리 (px)
 COVER_MIN_DIST = 150           # 숨을 자리가 플레이어와 이보다 가까우면 그 장애물은 쓰지 않는다 (px)
