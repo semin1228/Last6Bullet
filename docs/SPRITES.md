@@ -32,3 +32,7 @@ C:\Python313\python.exe tools\prep_sprites.py 받은그림폴더 res --size 128
 ## 확인
 - 게임을 켜서 본다: `C:\Python313\python.exe main.py`.
 - 그림 위치나 크기가 어색하면 `config.py` 의 `SPRITE_SIZE` 만 바꾼다.
+
+## API 로 직접 뽑기 (선택, `tools/gen_sprites.py`)
+Gemini(Nano Banana Pro `gemini-3-pro-image`)나 OpenAI(`gpt-image-1`) API 로 `GEMINI_IMAGE_PROMPTS.md` 의 프롬프트를 자동으로 보낸다. 키는 환경변수(`GEMINI_API_KEY`, `OPENAI_API_KEY`)로만 넣는다.
+`--dry-run` 으로 프롬프트만 먼저 본다. 결과는 `art_raw/<provider>/` (저장소에 올리지 않음)에 저장되고, `--compare sheriff_down` 으로 provider 별 그림을 나란히 비교한 뒤 마음에 드는 쪽을 `prep_sprites.py` 로 `res/` 에 넣는다. 실제 키로는 아직 돌려 보지 못했다.
