@@ -9,6 +9,7 @@ from pico2d import draw_circle
 
 import config
 import game_framework
+import sprites
 from enemy import Enemy
 
 
@@ -71,6 +72,8 @@ class Dog(Enemy):
     def draw_body(self, cx, cy):
         # 들개: 몸통 원 + 바라보는 쪽 머리 원 + 귀
         hx, hy = self.x + cx * (self.radius + 3), self.y + cy * (self.radius + 3)
+        if sprites.draw_character('hound', self.x, self.y, self.facing):    # 그림이 없으면 도형
+            return
         draw_circle(self.x, self.y, self.radius, *self.COLOR, filled=True)
         draw_circle(hx, hy, 7, *self.COLOR, filled=True)
         draw_circle(hx - cy * 5, hy + cx * 5, 2, *config.COLOR_DOG_EAR, filled=True)

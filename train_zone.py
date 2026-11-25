@@ -14,6 +14,7 @@ from pico2d import draw_line, draw_rectangle
 import config
 import game_framework
 import game_world
+import sprites
 from bullet import Bullet
 from enemy import Enemy
 from player import Player
@@ -100,8 +101,30 @@ class TrainZone(Zone):
 
     # ------------------------------------------------------------ 그리기
 
+    def draw_over_background(self, l, b, r, t):
+        # 배경 그림 위: 짐받이 턱 선(떨어지는 경계)은 늘 그리고, 위험 띠는 덜컹 예고 때만 깜빡인다. 침목은 그림 밖이라 없다.
+        if self.warning() and int(self.clock * 8) % 2:
+            draw_rectangle(l, b, config.LIP_X, t, *config.COLOR_JOLT_WARN, filled=True)
+        draw_rectangle(config.LIP_X - 4, b, config.LIP_X + 4, t, *config.COLOR_TABLE_EDGE, filled=True)
+        self.draw_crates()
+        self.draw_door(r, planks=False)
+
+    def draw_crates(self):
+        if sprites.get('obs_crate') is not None:                # 짐 상자 그림 (판정은 사각형 그대로)
+            for i, rect in enumerate(self.obstacles):
+                sprites.draw_obstacle('crate', i, rect)
+            return
+        for ol, ob, o_r, ot in self.obstacles:                  # 짐 상자
+            draw_rectangle(ol, ob, o_r, ot, *config.COLOR_TABLE, filled=True)
+            draw_rectangle(ol, ob, o_r, ob + 8, *config.COLOR_TABLE_EDGE, filled=True)
+            draw_line(ol, ob, o_r, ot, *config.COLOR_TABLE_EDGE)
+            draw_line(ol, ot, o_r, ob, *config.COLOR_TABLE_EDGE)
+
     def draw(self):
         l, b, r, t = self.inner
+        if sprites.draw_background('bg_train'):
+            self.draw_over_background(l, b, r, t)
+            return
         draw_rectangle(0, 0, config.WIDTH, config.HEIGHT, *config.COLOR_TRAIN_OUTSIDE, filled=True)
         # 지나가는 침목: 위아래 벽 자리에서 왼쪽으로 흘러간다 (달리는 느낌)
         shift = (self.clock * config.TRAIN_SCROLL) % 48
@@ -117,13 +140,5 @@ class TrainZone(Zone):
             color = stripe if i % 2 == 0 else config.COLOR_STRIPE_BLACK
             draw_rectangle(x, b, min(x + 16, config.LIP_X), t, *color, filled=True)
         draw_rectangle(config.LIP_X - 4, b, config.LIP_X + 4, t, *config.COLOR_TABLE_EDGE, filled=True)   # 짐받이 턱
-        for ol, ob, o_r, ot in self.obstacles:                  # 짐 상자
-            draw_rectangle(ol, ob, o_r, ot, *config.COLOR_TABLE, filled=True)
-            draw_rectangle(ol, ob, o_r, ob + 8, *config.COLOR_TABLE_EDGE, filled=True)
-            draw_line(ol, ob, o_r, ot, *config.COLOR_TABLE_EDGE)
-            draw_line(ol, ot, o_r, ob, *config.COLOR_TABLE_EDGE)
-        lo, hi = self.door_span()
-        if self.door_open:
-            draw_rectangle(r, lo, config.WIDTH, hi, *config.COLOR_DOOR_OPEN, filled=True)
-        else:
-            draw_rectangle(r, lo, config.WIDTH - 6, hi, *config.COLOR_DOOR, filled=True)
+        self.draw_crates()
+        self.draw_door(r, planks=False)

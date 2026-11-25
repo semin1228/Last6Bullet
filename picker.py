@@ -21,6 +21,7 @@ import config
 import effect
 import game_framework
 import game_world
+import sprites
 from enemy import Enemy
 
 
@@ -347,10 +348,11 @@ class Picker(Enemy):
     def draw_body(self, cx, cy):
         # 줍줍이: 녹색 몸, 붉은 두건, 짧은 총
         gx, gy = self.x + cx * (self.radius + 7), self.y + cy * (self.radius + 7)
-        draw_line(self.x, self.y, gx, gy, *config.COLOR_GUN)
-        draw_line(self.x + 1, self.y, gx + 1, gy, *config.COLOR_GUN)
-        draw_circle(self.x, self.y, self.radius, *self.COLOR, filled=True)
-        draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_BANDANA, filled=True)
+        if not sprites.draw_character('picker', self.x, self.y, self.facing):    # 그림이 없으면 도형
+            draw_line(self.x, self.y, gx, gy, *config.COLOR_GUN)
+            draw_line(self.x + 1, self.y, gx + 1, gy, *config.COLOR_GUN)
+            draw_circle(self.x, self.y, self.radius, *self.COLOR, filled=True)
+            draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_BANDANA, filled=True)
         if self.state == 'LUNGE' and self.lunge_time < config.LUNGE_WINDUP:   # 웅크림: 몸 테두리가 붉게
             draw_circle(self.x, self.y, self.radius + 3, *config.COLOR_BULLET_ENEMY)
             draw_circle(self.x, self.y, self.radius + 4, *config.COLOR_BULLET_ENEMY)

@@ -9,6 +9,7 @@ import config
 import effect
 import game_framework
 import game_world
+import sprites
 from bullet import Bullet
 from enemy import Enemy
 
@@ -192,15 +193,22 @@ class Player:
             return                 # 무적 중에는 깜빡인다
         cx, cy = math.cos(self.aim), math.sin(self.aim)
         gx, gy = self.x + cx * self.gun_reach(), self.y + cy * self.gun_reach()
-        for o in (-1, 0, 1):  # 두께 3px 총신
-            draw_line(self.x - cy * o, self.y + cx * o, gx - cy * o, gy + cx * o, *config.COLOR_GUN)
-        if self.state == 'KICK':  # 차는 발: 몸에서 조준 방향으로 뻗는 굵은 선
+        if self.state == 'KICK':
+            variant = 'kick'
+        elif self.state == 'RUN':
+            variant = 'run1' if int(self.zone.clock / config.SPRITE_RUN_FRAME) % 2 == 0 else 'run2'
+        else:
+            variant = None
+        if not sprites.draw_character('sheriff', self.x, self.y, self.aim, variant):    # 그림이 없으면 도형
+            for o in (-1, 0, 1):  # 두께 3px 총신
+                draw_line(self.x - cy * o, self.y + cx * o, gx - cy * o, gy + cx * o, *config.COLOR_GUN)
+            draw_circle(self.x, self.y, self.radius, *config.COLOR_PLAYER, filled=True)
+            draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_HAT, filled=True)
+        if self.state == 'KICK' and (sprites.get('sheriff_right_kick') is None or sprites.pick_direction(self.aim)[0] != 'right'):  # 차는 발: 조준 방향으로 뻗는 굵은 선
             reach = self.radius + config.KICK_RANGE * 0.6
             for o in (-2, -1, 0, 1, 2):
                 draw_line(self.x - cy * o, self.y + cx * o, self.x + cx * reach - cy * o,
                           self.y + cy * reach + cx * o, *config.COLOR_BOOT)
-        draw_circle(self.x, self.y, self.radius, *config.COLOR_PLAYER, filled=True)
-        draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_HAT, filled=True)
         if self.dazed > 0:        # 밀쳐져 경직: 머리 위를 도는 별 두 개 (적 기절 표시와 같은 모양)
             a = self.dazed * 14
             for k in (0, math.pi):

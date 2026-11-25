@@ -83,6 +83,11 @@ SALOON_TABLES = [
     (840, 440, 980, 510),
 ]
 
+# 그림(res/ 의 PNG)을 그릴 화면 크기 (px). 판정 반지름과 별개다. 그림이 너무 크거나 작으면 여기서 조절한다.
+SPRITE_SIZE = {'sheriff': 64, 'picker': 56, 'drunk': 60, 'hound': 56, 'boss': 96}
+SPRITE_RUN_FRAME = 0.15        # 보안관 달리기 그림 두 장을 번갈아 보여 주는 간격 (초)
+MINE_DIM = (70, 70, 80)        # 광산 배경 그림을 어둡게 깔 때 곱하는 색 (255 가 원래 밝기)
+
 LIGHT_RADIUS = 110             # 광산 랜턴 빛 반경 (px, PRD 7장)
 GLINT_PERIOD = 2.2             # 빛 밖 바닥 총알이 반짝이는 주기 (초)
 GLINT_TIME = 0.12              # 한 번 반짝이는 시간 (초)
