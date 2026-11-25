@@ -115,8 +115,24 @@ class Bot:
         self.dodge = 0
         self.dodge_dir = (0, 0)
         self.shot_gap = 0
+        self.history = []          # 최근 위치 (막혀서 못 가는지 보려고)
+        self.unstick = 0           # 막혔을 때 옆으로 걷는 남은 프레임
+        self.unstick_dir = (0, 0)
 
     def keys(self, dx, dy):
+        # 길찾기가 없어 바위 모서리에 걸려 멈추는 일이 있었다(광산 봇 판의 절반, 시야 검사 측정 때 발견).
+        # 가려는데 0.5초 동안 5px 도 못 움직였으면 가려던 방향의 옆으로 40프레임 걷는다.
+        p = self.pm.player
+        self.history = (self.history + [(p.x, p.y)])[-30:]
+        if self.unstick > 0:
+            self.unstick -= 1
+            dx, dy = self.unstick_dir
+        elif (abs(dx) > 4 or abs(dy) > 4) and len(self.history) == 30 and                 math.hypot(p.x - self.history[0][0], p.y - self.history[0][1]) < 5:
+            side = self.rng.choice((-1, 1))
+            self.unstick_dir = (-dy * side, dx * side)
+            self.unstick = 40
+            self.history = []
+            dx, dy = self.unstick_dir
         want = set()
         if dx > 4: want.add(SDLK_d)
         if dx < -4: want.add(SDLK_a)
