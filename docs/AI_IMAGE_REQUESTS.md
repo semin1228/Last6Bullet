@@ -12,6 +12,7 @@ Gemini, ChatGPT 같은 이미지 생성 AI 대화창에 아래 요청을 **위�
 - 순서 추천: 보안관 3장 → 술집 배경 → 테이블 → 줍줍이 → 나머지. 일부만 있어도 게임이 돈다 (없는 그림은 도형으로 나온다).
 
 
+
 ## 캐릭터 (방향별)
 
 ### `sheriff_down.png`
@@ -19,7 +20,9 @@ Gemini, ChatGPT 같은 이미지 생성 AI 대화창에 아래 요청을 **위�
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -35,7 +38,9 @@ centered, solid pure magenta (#FF00FF) background, 512x512.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -52,7 +57,9 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -67,7 +74,9 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -83,7 +92,9 @@ centered, solid pure magenta (#FF00FF) background, 512x512.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -100,7 +111,9 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -115,7 +128,9 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -131,7 +146,9 @@ centered, solid pure magenta (#FF00FF) background, 512x512.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -148,7 +165,9 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -163,7 +182,9 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -179,7 +200,9 @@ centered, solid pure magenta (#FF00FF) background, 512x512.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -196,7 +219,9 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -211,7 +236,9 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -227,7 +254,9 @@ centered, solid pure magenta (#FF00FF) background, 512x512.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -244,7 +273,9 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -262,12 +293,14 @@ Use the attached image as the exact character design reference: same outfit, col
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Empty Wild West saloon interior, high-angle top-down view almost straight down, 16:9, 1280x720,
+Empty Wild West saloon interior, same steep high-angle camera (about 65 degrees down), 16:9, 1280x720,
 large open empty floor in the middle with no furniture and no characters, walls and props only along the edges,
 dark wood plank floor, barrels and lanterns along the edges, swinging doors in the middle of the top wall.
 ```
@@ -277,12 +310,14 @@ dark wood plank floor, barrels and lanterns along the edges, swinging doors in t
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Empty dark mine tunnel interior, high-angle top-down view almost straight down, 16:9, 1280x720,
+Empty dark mine tunnel interior, same steep high-angle camera (about 65 degrees down), 16:9, 1280x720,
 large open empty floor in the middle with no furniture and no characters, walls and props only along the edges,
 dark rocky floor, wooden support beams and rails along the edges.
 ```
@@ -292,12 +327,14 @@ dark rocky floor, wooden support beams and rails along the edges.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Empty wooden freight train car interior, high-angle top-down view almost straight down, 16:9, 1280x720,
+Empty wooden freight train car interior, same steep high-angle camera (about 65 degrees down), 16:9, 1280x720,
 large open empty floor in the middle with no furniture and no characters, walls and props only along the edges,
 wooden plank floor, car walls on both long sides, a long horizontal rectangular room.
 ```
@@ -307,12 +344,14 @@ wooden plank floor, car walls on both long sides, a long horizontal rectangular 
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-Empty bank interior, high-angle top-down view almost straight down, 16:9, 1280x720,
+Empty bank interior, same steep high-angle camera (about 65 degrees down), 16:9, 1280x720,
 large open empty floor in the middle with no furniture and no characters, walls and props only along the edges,
 marble floor, teller cage bars and a vault door along the edges.
 ```
@@ -325,12 +364,14 @@ marble floor, teller cage bars and a vault door along the edges.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-a round wooden saloon table with chairs, high-angle top-down view almost straight down, same art style, filling a roughly square area,
+a round wooden saloon table with chairs, same steep high-angle camera (about 65 degrees down), same art style, filling a roughly square area,
 solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 ```
 
@@ -339,12 +380,14 @@ solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-a lump of cave rock, high-angle top-down view almost straight down, same art style, filling a roughly square area,
+a lump of cave rock, same steep high-angle camera (about 65 degrees down), same art style, filling a roughly square area,
 solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 ```
 
@@ -353,12 +396,14 @@ solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-a wooden freight crate, high-angle top-down view almost straight down, same art style, filling a roughly square area,
+a wooden freight crate, same steep high-angle camera (about 65 degrees down), same art style, filling a roughly square area,
 solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 ```
 
@@ -367,11 +412,13 @@ solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
 No text, no logos, no watermark.
-a square marble pillar seen from above, high-angle top-down view almost straight down, same art style, filling a roughly square area,
+a square marble pillar seen from above, same steep high-angle camera (about 65 degrees down), same art style, filling a roughly square area,
 solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.
 ```

@@ -22,7 +22,9 @@ RAW = os.path.join(ROOT, 'art_raw')
 STYLE = """Style: clean 2D cartoon game art, like a polished indie mobile game. Thick, smooth, dark brown-black outlines
 around every object. Flat colors with simple soft shading and a small highlight, no realistic texture, no painterly
 brush strokes, no gritty noise. Warm cozy lantern lighting. Wild West saloon theme.
-Camera: high-angle top-down, looking down from above with only a slight tilt, almost straight down.
+Camera: high-angle view looking steeply down at about 65 degrees, only slightly tilted from straight overhead.
+The top of the hat and head are clearly visible, the body is somewhat foreshortened, and the feet with the round shadow are visible below.
+Same camera angle for every image.
 Characters are chibi-proportioned (big head and hat, small body), with a soft round dark shadow under the feet.
 Palette: dark wood plank brown (#5a3a22 to #8a5a35), warm beige walls, lantern orange glow, tan hat, dusty blue shirt,
 dark green vest, red bandana, dark charcoal trousers. Consistent look across every image.
@@ -66,15 +68,38 @@ def jobs(only=None):
                 prompt += '\nUse the attached image as the exact character design reference: same outfit, colors, proportions and art style.'
             out.append((name + '_' + d, prompt, '1:1', ref))
     for name, (place, details) in BACKGROUNDS.items():
-        out.append((name, '%s\nEmpty %s interior, high-angle top-down view almost straight down, 16:9, 1280x720,\n'
+        out.append((name, '%s\nEmpty %s interior, same steep high-angle camera (about 65 degrees down), 16:9, 1280x720,\n'
                     'large open empty floor in the middle with no furniture and no characters, walls and props only along the edges,\n%s.'
                     % (STYLE, place, details), '16:9', None))
     for name, obj in OBSTACLES.items():
-        out.append((name, '%s\n%s, high-angle top-down view almost straight down, same art style, filling a roughly square area,\n'
+        out.append((name, '%s\n%s, same steep high-angle camera (about 65 degrees down), same art style, filling a roughly square area,\n'
                     'solid pure magenta (#FF00FF) background, soft shadow underneath, 512x512.' % (STYLE, obj), '1:1', None))
     if only:
         out = [j for j in out if any(j[0].startswith(o) for o in only)]
     return out
+
+
+MD_HEAD = '# AI 이미지 요청서 (복사해서 붙여 넣기)\n\nGemini, ChatGPT 같은 이미지 생성 AI 대화창에 아래 요청을 **위에서부터 순서대로** 하나씩 붙여 넣는다. 각 칸의 코드 블록 전체가 한 번의 요청이다 (스타일 문단이 이미 들어 있다).\n같은 대화창에서 이어서 만들면 스타일이 더 잘 맞는다. 새 대화로 시작하면 스타일 문단이 이미 요청마다 들어 있으니 그대로 붙이면 된다.\n\n## 규칙\n- 받은 그림은 **칸 제목의 파일 이름**으로 저장한다 (예: `sheriff_down.png`). 파일 이름과 경로에 한글·공백을 쓰지 않는다.\n- 배경이 마젠타(#FF00FF) 단색인 그림은 `tools\\prep_sprites.py` 가 투명으로 바꾼다. 배경 그림(`bg_*`)은 그대로 쓴다. 자세한 것은 `docs/SPRITES.md`.\n- 캐릭터는 `_down` 을 **먼저** 마음에 들 때까지 만든다. 그다음 `_up`, `_right` 를 요청할 때 **`_down` 그림을 같이 첨부**한다 (첨부할 수 없는 대화창이면 요청만 붙이고, 여러 번 뽑아 가장 비슷한 것을 고른다).\n- 마지막에 세 방향이 같은 캐릭터로 보이는지(모자, 옷 색, 몸 비율) 나란히 놓고 본다. 오른쪽 그림이 정확히 오른쪽을 보는지, 배경에 장애물·사람이 없는지, 글자·워터마크가 없는지도 본다.\n- 크기가 달라도(AI가 512x512 를 못 지키는 경우가 많다) 비율만 맞으면 된다. 크기는 `prep_sprites.py --size` 로 줄인다.\n- 순서 추천: 보안관 3장 → 술집 배경 → 테이블 → 줍줍이 → 나머지. 일부만 있어도 게임이 돈다 (없는 그림은 도형으로 나온다).\n\n'
+
+
+def write_md():
+    # 위 프롬프트로 docs/AI_IMAGE_REQUESTS.md 를 다시 만든다 (다른 AI 대화창에 붙여 넣는 요청서)
+    sections = [('캐릭터 (방향별)', lambda n: n.rsplit('_', 1)[0] in CHARACTERS),
+                ('구역 배경 (1280x720, 16:9)', lambda n: n.startswith('bg_')),
+                ('장애물', lambda n: n.startswith('obs_'))]
+    lines = [MD_HEAD]
+    for title, pred in sections:
+        lines.append('\n## %s\n' % title)
+        for name, prompt, aspect, ref in jobs():
+            if pred(name):
+                lines.append('### `%s.png`' % name)
+                if ref:
+                    lines.append('(`%s.png` 를 같이 첨부)\n' % ref)
+                lines.append('```\n%s\n```\n' % prompt)
+    path = os.path.join(ROOT, 'docs', 'AI_IMAGE_REQUESTS.md')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    print('저장', os.path.relpath(path, ROOT))
 
 
 def post(url, headers, body):
@@ -150,8 +175,11 @@ def main():
     ap.add_argument('--size', default='2K', help='gemini 그림 크기 1K/2K/4K (기본 2K)')
     ap.add_argument('--only', nargs='*', help='이름이 이 글자로 시작하는 것만 (예: sheriff bg_saloon)')
     ap.add_argument('--dry-run', action='store_true', help='프롬프트만 출력하고 API 는 부르지 않는다')
+    ap.add_argument('--write-md', action='store_true', help='docs/AI_IMAGE_REQUESTS.md 를 프롬프트로 다시 만든다')
     ap.add_argument('--compare', metavar='NAME', help='provider 별 NAME.png 를 나란히 붙인 비교 그림을 만든다')
     args = ap.parse_args()
+    if args.write_md:
+        return write_md()
     if args.compare:
         return compare(args.compare)
     model = args.model or ('gemini-3-pro-image' if args.provider == 'gemini' else 'gpt-image-1')
