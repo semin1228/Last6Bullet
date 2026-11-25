@@ -10,7 +10,7 @@
 
 ## 실행과 확인
 - 게임: `C:\Python313\python.exe main.py` (F1 장부 표시, F2 다음 구역, R 다시 하기)
-- 자동 점검: `C:\Python313\python.exe tools\check.py` (로그는 끝 몇 줄만 본다. 현재 124개. 실행기만 `check.py`, 테스트는 `tools/checks/c1~c4·c6`, 도우미는 `checks/common.py`. 새 테스트는 해당 장 파일에 `@test` 로 추가)
+- 자동 점검: `C:\Python313\python.exe tools\check.py` (로그는 끝 몇 줄만 본다. 현재 126개. 실행기만 `check.py`, 테스트는 `tools/checks/c1~c4·c6`, 도우미는 `checks/common.py`. 새 테스트는 해당 장 파일에 `@test` 로 추가)
 - 봇 난이도 측정: `C:\Python313\python.exe tools\bot_measure.py [판 수] [구역 0~3]`
 - 스크린샷 `tools\shot.py`, 데모 녹화 `tools\record.py`
 - 수치는 모두 `config.py`, 구역 배치는 `zone.py`의 `ZONES`에 있다.

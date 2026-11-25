@@ -348,7 +348,7 @@ class Picker(Enemy):
     def draw_body(self, cx, cy):
         # 줍줍이: 녹색 몸, 붉은 두건, 짧은 총
         gx, gy = self.x + cx * (self.radius + 7), self.y + cy * (self.radius + 7)
-        if not sprites.draw_character('picker', self.x, self.y, self.facing):    # 그림이 없으면 도형
+        if not sprites.draw_character('picker', self.x, self.y, self.facing, self.pose):    # 그림이 없으면 도형
             draw_line(self.x, self.y, gx, gy, *config.COLOR_GUN)
             draw_line(self.x + 1, self.y, gx + 1, gy, *config.COLOR_GUN)
             draw_circle(self.x, self.y, self.radius, *self.COLOR, filled=True)

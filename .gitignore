@@ -4,3 +4,4 @@ __pycache__/
 .idea/
 *.zip
 demo_video/
+art_raw/

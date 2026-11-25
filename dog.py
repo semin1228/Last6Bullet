@@ -72,7 +72,7 @@ class Dog(Enemy):
     def draw_body(self, cx, cy):
         # 들개: 몸통 원 + 바라보는 쪽 머리 원 + 귀
         hx, hy = self.x + cx * (self.radius + 3), self.y + cy * (self.radius + 3)
-        if sprites.draw_character('hound', self.x, self.y, self.facing):    # 그림이 없으면 도형
+        if sprites.draw_character('hound', self.x, self.y, self.facing, self.pose):    # 그림이 없으면 도형
             return
         draw_circle(self.x, self.y, self.radius, *self.COLOR, filled=True)
         draw_circle(hx, hy, 7, *self.COLOR, filled=True)

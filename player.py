@@ -26,6 +26,7 @@ class Player:
         self.pressed = set()
         self.held = []             # 손에 든 총알 (HELD 상태의 Bullet)
         self.fire_cooldown = 0.0
+        self.shoot_pose = 0.0      # 쏜 직후 쏘는 자세 그림을 보여 줄 남은 시간 (초)
         self.hp = config.PLAYER_HP
         self.invincible = 0.0      # 남은 무적 시간 (초)
         self.dry_flash = 0.0       # 빈 총을 당긴 뒤 HUD 실린더가 붉게 보이는 남은 시간 (초)
@@ -100,6 +101,7 @@ class Player:
         effect.spawn(effect.MuzzleFlash(bullet.x, bullet.y, self.aim))
         bullet.add_to_world()
         self.fire_cooldown = config.FIRE_COOLDOWN
+        self.shoot_pose = config.SHOOT_POSE_TIME
         return bullet
 
     def dry_fire(self):
@@ -157,6 +159,7 @@ class Player:
 
     def update(self):
         self.fire_cooldown = max(0.0, self.fire_cooldown - game_framework.frame_time)
+        self.shoot_pose = max(0.0, self.shoot_pose - game_framework.frame_time)
         self.invincible = max(0.0, self.invincible - game_framework.frame_time)
         self.dry_flash = max(0.0, self.dry_flash - game_framework.frame_time)
         self.kick_cooldown = max(0.0, self.kick_cooldown - game_framework.frame_time)
@@ -193,18 +196,13 @@ class Player:
             return                 # 무적 중에는 깜빡인다
         cx, cy = math.cos(self.aim), math.sin(self.aim)
         gx, gy = self.x + cx * self.gun_reach(), self.y + cy * self.gun_reach()
-        if self.state == 'KICK':
-            variant = 'kick'
-        elif self.state == 'RUN':
-            variant = 'run1' if int(self.zone.clock / config.SPRITE_RUN_FRAME) % 2 == 0 else 'run2'
-        else:
-            variant = None
+        variant = sprites.pose_variant(self.state == 'KICK', self.shoot_pose > 0, self.state == 'RUN', self.zone.clock)
         if not sprites.draw_character('sheriff', self.x, self.y, self.aim, variant):    # 그림이 없으면 도형
             for o in (-1, 0, 1):  # 두께 3px 총신
                 draw_line(self.x - cy * o, self.y + cx * o, gx - cy * o, gy + cx * o, *config.COLOR_GUN)
             draw_circle(self.x, self.y, self.radius, *config.COLOR_PLAYER, filled=True)
             draw_circle(self.x, self.y, self.radius - 5, *config.COLOR_HAT, filled=True)
-        if self.state == 'KICK' and (sprites.get('sheriff_right_kick') is None or sprites.pick_direction(self.aim)[0] != 'right'):  # 차는 발: 조준 방향으로 뻗는 굵은 선
+        if self.state == 'KICK' and sprites.get('sheriff_%s_kick' % sprites.pick_direction(self.aim)[0]) is None:  # 발차기 그림이 없으면: 조준 방향으로 뻗는 굵은 선
             reach = self.radius + config.KICK_RANGE * 0.6
             for o in (-2, -1, 0, 1, 2):
                 draw_line(self.x - cy * o, self.y + cx * o, self.x + cx * reach - cy * o,
