@@ -19,8 +19,47 @@ C:\Python313\python.exe tools\prep_sprites.py C:\dev\2dgp\raw_art res --size 256
 ```
 받은그림 폴더는 저장소 밖(`C:\dev\2dgp\raw_art`)에 둔다. 경로와 파일 이름에 한글·공백을 쓰지 않는다. 자세한 규칙은 `docs/SPRITES.md`.
 
+## 필요한 파일 전체 목록 (체크하며 진행)
+파일 이름은 코드가 그대로 읽는다. 저장 위치는 최종적으로 `res/` 이다. 왼쪽 보는 그림은 오른쪽을 코드가 반전하므로 만들지 않는다.
+
+**A. 꼭 필요 (23개)** - 이것만 있어도 4개 구역이 그림으로 돈다
+- [ ] 보안관 `sheriff_down` `sheriff_up` `sheriff_right`
+- [ ] 줍줍이 `picker_down` `picker_up` `picker_right`
+- [ ] 술꾼 `drunk_down` `drunk_up` `drunk_right`
+- [ ] 들개 `hound_down` `hound_up` `hound_right`
+- [ ] 두목 `boss_down` `boss_up` `boss_right`
+- [ ] 배경 `bg_saloon` `bg_mine` `bg_train` `bg_bank`
+- [ ] 장애물 `obs_table` `obs_rock` `obs_crate` `obs_pillar`
+
+**B. 있으면 좋음 - 걷기 (30개)** - 움직일 때 두 장이 번갈아 나온다
+- [ ] 보안관 `sheriff_{down,up,right}_{walk1,walk2}` (6)
+- [ ] 줍줍이 `picker_{down,up,right}_{walk1,walk2}` (6)
+- [ ] 술꾼 `drunk_{down,up,right}_{walk1,walk2}` (6)
+- [ ] 들개 `hound_{down,up,right}_{walk1,walk2}` (6)
+- [ ] 두목 `boss_{down,up,right}_{walk1,walk2}` (6)
+
+**C. 있으면 좋음 - 쏘기 (12개)** - 쏜 직후 0.12초 동안 나온다 (들개는 쏘지 않아 없음)
+- [ ] 보안관 `sheriff_{down,up,right}_shoot` (3)
+- [ ] 줍줍이 `picker_{down,up,right}_shoot` (3)
+- [ ] 술꾼 `drunk_{down,up,right}_shoot` (3)
+- [ ] 두목 `boss_{down,up,right}_shoot` (3)
+
+**D. 있으면 좋음 - 보안관 발차기 (3개)**
+- [ ] `sheriff_{down,up,right}_kick`
+
+**E. 선택**
+- [ ] 장애물 모양 추가 `obs_rock2` `obs_rock3` 처럼 번호를 붙이면 번갈아 쓴다
+
+합계: A 23 + B 30 + C 12 + D 3 = **68개**. 이 중 B~D 45개는 없으면 서 있는 그림으로 나오므로 마지막에 해도 된다.
+
+**이 요청서에 없는 것** (코드가 도형으로 그리거나 다른 작업 담당): 총알·총구 불꽃·UI(체력, 실린더, 조준점)는 코드 도형, 수배 포스터 초상화·타이틀·엔딩은 `flow-screens` 작업 담당. 맞음·쓰러짐 그림은 만들지 않는다(흰 번쩍임과 별을 코드가 그린다).
+
 ## 순서 추천
-보안관 방향 시트 → 보안관 동작 시트 → 술집 배경 → 테이블 → 줍줍이 → 광산(배경+바위) → 나머지 캐릭터 → 기차 → 은행. 일부만 있어도 게임이 돈다 (없는 그림은 도형으로 나온다).
+1. 보안관 방향 시트 (정면은 이미 있는 Gemini 6번 기준)
+2. 술집 배경 → 테이블 → 줍줍이 → 술꾼 방향 시트 (여기까지 하면 1구역이 그림으로 나온다. 게임을 켜서 크기와 시점을 먼저 확인한다)
+3. 광산(배경, 바위, 들개) → 기차(배경, 상자) → 은행(배경, 기둥, 두목)
+4. 보안관 걷기 → 보안관 발차기·쏘기 → 적 걷기 → 적 쏘기 (선택)
+5. 그림이 모일 때마다 `prep_sprites.py` 로 `res/` 에 넣고 게임에서 확인한다.
 
 
 ## 1. 캐릭터 방향 시트 (3칸: 아래 · 위 · 오른쪽)
