@@ -241,7 +241,7 @@ last_six/
 ├── hud.py               # 체력, 총알(리볼버 실린더), 구역 이름, 덜컹 예고 표시
 ├── crosshair.py         # 마우스 조준점 (1주차 추가)
 ├── effect.py            # 총구 불꽃, 튕김 불똥, 줍기·피격 고리 등 짧은 연출 (1주차 추가)
-├── tools/               # 자동 점검(check.py), 스크린샷(shot.py)
+├── tools/               # 자동 점검 실행기(check.py)와 장별 테스트(checks/c1~c4, 공용 도우미 common.py), 스크린샷(shot.py)
 └── res/                 # 이미지, 효과음
 ```
 
