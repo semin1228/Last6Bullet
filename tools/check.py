@@ -8,7 +8,7 @@ import sim
 
 import play_mode
 from pico2d import close_canvas
-from checks import c1_basics, c2_enemies, c3_zones, c4_train_boss   # noqa: F401  불러오면 테스트가 순서대로 등록된다
+from checks import c1_basics, c2_enemies, c3_zones, c4_train_boss, c5_flow   # noqa: F401  불러오면 테스트가 순서대로 등록된다
 from checks.common import TESTS
 
 

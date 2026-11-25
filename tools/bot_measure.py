@@ -195,6 +195,7 @@ def run(index, trials, limit_s=90):
         game_framework.running = True
         game_framework.stack = [play_mode]
         play_mode.SPAWN_ENEMIES = True
+        play_mode.SHOW_POSTERS = False
         random.seed(1000 + k)
         play_mode.init()
         if index:

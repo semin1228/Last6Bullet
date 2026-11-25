@@ -232,6 +232,7 @@ last_six/
 ├── config.py            # 난이도별 수치 (체험판 초기값)
 ├── title_mode.py  play_mode.py  poster_mode.py  badge_mode.py
 ├── duel_mode.py   ending_mode.py  gameover_mode.py
+├── ui.py                # 타이틀·포스터·엔딩이 함께 쓰는 글자 가운데 맞춤 (4주차 추가)
 ├── player.py            # 보안관
 ├── bullet.py            # 총알 (상태로 비행, 바닥, 굴러감 관리)
 ├── enemy.py             # 적 공통 (줍기, 기절, 소지 총알)
@@ -475,7 +476,7 @@ stateDiagram-v2
 
 최소 완성: 타이틀부터 엔딩까지 소리와 함께 한 판을 할 수 있다.
 
-- [ ] 현상수배 포스터(`poster_mode`) 글자판, 타이틀, 엔딩
+- [x] 현상수배 포스터(`poster_mode`) 글자판, 타이틀, 엔딩 (도형과 글자만. 이미지는 교체 항목에서)
 - [ ] 효과음 (총성, 줍기 '철컥', 발차기, 피격)
 - [ ] AI 이미지로 보안관, 적 3종, 두목, 구역 배경 제작 후 교체 (부족하면 16장 축소 순서 4)
 - [ ] 난이도별 수치 조정, 버그 수정

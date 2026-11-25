@@ -36,6 +36,7 @@ def fresh(enemies=False):
     game_framework.running = True
     game_framework.stack = [play_mode]
     play_mode.SPAWN_ENEMIES = enemies
+    play_mode.SHOW_POSTERS = False
     play_mode.init()
     return play_mode
 
@@ -494,6 +495,7 @@ def w3_3_duel():
     random.seed(2)
     pm = fresh()
     play_mode.SPAWN_ENEMIES = True
+    play_mode.SHOW_POSTERS = False
     pm.start_zone(len(ZONES) - 2)
     for e in pm.enemies:
         e.alive = False
@@ -514,6 +516,56 @@ def w3_3_duel():
     save('w3_3_duel_win')
     game_framework.stack = [pm]
     pm.finish()
+
+
+# ---------------------------------------------------------------- 4주차
+
+def close_flow():
+    import game_framework
+    while game_framework.stack:
+        game_framework.stack.pop().finish()
+
+
+@scene
+def w4_1_title():
+    import game_framework
+    import title_mode
+    game_framework.running = True
+    game_framework.stack = [title_mode]
+    title_mode.init()
+    sim.step(2)
+    save('w4_1_title')
+    close_flow()
+
+
+@scene
+def w4_2_poster():
+    import poster_mode
+    pm = fresh(enemies=True)
+    poster_mode.prepare(0)
+    import game_framework
+    game_framework.push_mode(poster_mode)
+    sim.step(2)
+    save('w4_2_poster_saloon')     # 술집: 줍줍이, 술꾼
+    close_flow()
+    pm = fresh(enemies=True)
+    pm.start_zone(3)               # 은행: 결투 위에 두목 포스터가 올라온 모습은 아래에 전투가 깔린다
+    poster_mode.prepare(3)
+    game_framework.push_mode(poster_mode)
+    sim.step(2)
+    save('w4_2_poster_boss')
+    close_flow()
+
+
+@scene
+def w4_3_ending():
+    import ending_mode
+    pm = fresh(enemies=True)
+    pm.player.bounty = 1050
+    pm.show_ending()
+    sim.step(2)
+    save('w4_3_ending')
+    close_flow()
 
 
 def main():
